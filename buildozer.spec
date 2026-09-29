@@ -1,4 +1,6 @@
 [app]
+p4a.branch = develop
+
 title = DHK CashBook Pro
 package.name = dhkcashbookpro
 package.domain = org.dhk.cashbook

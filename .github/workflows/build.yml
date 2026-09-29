@@ -54,7 +54,6 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
-          yes | buildozer -v android clean
           yes | buildozer -v android debug
 
       - name: Upload Compiled APK Artifact

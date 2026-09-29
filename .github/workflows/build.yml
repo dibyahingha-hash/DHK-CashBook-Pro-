@@ -36,6 +36,7 @@ jobs:
             libxml2-dev \
             libxslt1-dev \
             zlib1g-dev \
+            libjpeg-dev \
             autoconf \
             automake \
             libtool \
@@ -49,7 +50,9 @@ jobs:
           pip install --upgrade pip
           pip install "Cython<3.0" buildozer
 
-      - name: Build Android APK with Auto-License Acceptance
+      - name: Build Android APK
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           yes | buildozer -v android debug
 

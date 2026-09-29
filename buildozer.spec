@@ -6,7 +6,9 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf,json,db
 version = 1.0.0
 
-requirements = python3,kivy==2.2.0,pillow,reportlab,requests,urllib3,certifi
+requirements = python3,kivy==2.2.0,pillow,requests,urllib3,certifi
+pip_requirements = reportlab
+
 
 
 orientation = portrait

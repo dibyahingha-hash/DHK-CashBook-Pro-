@@ -6,12 +6,14 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf,json,db
 version = 1.0.0
 
-requirements = python3,kivy==2.2.0,reportlab,requests,urllib3,certifi
+requirements = python3,kivy==2.2.0,pillow,reportlab,requests,urllib3,certifi
+
 
 orientation = portrait
 fullscreen = 0
 
-android.archs = arm64-v8a, armeabi-v7a
+android.archs = arm64-v8a
+
 android.build_tools_version = 33.0.2
 
 android.minapi = 21

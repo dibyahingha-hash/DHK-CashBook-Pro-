@@ -1,26 +1,25 @@
 import os
 import sys
+import traceback
 
-# Prevent native accelerator lookup for reportlab
+# Prevent ReportLab accelerator lookup
 sys.modules['_rl_accel'] = None
 
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 from kivy.uix.widget import Widget
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.label import Label
 from kivy.properties import StringProperty
 from kivy.utils import platform
 
-from core.currency import CurrencyEngine
-from core.db_manager import DatabaseManager
-
-
-# Define Spacer so ui.kv doesn't crash Kivy Factory
+# Define custom Spacer class for ui.kv
 class Spacer(Widget):
     pass
 
 
-def get_db():
+def get_db_instance():
     if platform == 'android':
         try:
             from android.storage import app_storage_path
@@ -29,6 +28,8 @@ def get_db():
             base_dir = os.environ.get('ANDROID_APP_PATH', '.')
     else:
         base_dir = '.'
+    
+    from core.db_manager import DatabaseManager
     return DatabaseManager(os.path.join(base_dir, 'cashbook.db'))
 
 
@@ -80,6 +81,7 @@ class OnboardingScreen(Screen):
 
     def save_initial_setup(self, school_name, udise, start_month, cash_val, bank_val, grain_val):
         global db
+        from core.currency import CurrencyEngine
         if not school_name or not udise:
             self.status_text = "Please enter School Name and UDISE."
             return
@@ -118,6 +120,7 @@ class DashboardScreen(Screen):
 
     def refresh_dashboard(self):
         global db
+        from core.currency import CurrencyEngine
         try:
             balances = db.get_monthly_balances(self.selected_account, 2026, 9)
             cash = balances["closing_cash"]
@@ -138,6 +141,7 @@ class VoucherEntryScreen(Screen):
 
     def save_voucher(self, v_date, v_type, head, amount_str, grain_str, desc, is_contra, contra_dir):
         global db
+        from core.currency import CurrencyEngine
         if not amount_str:
             self.status_msg = "Please enter an amount."
             return
@@ -169,16 +173,31 @@ class VoucherEntryScreen(Screen):
 class DHKCashBookApp(App):
     def build(self):
         global db
-        db = get_db()
-        Builder.load_file('ui.kv')
-        sm = ScreenManager()
-        sm.add_widget(PinScreen(name='pin'))
-        sm.add_widget(OnboardingScreen(name='onboarding'))
-        sm.add_widget(DashboardScreen(name='dashboard'))
-        sm.add_widget(VoucherEntryScreen(name='voucher'))
-        return sm
+        try:
+            db = get_db_instance()
+            Builder.load_file('ui.kv')
+            sm = ScreenManager()
+            sm.add_widget(PinScreen(name='pin'))
+            sm.add_widget(OnboardingScreen(name='onboarding'))
+            sm.add_widget(DashboardScreen(name='dashboard'))
+            sm.add_widget(VoucherEntryScreen(name='voucher'))
+            return sm
+        except Exception:
+            # Trap and print the full crash log onto the screen
+            err = traceback.format_exc()
+            scroll = ScrollView()
+            lbl = Label(
+                text=f"LAUNCH CRASH LOG:\n\n{err}",
+                font_size='11sp',
+                color=(1, 0.3, 0.3, 1),
+                size_hint_y=None,
+                halign='left',
+                valign='top'
+            )
+            lbl.bind(texture_size=lambda inst, val: setattr(inst, 'size', val))
+            scroll.add_widget(lbl)
+            return scroll
 
 
 if __name__ == '__main__':
     DHKCashBookApp().run()
-    

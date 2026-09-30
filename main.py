@@ -15,7 +15,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.widget import Widget
 from kivy.utils import platform
 
-# Configure keyboard behavior to keep input fields in view
+# Keep input fields visible above the virtual keyboard
 Window.softinput_mode = 'below_target'
 
 
@@ -65,14 +65,18 @@ class PinScreen(Screen):
         global db
         if self.current_pin == "1234" or len(self.current_pin) == 4:
             self.error_msg = ""
-            self.manager.transition = SlideTransition(direction="left")
             try:
                 balances = db.get_monthly_balances("MDM", 2026, 9)
                 if balances.get("opening_cash", 0) > 0 or balances.get("opening_bank", 0) > 0:
+                    dash = self.manager.get_screen('dashboard')
+                    dash.refresh_dashboard()
+                    self.manager.transition = SlideTransition(direction="left")
                     self.manager.current = "dashboard"
                 else:
+                    self.manager.transition = SlideTransition(direction="left")
                     self.manager.current = "onboarding"
             except Exception:
+                self.manager.transition = SlideTransition(direction="left")
                 self.manager.current = "onboarding"
         else:
             self.error_msg = "Invalid PIN. Try again."
@@ -100,7 +104,7 @@ class OnboardingScreen(Screen):
             grain_g = int(float(grain_val or 0) * 1000)
             month_idx = int(start_month)
 
-            # 1. Save school profile to db
+            # Save school profile
             with db._get_connection() as conn:
                 cur = conn.cursor()
                 cur.execute("""
@@ -110,7 +114,7 @@ class OnboardingScreen(Screen):
                 """, (clean_school, clean_udise))
                 conn.commit()
 
-            # 2. Save baseline using exact keyword arguments expected by db_manager
+            # Save baseline opening balances
             db.set_account_initialization(
                 account_type="MDM",
                 fin_year="2026-2027",
@@ -120,6 +124,11 @@ class OnboardingScreen(Screen):
                 bank_paise=bank_p,
                 grain_grams=grain_g
             )
+
+            # Explicitly refresh dashboard screen before switching
+            dash = self.manager.get_screen('dashboard')
+            dash.selected_account = "MDM"
+            dash.refresh_dashboard()
 
             self.manager.transition = SlideTransition(direction="left")
             self.manager.current = "dashboard"
@@ -161,8 +170,8 @@ class DashboardScreen(Screen):
                 self.grain_display = f"{grain_g / 1000.0:.3f} kg"
             else:
                 self.grain_display = "N/A"
-        except Exception:
-            pass
+        except Exception as e:
+            self.cash_display = f"Err: {str(e)[:12]}"
 
 
 class VoucherEntryScreen(Screen):
@@ -202,6 +211,9 @@ class VoucherEntryScreen(Screen):
                 purpose_head=purpose or "Expenditure",
                 mode=mode
             )
+
+            dash = self.manager.get_screen('dashboard')
+            dash.refresh_dashboard()
 
             self.manager.transition = SlideTransition(direction="right")
             self.manager.current = "dashboard"

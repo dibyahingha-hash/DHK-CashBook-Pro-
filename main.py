@@ -2,7 +2,7 @@ import os
 import sys
 import traceback
 
-# Prevent ReportLab accelerator lookup
+# Disable ReportLab C-extension accelerator
 sys.modules['_rl_accel'] = None
 
 from kivy.app import App
@@ -14,7 +14,7 @@ from kivy.uix.label import Label
 from kivy.properties import StringProperty
 from kivy.utils import platform
 
-# Define custom Spacer class for ui.kv
+
 class Spacer(Widget):
     pass
 
@@ -28,7 +28,7 @@ def get_db_instance():
             base_dir = os.environ.get('ANDROID_APP_PATH', '.')
     else:
         base_dir = '.'
-    
+
     from core.db_manager import DatabaseManager
     return DatabaseManager(os.path.join(base_dir, 'cashbook.db'))
 
@@ -64,7 +64,7 @@ class PinScreen(Screen):
             self.manager.transition = SlideTransition(direction="left")
             try:
                 balances = db.get_monthly_balances("MDM", 2026, 9)
-                if balances["opening_cash"] > 0 or balances["opening_bank"] > 0:
+                if balances.get("opening_cash", 0) > 0 or balances.get("opening_bank", 0) > 0:
                     self.manager.current = "dashboard"
                 else:
                     self.manager.current = "onboarding"
@@ -87,8 +87,8 @@ class OnboardingScreen(Screen):
             return
 
         try:
-            cash_p = CurrencyEngine.parse_to_paise(cash_val)
-            bank_p = CurrencyEngine.parse_to_paise(bank_val)
+            cash_p = CurrencyEngine.parse_to_paise(cash_val or "0")
+            bank_p = CurrencyEngine.parse_to_paise(bank_val or "0")
             grain_g = int(float(grain_val or 0) * 1000)
             month_idx = int(start_month)
 
@@ -111,63 +111,73 @@ class OnboardingScreen(Screen):
 class DashboardScreen(Screen):
     cash_display = StringProperty("₹ 0.00")
     bank_display = StringProperty("₹ 0.00")
-    total_display = StringProperty("₹ 0.00")
     grain_display = StringProperty("0.000 kg")
     selected_account = StringProperty("MDM")
 
     def on_enter(self):
         self.refresh_dashboard()
 
+    def select_account(self, acc_type):
+        self.selected_account = acc_type
+        self.refresh_dashboard()
+
+    def open_new_voucher(self):
+        self.manager.transition = SlideTransition(direction="left")
+        self.manager.current = "voucher"
+
     def refresh_dashboard(self):
         global db
         from core.currency import CurrencyEngine
         try:
             balances = db.get_monthly_balances(self.selected_account, 2026, 9)
-            cash = balances["closing_cash"]
-            bank = balances["closing_bank"]
-            total = cash + bank
-            grain = balances["closing_grain"]
+            cash = balances.get("closing_cash", 0)
+            bank = balances.get("closing_bank", 0)
+            grain = balances.get("closing_grain", 0)
 
             self.cash_display = CurrencyEngine.paise_to_rupees_str(cash)
             self.bank_display = CurrencyEngine.paise_to_rupees_str(bank)
-            self.total_display = CurrencyEngine.paise_to_rupees_str(total)
             self.grain_display = f"{grain / 1000.0:.3f} kg"
         except Exception:
             pass
 
 
 class VoucherEntryScreen(Screen):
-    status_msg = StringProperty("")
+    next_voucher_str = StringProperty("Voucher #1")
+    error_msg = StringProperty("")
 
-    def save_voucher(self, v_date, v_type, head, amount_str, grain_str, desc, is_contra, contra_dir):
+    def on_enter(self):
+        self.error_msg = ""
+
+    def cancel(self):
+        self.manager.transition = SlideTransition(direction="right")
+        self.manager.current = "dashboard"
+
+    def save_voucher(self, v_date, amount_str, purpose, mode):
         global db
         from core.currency import CurrencyEngine
         if not amount_str:
-            self.status_msg = "Please enter an amount."
+            self.error_msg = "Please enter an amount."
             return
 
         try:
             paise = CurrencyEngine.parse_to_paise(amount_str)
-            grain = int(float(grain_str or 0) * 1000)
-            contra_bool = True if is_contra else False
 
             db.add_voucher(
                 account_type="MDM",
                 voucher_date=v_date,
-                voucher_type=v_type,
-                accounting_head=head,
+                voucher_type="PAYMENT",
+                accounting_head=purpose,
                 amount_paise=paise,
-                grain_grams=grain,
-                particulars=desc,
-                is_contra=contra_bool,
-                contra_direction=contra_dir if contra_bool else ""
+                grain_grams=0,
+                particulars=purpose,
+                is_contra=False,
+                contra_direction=""
             )
 
-            self.status_msg = "Voucher saved successfully."
             self.manager.transition = SlideTransition(direction="right")
             self.manager.current = "dashboard"
         except Exception as e:
-            self.status_msg = f"Error: {str(e)}"
+            self.error_msg = f"Error: {str(e)}"
 
 
 class DHKCashBookApp(App):
@@ -183,7 +193,6 @@ class DHKCashBookApp(App):
             sm.add_widget(VoucherEntryScreen(name='voucher'))
             return sm
         except Exception:
-            # Trap and print the full crash log onto the screen
             err = traceback.format_exc()
             scroll = ScrollView()
             lbl = Label(

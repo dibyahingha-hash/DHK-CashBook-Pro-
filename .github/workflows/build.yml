@@ -50,6 +50,10 @@ jobs:
           pip install --upgrade pip
           pip install "Cython==0.29.36" buildozer
 
+      - name: Pre-bundle Pure Python ReportLab
+        run: |
+          pip install --target=. reportlab
+
       - name: Build Android APK
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}

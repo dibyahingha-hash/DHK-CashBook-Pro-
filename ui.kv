@@ -1,5 +1,8 @@
 #:kivy 2.2.0
 
+<Spacer@Widget>:
+    size_hint_y: 1
+
 <PinScreen>:
     canvas.before:
         Color:
@@ -10,11 +13,11 @@
 
     BoxLayout:
         orientation: 'vertical'
-        padding: 30
-        spacing: 20
+        padding: [24, 30, 24, 20]
+        spacing: 12
 
         Spacer:
-            size_hint_y: 0.15
+            size_hint_y: 0.1
 
         Label:
             text: "DHK CashBook Pro"
@@ -32,15 +35,15 @@
             height: '20dp'
 
         Spacer:
-            size_hint_y: 0.1
+            size_hint_y: 0.08
 
         Label:
             text: root.pin_display
-            font_size: '26sp'
+            font_size: '28sp'
             bold: True
             color: 0.3, 0.7, 1.0, 1
             size_hint_y: None
-            height: '40dp'
+            height: '42dp'
 
         Label:
             text: root.error_msg
@@ -51,124 +54,156 @@
 
         GridLayout:
             cols: 3
-            spacing: 12
-            size_hint_y: 0.55
+            spacing: 10
+            size_hint_y: 0.6
 
             Button:
                 text: "1"
+                font_size: '20sp'
                 on_press: root.append_digit(1)
             Button:
                 text: "2"
+                font_size: '20sp'
                 on_press: root.append_digit(2)
             Button:
                 text: "3"
+                font_size: '20sp'
                 on_press: root.append_digit(3)
             Button:
                 text: "4"
+                font_size: '20sp'
                 on_press: root.append_digit(4)
             Button:
                 text: "5"
+                font_size: '20sp'
                 on_press: root.append_digit(5)
             Button:
                 text: "6"
+                font_size: '20sp'
                 on_press: root.append_digit(6)
             Button:
                 text: "7"
+                font_size: '20sp'
                 on_press: root.append_digit(7)
             Button:
                 text: "8"
+                font_size: '20sp'
                 on_press: root.append_digit(8)
             Button:
                 text: "9"
+                font_size: '20sp'
                 on_press: root.append_digit(9)
             Button:
                 text: "C"
+                font_size: '18sp'
                 background_color: 0.7, 0.2, 0.2, 1
                 on_press: root.backspace()
             Button:
                 text: "0"
+                font_size: '20sp'
                 on_press: root.append_digit(0)
             Button:
-                text: "⌫"
+                text: "DEL"
+                font_size: '14sp'
                 on_press: root.backspace()
 
 
 <OnboardingScreen>:
     canvas.before:
         Color:
-            rgba: 0.96, 0.97, 0.98, 1
+            rgba: 0.95, 0.96, 0.98, 1
         Rectangle:
             pos: self.pos
             size: self.size
 
-    BoxLayout:
-        orientation: 'vertical'
-        padding: 20
-        spacing: 10
+    ScrollView:
+        do_scroll_x: False
+        do_scroll_y: True
 
-        Label:
-            text: "School Setup & Baseline"
-            font_size: '18sp'
-            bold: True
-            color: 0.1, 0.15, 0.2, 1
+        BoxLayout:
+            orientation: 'vertical'
+            padding: [20, 24, 20, 30]
+            spacing: 12
             size_hint_y: None
-            height: '35dp'
+            height: self.minimum_height
 
-        TextInput:
-            id: in_school_name
-            hint_text: "School Name (e.g. Chenimari LP School)"
-            multiline: False
-            size_hint_y: None
-            height: '42dp'
+            Label:
+                text: "School Setup & Baseline"
+                font_size: '19sp'
+                bold: True
+                color: 0.1, 0.15, 0.22, 1
+                size_hint_y: None
+                height: '35dp'
 
-        TextInput:
-            id: in_udise
-            hint_text: "11-Digit UDISE Code"
-            multiline: False
-            size_hint_y: None
-            height: '42dp'
+            Label:
+                text: "School Details"
+                font_size: '12sp'
+                bold: True
+                color: 0.35, 0.4, 0.45, 1
+                size_hint_y: None
+                height: '20dp'
 
-        Label:
-            text: "Starting Month: September (9)"
-            font_size: '12sp'
-            color: 0.3, 0.3, 0.3, 1
-            size_hint_y: None
-            height: '25dp'
+            TextInput:
+                id: in_school_name
+                hint_text: "School Name (e.g. No 79 Betoni LP)"
+                multiline: False
+                size_hint_y: None
+                height: '46dp'
 
-        TextInput:
-            id: in_cash
-            hint_text: "Opening Cash in Hand (₹)"
-            multiline: False
-            size_hint_y: None
-            height: '42dp'
+            TextInput:
+                id: in_udise
+                hint_text: "11-Digit UDISE Code"
+                input_filter: 'int'
+                multiline: False
+                size_hint_y: None
+                height: '46dp'
 
-        TextInput:
-            id: in_bank
-            hint_text: "Opening Bank Balance (₹)"
-            multiline: False
-            size_hint_y: None
-            height: '42dp'
+            Label:
+                text: "Opening Balances (September 2026)"
+                font_size: '12sp'
+                bold: True
+                color: 0.35, 0.4, 0.45, 1
+                size_hint_y: None
+                height: '24dp'
 
-        TextInput:
-            id: in_grain
-            hint_text: "Opening Rice Stock (in Kg, e.g. 42.500)"
-            multiline: False
-            size_hint_y: None
-            height: '42dp'
+            TextInput:
+                id: in_cash
+                hint_text: "Opening Cash in Hand (₹)"
+                input_filter: 'float'
+                multiline: False
+                size_hint_y: None
+                height: '46dp'
 
-        Label:
-            text: root.status_text
-            font_size: '11sp'
-            color: 1, 0.2, 0.2, 1
-            size_hint_y: None
-            height: '20dp'
+            TextInput:
+                id: in_bank
+                hint_text: "Opening Bank Balance (₹)"
+                input_filter: 'float'
+                multiline: False
+                size_hint_y: None
+                height: '46dp'
 
-        Button:
-            text: "✔ Save & Begin Accounting"
-            background_color: 0.1, 0.6, 0.3, 1
-            size_hint_y: None
-            height: '48dp'
-            on_press: root.save_initial_setup(in_school_name.text, in_udise.text, 9, in_cash.text, in_bank.text, in_grain.text)
+            TextInput:
+                id: in_grain
+                hint_text: "Opening Rice Stock (in Kg, e.g. 150)"
+                input_filter: 'float'
+                multiline: False
+                size_hint_y: None
+                height: '46dp'
+
+            Label:
+                text: root.status_text
+                font_size: '11sp'
+                color: 1, 0.2, 0.2, 1
+                size_hint_y: None
+                height: '22dp'
+
+            Button:
+                text: "Save & Begin Accounting"
+                bold: True
+                background_color: 0.12, 0.55, 0.28, 1
+                size_hint_y: None
+                height: '50dp'
+                on_press: root.save_initial_setup(in_school_name.text, in_udise.text, 9, in_cash.text, in_bank.text, in_grain.text)
 
 
 <DashboardScreen>:
@@ -203,7 +238,7 @@
 
         BoxLayout:
             orientation: 'vertical'
-            size_hint_y: 0.3
+            size_hint_y: 0.35
             padding: 14
             spacing: 6
             canvas.before:
@@ -217,21 +252,21 @@
             Label:
                 text: "Active Month: September 2026"
                 color: 0.4, 0.4, 0.4, 1
-                font_size: '11sp'
+                font_size: '12sp'
             Label:
                 text: "Cash-in-Hand: " + root.cash_display
                 color: 0.1, 0.6, 0.2, 1
-                font_size: '17sp'
+                font_size: '18sp'
                 bold: True
             Label:
                 text: "Bank Balance: " + root.bank_display
                 color: 0.1, 0.3, 0.7, 1
-                font_size: '17sp'
+                font_size: '18sp'
                 bold: True
             Label:
                 text: "Rice in Stock: " + root.grain_display
                 color: 0.5, 0.35, 0.1, 1
-                font_size: '13sp'
+                font_size: '14sp'
 
         Button:
             text: "➕ Record Voucher Expenditure"
@@ -267,59 +302,72 @@
             pos: self.pos
             size: self.size
 
-    BoxLayout:
-        orientation: 'vertical'
-        padding: 20
-        spacing: 12
-
-        Label:
-            text: "New Expenditure — " + root.next_voucher_str
-            font_size: '17sp'
-            bold: True
-            color: 0.1, 0.15, 0.2, 1
-            size_hint_y: None
-            height: '35dp'
-
-        TextInput:
-            id: v_date
-            text: "2026-09-16"
-            hint_text: "Date (YYYY-MM-DD)"
-            multiline: False
-            size_hint_y: None
-            height: '42dp'
-
-        TextInput:
-            id: v_amount
-            hint_text: "Amount Spent (₹, e.g. 450.00)"
-            multiline: False
-            size_hint_y: None
-            height: '42dp'
-
-        TextInput:
-            id: v_purpose
-            text: "MDM Cooking Cost (Groceries/Vegetables)"
-            hint_text: "Purpose of Expenditure"
-            multiline: False
-            size_hint_y: None
-            height: '42dp'
-
-        Label:
-            text: root.error_msg
-            font_size: '11sp'
-            color: 1, 0.2, 0.2, 1
-            size_hint_y: None
-            height: '20dp'
+    ScrollView:
+        do_scroll_x: False
+        do_scroll_y: True
 
         BoxLayout:
+            orientation: 'vertical'
+            padding: [20, 20, 20, 24]
+            spacing: 12
             size_hint_y: None
-            height: '46dp'
-            spacing: 10
-            Button:
-                text: "Cancel"
-                background_color: 0.6, 0.6, 0.6, 1
-                on_press: root.cancel()
-            Button:
-                text: "✔ Save Entry"
-                background_color: 0.1, 0.6, 0.3, 1
-                on_press: root.save_voucher(v_date.text, v_amount.text, v_purpose.text, "CASH")
+            height: self.minimum_height
 
+            Label:
+                text: "New Expenditure — " + root.next_voucher_str
+                font_size: '17sp'
+                bold: True
+                color: 0.1, 0.15, 0.2, 1
+                size_hint_y: None
+                height: '35dp'
+
+            TextInput:
+                id: v_no
+                hint_text: "Voucher Number (e.g. 1)"
+                multiline: False
+                size_hint_y: None
+                height: '46dp'
+
+            TextInput:
+                id: v_date
+                text: "2026-09-30"
+                hint_text: "Date (YYYY-MM-DD)"
+                multiline: False
+                size_hint_y: None
+                height: '46dp'
+
+            TextInput:
+                id: v_amount
+                hint_text: "Amount Spent (₹, e.g. 450.00)"
+                input_filter: 'float'
+                multiline: False
+                size_hint_y: None
+                height: '46dp'
+
+            TextInput:
+                id: v_purpose
+                text: "MDM Cooking Cost (Groceries/Vegetables)"
+                hint_text: "Purpose of Expenditure"
+                multiline: False
+                size_hint_y: None
+                height: '46dp'
+
+            Label:
+                text: root.error_msg
+                font_size: '11sp'
+                color: 1, 0.2, 0.2, 1
+                size_hint_y: None
+                height: '20dp'
+
+            BoxLayout:
+                size_hint_y: None
+                height: '48dp'
+                spacing: 10
+                Button:
+                    text: "Cancel"
+                    background_color: 0.6, 0.6, 0.6, 1
+                    on_press: root.cancel()
+                Button:
+                    text: "✔ Save Entry"
+                    background_color: 0.1, 0.6, 0.3, 1
+                    on_press: root.save_voucher(v_no.text, v_date.text, v_amount.text, v_purpose.text, "CASH")

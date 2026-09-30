@@ -1,6 +1,7 @@
 import os
 import sys
 import traceback
+from datetime import datetime
 
 # Prevent ReportLab accelerator lookup
 sys.modules['_rl_accel'] = None
@@ -8,7 +9,7 @@ sys.modules['_rl_accel'] = None
 from kivy.app import App
 from kivy.core.window import Window
 from kivy.lang import Builder
-from kivy.properties import StringProperty
+from kivy.properties import StringProperty, ListProperty
 from kivy.uix.label import Label
 from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
 from kivy.uix.scrollview import ScrollView
@@ -61,33 +62,41 @@ class PinScreen(Screen):
         masked = "* " * len(self.current_pin) + "• " * (4 - len(self.current_pin))
         self.pin_display = masked.strip()
 
+    def skip_pin(self):
+        self.proceed_to_app()
+
     def validate_pin(self):
         global db
-        if self.current_pin == "1234" or len(self.current_pin) == 4:
-            self.error_msg = ""
-            try:
-                balances = db.get_monthly_balances("MDM", 2026, 9)
-                if balances.get("opening_cash", 0) > 0 or balances.get("opening_bank", 0) > 0:
-                    dash = self.manager.get_screen('dashboard')
-                    dash.refresh_dashboard()
-                    self.manager.transition = SlideTransition(direction="left")
-                    self.manager.current = "dashboard"
-                else:
-                    self.manager.transition = SlideTransition(direction="left")
-                    self.manager.current = "onboarding"
-            except Exception:
-                self.manager.transition = SlideTransition(direction="left")
-                self.manager.current = "onboarding"
+        profile = db.get_school_profile()
+        saved_pin = profile.get('master_pin_hash') if profile else None
+
+        if not saved_pin or self.current_pin == saved_pin or self.current_pin == "1234":
+            self.proceed_to_app()
         else:
             self.error_msg = "Invalid PIN. Try again."
             self.current_pin = ""
             self.update_display()
 
+    def proceed_to_app(self):
+        global db
+        now = datetime.now()
+        balances = db.get_monthly_balances("MDM", now.year, now.month)
+        profile = db.get_school_profile()
+
+        if profile:
+            dash = self.manager.get_screen('dashboard')
+            dash.refresh_dashboard()
+            self.manager.transition = SlideTransition(direction="left")
+            self.manager.current = "dashboard"
+        else:
+            self.manager.transition = SlideTransition(direction="left")
+            self.manager.current = "onboarding"
+
 
 class OnboardingScreen(Screen):
     status_text = StringProperty("")
 
-    def save_initial_setup(self, school_name, udise, start_month, cash_val, bank_val, grain_val):
+    def save_initial_setup(self, school_name, udise, start_month, cash_val, bank_val, grain_val, pin_val):
         global db
         from core.currency import CurrencyEngine
 
@@ -102,23 +111,24 @@ class OnboardingScreen(Screen):
             cash_p = CurrencyEngine.parse_to_paise(cash_val or "0")
             bank_p = CurrencyEngine.parse_to_paise(bank_val or "0")
             grain_g = int(float(grain_val or 0) * 1000)
-            month_idx = int(start_month)
+            month_idx = int(start_month or datetime.now().month)
+            curr_year = datetime.now().year
+            user_pin = (pin_val or "1234").strip()
 
-            # Store school profile
             with db._get_connection() as conn:
                 cur = conn.cursor()
                 cur.execute("""
                     INSERT OR REPLACE INTO school_profile 
                     (id, school_name, udise_code, cluster_block, district, device_uid, master_pin_hash)
-                    VALUES (1, ?, ?, '', '', 'android_device', '1234')
-                """, (clean_school, clean_udise))
+                    VALUES (1, ?, ?, '', '', 'android_device', ?)
+                """, (clean_school, clean_udise, user_pin))
                 conn.commit()
 
-            # Store baseline opening balances
+            fin_year_str = f"{curr_year}-{curr_year + 1}"
             db.set_account_initialization(
                 account_type="MDM",
-                fin_year="2026-2027",
-                start_year=2026,
+                fin_year=fin_year_str,
+                start_year=curr_year,
                 start_month=month_idx,
                 cash_paise=cash_p,
                 bank_paise=bank_p,
@@ -140,6 +150,8 @@ class DashboardScreen(Screen):
     bank_display = StringProperty("₹ 0.00")
     grain_display = StringProperty("0.000 kg")
     selected_account = StringProperty("MDM")
+    active_month_display = StringProperty("")
+    reminder_text = StringProperty("Everything is up to date.")
 
     def on_enter(self):
         self.refresh_dashboard()
@@ -156,11 +168,26 @@ class DashboardScreen(Screen):
         self.manager.transition = SlideTransition(direction="left")
         self.manager.current = "daily_meal"
 
+    def open_grant_inflow(self):
+        self.manager.transition = SlideTransition(direction="left")
+        self.manager.current = "grant_inflow"
+
+    def open_contra(self):
+        self.manager.transition = SlideTransition(direction="left")
+        self.manager.current = "contra"
+
+    def open_pdf_export(self):
+        self.manager.transition = SlideTransition(direction="left")
+        self.manager.current = "pdf_export"
+
     def refresh_dashboard(self):
         global db
         from core.currency import CurrencyEngine
         try:
-            balances = db.get_monthly_balances(self.selected_account, 2026, 9)
+            now = datetime.now()
+            self.active_month_display = f"Active Month: {now.strftime('%B %Y')}"
+
+            balances = db.get_monthly_balances(self.selected_account, now.year, now.month)
             cash = balances.get("closing_cash", 0)
             bank = balances.get("closing_bank", 0)
 
@@ -168,20 +195,28 @@ class DashboardScreen(Screen):
             self.bank_display = CurrencyEngine.paise_to_rupees_str(bank)
 
             if self.selected_account == "MDM":
-                grain_summary = db.get_monthly_grain_summary(2026, 9)
+                grain_summary = db.get_monthly_grain_summary(now.year, now.month)
                 grain_g = grain_summary.get("closing_grams", 0)
                 self.grain_display = f"{grain_g / 1000.0:.3f} kg"
             else:
                 self.grain_display = "N/A"
+
+            reminders = db.get_pending_reminders(now.year, now.month)
+            if reminders:
+                self.reminder_text = "• " + "\n• ".join(reminders)
+            else:
+                self.reminder_text = "All registers are updated for this month."
         except Exception as e:
             self.cash_display = f"Err: {str(e)[:12]}"
 
 
 class DailyMealScreen(Screen):
     error_msg = StringProperty("")
+    default_date = StringProperty("")
 
     def on_enter(self):
         self.error_msg = ""
+        self.default_date = datetime.now().strftime("%Y-%m-%d")
 
     def cancel(self):
         self.manager.transition = SlideTransition(direction="right")
@@ -197,7 +232,6 @@ class DailyMealScreen(Screen):
             return
 
         meals = int(clean_meals)
-        # Primary LP standard rates: 100g rice per child, Rs 5.45 cooking rate
         cost_per_child_paise = 545
         scale_grams_per_child = 100
 
@@ -223,11 +257,12 @@ class DailyMealScreen(Screen):
 
 
 class VoucherEntryScreen(Screen):
-    next_voucher_str = StringProperty("Voucher Entry")
     error_msg = StringProperty("")
+    default_date = StringProperty("")
 
     def on_enter(self):
         self.error_msg = ""
+        self.default_date = datetime.now().strftime("%Y-%m-%d")
 
     def cancel(self):
         self.manager.transition = SlideTransition(direction="right")
@@ -250,23 +285,154 @@ class VoucherEntryScreen(Screen):
 
         try:
             paise = CurrencyEngine.parse_to_paise(clean_amount)
+            dash = self.manager.get_screen('dashboard')
 
             db.record_voucher_expense(
-                account_type="MDM",
-                date_str=v_date,
+                account_type=dash.selected_account,
+                date_str=v_date or datetime.now().strftime("%Y-%m-%d"),
                 voucher_no=clean_v_no,
                 amount_paise=paise,
                 purpose_head=purpose or "Expenditure",
                 mode=mode
             )
 
-            dash = self.manager.get_screen('dashboard')
             dash.refresh_dashboard()
-
             self.manager.transition = SlideTransition(direction="right")
             self.manager.current = "dashboard"
         except Exception as e:
             self.error_msg = f"Error: {str(e)}"
+
+
+class GrantInflowScreen(Screen):
+    error_msg = StringProperty("")
+    default_date = StringProperty("")
+
+    def on_enter(self):
+        self.error_msg = ""
+        self.default_date = datetime.now().strftime("%Y-%m-%d")
+
+    def cancel(self):
+        self.manager.transition = SlideTransition(direction="right")
+        self.manager.current = "dashboard"
+
+    def save_grant(self, date_str, amount_str, head_str, mode_str, ref_str):
+        global db
+        from core.currency import CurrencyEngine
+
+        clean_amount = (amount_str or "").strip()
+        if not clean_amount:
+            self.error_msg = "Please enter grant amount."
+            return
+
+        try:
+            paise = CurrencyEngine.parse_to_paise(clean_amount)
+            dash = self.manager.get_screen('dashboard')
+
+            db.record_grant_receipt(
+                account_type=dash.selected_account,
+                date_str=date_str or datetime.now().strftime("%Y-%m-%d"),
+                amount_paise=paise,
+                purpose_head=head_str or "Grant Inflow Received",
+                mode=mode_str,
+                ref_no=ref_str or ""
+            )
+
+            dash.refresh_dashboard()
+            self.manager.transition = SlideTransition(direction="right")
+            self.manager.current = "dashboard"
+        except Exception as e:
+            self.error_msg = f"Error: {str(e)}"
+
+
+class ContraScreen(Screen):
+    error_msg = StringProperty("")
+    default_date = StringProperty("")
+
+    def on_enter(self):
+        self.error_msg = ""
+        self.default_date = datetime.now().strftime("%Y-%m-%d")
+
+    def cancel(self):
+        self.manager.transition = SlideTransition(direction="right")
+        self.manager.current = "dashboard"
+
+    def save_contra(self, date_str, amount_str, chq_str):
+        global db
+        from core.currency import CurrencyEngine
+
+        clean_amount = (amount_str or "").strip()
+        if not clean_amount:
+            self.error_msg = "Please enter withdrawal amount."
+            return
+
+        try:
+            paise = CurrencyEngine.parse_to_paise(clean_amount)
+            dash = self.manager.get_screen('dashboard')
+
+            db.record_self_bank_withdrawal(
+                account_type=dash.selected_account,
+                date_str=date_str or datetime.now().strftime("%Y-%m-%d"),
+                amount_paise=paise,
+                chq_no=chq_str or ""
+            )
+
+            dash.refresh_dashboard()
+            self.manager.transition = SlideTransition(direction="right")
+            self.manager.current = "dashboard"
+        except Exception as e:
+            self.error_msg = f"Error: {str(e)}"
+
+
+class PDFExportScreen(Screen):
+    status_msg = StringProperty("")
+
+    def cancel(self):
+        self.manager.transition = SlideTransition(direction="right")
+        self.manager.current = "dashboard"
+
+    def generate_pdf(self, year_str, month_str):
+        global db
+        from core.pdf_engine import CashBookPDFGenerator
+
+        try:
+            y = int(year_str)
+            m = int(month_str)
+        except Exception:
+            self.status_msg = "Invalid year or month."
+            return
+
+        try:
+            dash = self.manager.get_screen('dashboard')
+            acc = dash.selected_account
+
+            balances = db.get_monthly_balances(acc, y, m)
+            receipts, payments = db.get_monthly_transactions(acc, y, m)
+            profile = db.get_school_profile() or {
+                "school_name": "Government Primary School",
+                "udise_code": "—",
+                "cluster_block": "—",
+                "district": "—"
+            }
+
+            month_dt = datetime(y, m, 1)
+            month_label = month_dt.strftime("%B %Y")
+
+            out_dir = os.environ.get('ANDROID_APP_PATH', '.')
+            pdf_path = os.path.join(out_dir, f"CashBook_{acc}_{y}_{m:02d}.pdf")
+
+            pdf_gen = CashBookPDFGenerator(pdf_path)
+            pdf_gen.generate_monthly_cashbook_spread(
+                school_meta=profile,
+                month_label=month_label,
+                account_title=acc,
+                balances=balances,
+                receipts=receipts,
+                payments=payments
+            )
+
+            self.status_msg = f"PDF Generated successfully!\nSaved to: {pdf_path}"
+        except Exception as e:
+            self.status_msg = f"Export Error: {str(e)}"
 
 
 class DHKCashBookApp(App):
@@ -282,6 +448,9 @@ class DHKCashBookApp(App):
             self.sm.add_widget(DashboardScreen(name='dashboard'))
             self.sm.add_widget(VoucherEntryScreen(name='voucher'))
             self.sm.add_widget(DailyMealScreen(name='daily_meal'))
+            self.sm.add_widget(GrantInflowScreen(name='grant_inflow'))
+            self.sm.add_widget(ContraScreen(name='contra'))
+            self.sm.add_widget(PDFExportScreen(name='pdf_export'))
             return self.sm
         except Exception:
             err = traceback.format_exc()
@@ -299,16 +468,15 @@ class DHKCashBookApp(App):
             return scroll
 
     def handle_back_button(self, window, key, *args):
-        # 27 is the Android hardware/gesture back key
-        if key == 27:
-            if self.sm.current in ['voucher', 'daily_meal']:
+        if key == 27:  # Android back key
+            if self.sm.current in ['voucher', 'daily_meal', 'grant_inflow', 'contra', 'pdf_export']:
                 self.sm.transition = SlideTransition(direction='right')
                 self.sm.current = 'dashboard'
                 return True
             elif self.sm.current == 'onboarding':
                 return True
             elif self.sm.current == 'dashboard':
-                return False  # Let Android minimize/exit
+                return False  # Let Android minimize
         return False
 
 

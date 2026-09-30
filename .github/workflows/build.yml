@@ -52,7 +52,9 @@ jobs:
 
       - name: Pre-bundle Pure Python ReportLab
         run: |
-          pip install --target=. reportlab
+          pip install --target=. --no-binary :all: reportlab || pip install --target=. reportlab
+          find . -name "*.so" -delete
+          find . -name "*.pyc" -delete
 
       - name: Build Android APK
         env:

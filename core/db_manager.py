@@ -1,7 +1,8 @@
 import sqlite3
-from typing import Dict, List, Optional, Tuple
+import shutil
+import os
+from typing import Dict, List, Optional, Tuple, Any
 from datetime import datetime
-from core.currency import CurrencyEngine
 
 DB_NAME = "cashbook.db"
 CURRENT_DB_VERSION = 1
@@ -33,7 +34,7 @@ class DatabaseManager:
                     cluster_block TEXT,
                     district TEXT,
                     device_uid TEXT NOT NULL,
-                    master_pin_hash TEXT NOT NULL,
+                    master_pin_hash TEXT,
                     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
                 );
 
@@ -120,6 +121,13 @@ class DatabaseManager:
                 cur.execute(f"PRAGMA user_version = {CURRENT_DB_VERSION};")
                 conn.commit()
 
+    def get_school_profile(self) -> Optional[Dict[str, Any]]:
+        with self._get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT * FROM school_profile WHERE id = 1")
+            row = cur.fetchone()
+            return dict(row) if row else None
+
     def set_account_initialization(self, account_type: str, fin_year: str, start_year: int,
                                    start_month: int, cash_paise: int, bank_paise: int,
                                    grain_grams: int = 0):
@@ -163,7 +171,7 @@ class DatabaseManager:
             return cur.lastrowid
 
     def record_self_bank_withdrawal(self, account_type: str, date_str: str,
-                                   amount_paise: int, chq_no: str) -> Tuple[int, int]:
+                                    amount_paise: int, chq_no: str) -> Tuple[int, int]:
         with self._get_connection() as conn:
             cur = conn.cursor()
             cur.execute("""
@@ -256,7 +264,7 @@ class DatabaseManager:
             cur.execute("SELECT * FROM account_initialization WHERE account_type = 'MDM'")
             init_row = cur.fetchone()
             if not init_row:
-                return {"opening_grams": 0, "received_grams": 0, "consumed_grams": 0, "closing_grams": 0}
+                return {"opening_grams": 0, "received_grams": 0, "consumed_grams": 0, "adjusted_grams": 0, "closing_grams": 0}
 
             start_dt = datetime(init_row["start_year"], init_row["start_month"], 1)
             target_dt = datetime(year, month, 1)
@@ -296,5 +304,67 @@ class DatabaseManager:
                 "consumed_grams": month_consumed,
                 "adjusted_grams": month_adjusted,
                 "closing_grams": closing_grams
-                                 }
-          
+            }
+
+    def get_monthly_transactions(self, account_type: str, year: int, month: int) -> Tuple[List[Dict[str, Any]], List[Dict[str, Any]]]:
+        start_date = f"{year:04d}-{month:02d}-01"
+        next_m_dt = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
+        end_date = next_m_dt.strftime("%Y-%m-%d")
+
+        receipts = []
+        payments = []
+
+        with self._get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("""
+                SELECT entry_date, purpose_head as particulars, voucher_no, ref_chq_no,
+                       cash_paise, bank_paise, is_receipt, is_contra
+                FROM transaction_records
+                WHERE account_type = ? AND entry_date >= ? AND entry_date < ?
+                ORDER BY entry_date ASC, id ASC
+            """, (account_type, start_date, end_date))
+
+            for row in cur.fetchall():
+                d = dict(row)
+                if d['is_receipt'] == 1:
+                    receipts.append(d)
+                else:
+                    payments.append(d)
+
+        return receipts, payments
+
+    def get_pending_reminders(self, year: int, month: int) -> List[str]:
+        reminders = []
+        start_date = f"{year:04d}-{month:02d}-01"
+        next_m_dt = datetime(year + 1, 1, 1) if month == 12 else datetime(year, month + 1, 1)
+        end_date = next_m_dt.strftime("%Y-%m-%d")
+
+        with self._get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("SELECT COUNT(*) FROM mdm_daily_attendance WHERE entry_date >= ? AND entry_date < ?", (start_date, end_date))
+            meal_count = cur.fetchone()[0]
+            if meal_count == 0:
+                reminders.append("No meal entries recorded for this month.")
+
+            cur.execute("SELECT COUNT(*) FROM transaction_records WHERE entry_date >= ? AND entry_date < ?", (start_date, end_date))
+            tx_count = cur.fetchone()[0]
+            if tx_count == 0:
+                reminders.append("No expenditure vouchers added for this month.")
+
+        return reminders
+
+    def backup_database(self, destination_path: str) -> bool:
+        try:
+            shutil.copyfile(self.db_path, destination_path)
+            return True
+        except Exception:
+            return False
+
+    def restore_database(self, source_path: str) -> bool:
+        try:
+            if os.path.exists(source_path):
+                shutil.copyfile(source_path, self.db_path)
+                return True
+            return False
+        except Exception:
+            return False

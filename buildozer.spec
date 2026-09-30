@@ -6,8 +6,8 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf,json,db
 version = 1.0.0
 
-# Pin python3 and hostpython3 to stable 3.10.11 to prevent Python 3.14 cgi deprecation
-requirements = python3==3.10.11,hostpython3==3.10.11,kivy==2.2.0,pillow,requests,urllib3,certifi,https://files.pythonhosted.org/packages/py3/r/reportlab/reportlab-3.6.13-py3-none-any.whl
+# Using python3==3.10.11 and direct pip resolution for reportlab
+requirements = python3==3.10.11,hostpython3==3.10.11,kivy==2.2.0,pillow,reportlab,requests,urllib3,certifi
 
 orientation = portrait
 fullscreen = 0

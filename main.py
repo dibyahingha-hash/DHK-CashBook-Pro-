@@ -2,17 +2,21 @@ import os
 import sys
 import traceback
 
-# Disable ReportLab C-extension accelerator
+# Prevent ReportLab accelerator lookup
 sys.modules['_rl_accel'] = None
 
 from kivy.app import App
+from kivy.core.window import Window
 from kivy.lang import Builder
-from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
-from kivy.uix.widget import Widget
-from kivy.uix.scrollview import ScrollView
-from kivy.uix.label import Label
 from kivy.properties import StringProperty
+from kivy.uix.label import Label
+from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.widget import Widget
 from kivy.utils import platform
+
+# Configure keyboard behavior to keep input fields in view
+Window.softinput_mode = 'below_target'
 
 
 class Spacer(Widget):
@@ -82,7 +86,11 @@ class OnboardingScreen(Screen):
     def save_initial_setup(self, school_name, udise, start_month, cash_val, bank_val, grain_val):
         global db
         from core.currency import CurrencyEngine
-        if not school_name or not udise:
+
+        clean_school = (school_name or "").strip()
+        clean_udise = (udise or "").strip()
+
+        if not clean_school or not clean_udise:
             self.status_text = "Please enter School Name and UDISE."
             return
 
@@ -92,11 +100,22 @@ class OnboardingScreen(Screen):
             grain_g = int(float(grain_val or 0) * 1000)
             month_idx = int(start_month)
 
+            # 1. Save school profile to db
+            with db._get_connection() as conn:
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT OR REPLACE INTO school_profile 
+                    (id, school_name, udise_code, cluster_block, district, device_uid, master_pin_hash)
+                    VALUES (1, ?, ?, '', '', 'android_device', '1234')
+                """, (clean_school, clean_udise))
+                conn.commit()
+
+            # 2. Save baseline using exact keyword arguments expected by db_manager
             db.set_account_initialization(
                 account_type="MDM",
                 fin_year="2026-2027",
                 start_year=2026,
-                start_month_idx=month_idx,
+                start_month=month_idx,
                 cash_paise=cash_p,
                 bank_paise=bank_p,
                 grain_grams=grain_g
@@ -132,17 +151,22 @@ class DashboardScreen(Screen):
             balances = db.get_monthly_balances(self.selected_account, 2026, 9)
             cash = balances.get("closing_cash", 0)
             bank = balances.get("closing_bank", 0)
-            grain = balances.get("closing_grain", 0)
 
             self.cash_display = CurrencyEngine.paise_to_rupees_str(cash)
             self.bank_display = CurrencyEngine.paise_to_rupees_str(bank)
-            self.grain_display = f"{grain / 1000.0:.3f} kg"
+
+            if self.selected_account == "MDM":
+                grain_summary = db.get_monthly_grain_summary(2026, 9)
+                grain_g = grain_summary.get("closing_grams", 0)
+                self.grain_display = f"{grain_g / 1000.0:.3f} kg"
+            else:
+                self.grain_display = "N/A"
         except Exception:
             pass
 
 
 class VoucherEntryScreen(Screen):
-    next_voucher_str = StringProperty("Voucher #1")
+    next_voucher_str = StringProperty("Voucher Entry")
     error_msg = StringProperty("")
 
     def on_enter(self):
@@ -152,26 +176,31 @@ class VoucherEntryScreen(Screen):
         self.manager.transition = SlideTransition(direction="right")
         self.manager.current = "dashboard"
 
-    def save_voucher(self, v_date, amount_str, purpose, mode):
+    def save_voucher(self, v_no, v_date, amount_str, purpose, mode):
         global db
         from core.currency import CurrencyEngine
-        if not amount_str:
+
+        clean_v_no = (v_no or "").strip()
+        clean_amount = (amount_str or "").strip()
+
+        if not clean_v_no:
+            self.error_msg = "Please enter a Voucher Number."
+            return
+
+        if not clean_amount:
             self.error_msg = "Please enter an amount."
             return
 
         try:
-            paise = CurrencyEngine.parse_to_paise(amount_str)
+            paise = CurrencyEngine.parse_to_paise(clean_amount)
 
-            db.add_voucher(
+            db.record_voucher_expense(
                 account_type="MDM",
-                voucher_date=v_date,
-                voucher_type="PAYMENT",
-                accounting_head=purpose,
+                date_str=v_date,
+                voucher_no=clean_v_no,
                 amount_paise=paise,
-                grain_grams=0,
-                particulars=purpose,
-                is_contra=False,
-                contra_direction=""
+                purpose_head=purpose or "Expenditure",
+                mode=mode
             )
 
             self.manager.transition = SlideTransition(direction="right")

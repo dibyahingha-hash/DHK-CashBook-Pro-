@@ -1,31 +1,38 @@
 import os
 import sys
 
-# Prevent ReportLab from attempting to load missing native C-accelerators
+# Prevent native accelerator lookup for reportlab
 sys.modules['_rl_accel'] = None
 
 from kivy.app import App
 from kivy.lang import Builder
 from kivy.uix.screenmanager import ScreenManager, Screen, SlideTransition
+from kivy.uix.widget import Widget
 from kivy.properties import StringProperty
-from kivy.core.window import Window
 from kivy.utils import platform
 
 from core.currency import CurrencyEngine
 from core.db_manager import DatabaseManager
 
-# Determine writable directory safely across Android and desktop
-if platform == 'android':
-    try:
-        from android.storage import app_storage_path
-        data_dir = app_storage_path()
-    except Exception:
-        data_dir = os.environ.get('ANDROID_APP_PATH', '.')
-else:
-    data_dir = '.'
 
-db_path = os.path.join(data_dir, 'cashbook.db')
-db = DatabaseManager(db_path)
+# Define Spacer so ui.kv doesn't crash Kivy Factory
+class Spacer(Widget):
+    pass
+
+
+def get_db():
+    if platform == 'android':
+        try:
+            from android.storage import app_storage_path
+            base_dir = app_storage_path()
+        except Exception:
+            base_dir = os.environ.get('ANDROID_APP_PATH', '.')
+    else:
+        base_dir = '.'
+    return DatabaseManager(os.path.join(base_dir, 'cashbook.db'))
+
+
+db = None
 
 
 class PinScreen(Screen):
@@ -50,13 +57,17 @@ class PinScreen(Screen):
         self.pin_display = masked.strip()
 
     def validate_pin(self):
+        global db
         if self.current_pin == "1234" or len(self.current_pin) == 4:
             self.error_msg = ""
             self.manager.transition = SlideTransition(direction="left")
-            balances = db.get_monthly_balances("MDM", 2026, 9)
-            if balances["opening_cash"] > 0 or balances["opening_bank"] > 0:
-                self.manager.current = "dashboard"
-            else:
+            try:
+                balances = db.get_monthly_balances("MDM", 2026, 9)
+                if balances["opening_cash"] > 0 or balances["opening_bank"] > 0:
+                    self.manager.current = "dashboard"
+                else:
+                    self.manager.current = "onboarding"
+            except Exception:
                 self.manager.current = "onboarding"
         else:
             self.error_msg = "Invalid PIN. Try again."
@@ -68,6 +79,7 @@ class OnboardingScreen(Screen):
     status_text = StringProperty("")
 
     def save_initial_setup(self, school_name, udise, start_month, cash_val, bank_val, grain_val):
+        global db
         if not school_name or not udise:
             self.status_text = "Please enter School Name and UDISE."
             return
@@ -105,22 +117,27 @@ class DashboardScreen(Screen):
         self.refresh_dashboard()
 
     def refresh_dashboard(self):
-        balances = db.get_monthly_balances(self.selected_account, 2026, 9)
-        cash = balances["closing_cash"]
-        bank = balances["closing_bank"]
-        total = cash + bank
-        grain = balances["closing_grain"]
+        global db
+        try:
+            balances = db.get_monthly_balances(self.selected_account, 2026, 9)
+            cash = balances["closing_cash"]
+            bank = balances["closing_bank"]
+            total = cash + bank
+            grain = balances["closing_grain"]
 
-        self.cash_display = CurrencyEngine.paise_to_rupees_str(cash)
-        self.bank_display = CurrencyEngine.paise_to_rupees_str(bank)
-        self.total_display = CurrencyEngine.paise_to_rupees_str(total)
-        self.grain_display = f"{grain / 1000.0:.3f} kg"
+            self.cash_display = CurrencyEngine.paise_to_rupees_str(cash)
+            self.bank_display = CurrencyEngine.paise_to_rupees_str(bank)
+            self.total_display = CurrencyEngine.paise_to_rupees_str(total)
+            self.grain_display = f"{grain / 1000.0:.3f} kg"
+        except Exception:
+            pass
 
 
 class VoucherEntryScreen(Screen):
     status_msg = StringProperty("")
 
     def save_voucher(self, v_date, v_type, head, amount_str, grain_str, desc, is_contra, contra_dir):
+        global db
         if not amount_str:
             self.status_msg = "Please enter an amount."
             return
@@ -151,6 +168,8 @@ class VoucherEntryScreen(Screen):
 
 class DHKCashBookApp(App):
     def build(self):
+        global db
+        db = get_db()
         Builder.load_file('ui.kv')
         sm = ScreenManager()
         sm.add_widget(PinScreen(name='pin'))
@@ -162,3 +181,4 @@ class DHKCashBookApp(App):
 
 if __name__ == '__main__':
     DHKCashBookApp().run()
+    

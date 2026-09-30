@@ -15,7 +15,7 @@ from kivy.uix.scrollview import ScrollView
 from kivy.uix.widget import Widget
 from kivy.utils import platform
 
-# Keep input fields visible above the virtual keyboard
+# Configure soft keyboard mode
 Window.softinput_mode = 'below_target'
 
 
@@ -104,7 +104,7 @@ class OnboardingScreen(Screen):
             grain_g = int(float(grain_val or 0) * 1000)
             month_idx = int(start_month)
 
-            # Save school profile
+            # Store school profile
             with db._get_connection() as conn:
                 cur = conn.cursor()
                 cur.execute("""
@@ -114,7 +114,7 @@ class OnboardingScreen(Screen):
                 """, (clean_school, clean_udise))
                 conn.commit()
 
-            # Save baseline opening balances
+            # Store baseline opening balances
             db.set_account_initialization(
                 account_type="MDM",
                 fin_year="2026-2027",
@@ -125,7 +125,6 @@ class OnboardingScreen(Screen):
                 grain_grams=grain_g
             )
 
-            # Explicitly refresh dashboard screen before switching
             dash = self.manager.get_screen('dashboard')
             dash.selected_account = "MDM"
             dash.refresh_dashboard()
@@ -153,6 +152,10 @@ class DashboardScreen(Screen):
         self.manager.transition = SlideTransition(direction="left")
         self.manager.current = "voucher"
 
+    def open_daily_attendance(self):
+        self.manager.transition = SlideTransition(direction="left")
+        self.manager.current = "daily_meal"
+
     def refresh_dashboard(self):
         global db
         from core.currency import CurrencyEngine
@@ -172,6 +175,51 @@ class DashboardScreen(Screen):
                 self.grain_display = "N/A"
         except Exception as e:
             self.cash_display = f"Err: {str(e)[:12]}"
+
+
+class DailyMealScreen(Screen):
+    error_msg = StringProperty("")
+
+    def on_enter(self):
+        self.error_msg = ""
+
+    def cancel(self):
+        self.manager.transition = SlideTransition(direction="right")
+        self.manager.current = "dashboard"
+
+    def save_daily_meal(self, date_str, meals_count_str):
+        global db
+        clean_date = (date_str or "").strip()
+        clean_meals = (meals_count_str or "").strip()
+
+        if not clean_meals.isdigit():
+            self.error_msg = "Enter a valid number of children."
+            return
+
+        meals = int(clean_meals)
+        # Primary LP standard rates: 100g rice per child, Rs 5.45 cooking rate
+        cost_per_child_paise = 545
+        scale_grams_per_child = 100
+
+        total_cost_paise = meals * cost_per_child_paise
+        total_grain_grams = meals * scale_grams_per_child
+
+        try:
+            with db._get_connection() as conn:
+                cur = conn.cursor()
+                cur.execute("""
+                    INSERT OR REPLACE INTO mdm_daily_attendance
+                    (entry_date, meals_served, cooking_rate_paise, cooking_cost_paise, scale_grams, grain_consumed_grams)
+                    VALUES (?, ?, ?, ?, ?, ?)
+                """, (clean_date, meals, cost_per_child_paise, total_cost_paise, scale_grams_per_child, total_grain_grams))
+                conn.commit()
+
+            dash = self.manager.get_screen('dashboard')
+            dash.refresh_dashboard()
+            self.manager.transition = SlideTransition(direction="right")
+            self.manager.current = "dashboard"
+        except Exception as e:
+            self.error_msg = f"Error: {str(e)}"
 
 
 class VoucherEntryScreen(Screen):
@@ -224,15 +272,17 @@ class VoucherEntryScreen(Screen):
 class DHKCashBookApp(App):
     def build(self):
         global db
+        Window.bind(on_keyboard=self.handle_back_button)
         try:
             db = get_db_instance()
             Builder.load_file('ui.kv')
-            sm = ScreenManager()
-            sm.add_widget(PinScreen(name='pin'))
-            sm.add_widget(OnboardingScreen(name='onboarding'))
-            sm.add_widget(DashboardScreen(name='dashboard'))
-            sm.add_widget(VoucherEntryScreen(name='voucher'))
-            return sm
+            self.sm = ScreenManager()
+            self.sm.add_widget(PinScreen(name='pin'))
+            self.sm.add_widget(OnboardingScreen(name='onboarding'))
+            self.sm.add_widget(DashboardScreen(name='dashboard'))
+            self.sm.add_widget(VoucherEntryScreen(name='voucher'))
+            self.sm.add_widget(DailyMealScreen(name='daily_meal'))
+            return self.sm
         except Exception:
             err = traceback.format_exc()
             scroll = ScrollView()
@@ -247,6 +297,19 @@ class DHKCashBookApp(App):
             lbl.bind(texture_size=lambda inst, val: setattr(inst, 'size', val))
             scroll.add_widget(lbl)
             return scroll
+
+    def handle_back_button(self, window, key, *args):
+        # 27 is the Android hardware/gesture back key
+        if key == 27:
+            if self.sm.current in ['voucher', 'daily_meal']:
+                self.sm.transition = SlideTransition(direction='right')
+                self.sm.current = 'dashboard'
+                return True
+            elif self.sm.current == 'onboarding':
+                return True
+            elif self.sm.current == 'dashboard':
+                return False  # Let Android minimize/exit
+        return False
 
 
 if __name__ == '__main__':

@@ -6,8 +6,8 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf,json,db
 version = 1.0.0
 
-# Using python3==3.10.11 and direct pip resolution for reportlab
-requirements = python3==3.10.11,hostpython3==3.10.11,kivy==2.2.0,pillow,reportlab,requests,urllib3,certifi
+# Only standard verified recipes; reportlab is pre-bundled in source
+requirements = python3==3.10.11,hostpython3==3.10.11,kivy==2.2.0,pillow,requests,urllib3,certifi
 
 orientation = portrait
 fullscreen = 0

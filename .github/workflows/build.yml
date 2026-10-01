@@ -41,6 +41,7 @@ jobs:
           pip install reportlab --target ./vendor_temp
           cp -r ./vendor_temp/reportlab ./reportlab
           rm -rf ./vendor_temp
+          find ./reportlab -name "*.so" -delete
 
       - name: Build with Buildozer & Auto Accept Licenses
         run: |

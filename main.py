@@ -94,8 +94,10 @@ class MDMPortalScreen(Screen):
                 rec = App.get_running_app().db.get_mdm_stock_record(ym)
 
             out_dir = get_safe_storage_dir()
-            filename = os.path.join(out_dir, f"MDM_Stock_{ym}.pdf")
-            generate_stock_register_pdf(ym, dict(rec), output_path=filename)
+          filename = os.path.join(out_dir, f"MDM_Stock_{ym}.pdf")
+          from pdf_generator import generate_stock_register
+        
+        generate_stock_register_pdf(ym, dict(rec), output_path=filename)
             self.ids.stock_results_lbl.text = f"PDF Saved to App Folder:\n{filename}"
         except Exception as e:
             self.ids.stock_results_lbl.text = f"PDF Error: {str(e)}"
@@ -139,6 +141,8 @@ class MDMPortalScreen(Screen):
             data = App.get_running_app().db.calculate_audit_cashbook(account_key, ym)
             out_dir = get_safe_storage_dir()
             filename = os.path.join(out_dir, f"{account_key}_{ym}_CashBook.pdf")
+         from pdf_generator import generate_cashbook_pdf
+        
             generate_cashbook_pdf("MDM Savings Account", ym, data, output_path=filename)
             self.ids.mdm_cb_summary_lbl.text = f"PDF Saved to App Folder:\n{filename}"
         except Exception as e:

@@ -43,16 +43,14 @@ class DatabaseManager:
                     lp_meals INTEGER NOT NULL DEFAULT 0,
                     up_meals INTEGER NOT NULL DEFAULT 0,
                     total_meals INTEGER NOT NULL DEFAULT 0,
-                    lp_rate REAL NOT NULL DEFAULT 6.78,
-                    up_rate REAL NOT NULL DEFAULT 10.15,
-                    rice_opening_kg REAL NOT NULL DEFAULT 0.0,
-                    rice_received_kg REAL NOT NULL DEFAULT 0.0,
-                    rice_consumed_kg REAL NOT NULL DEFAULT 0.0,
-                    rice_closing_kg REAL NOT NULL DEFAULT 0.0,
-                    fund_opening REAL NOT NULL DEFAULT 0.0,
-                    fund_received REAL NOT NULL DEFAULT 0.0,
-                    fund_spent REAL NOT NULL DEFAULT 0.0,
-                    fund_closing REAL NOT NULL DEFAULT 0.0
+                    rice_op REAL NOT NULL DEFAULT 0.0,
+                    rice_rec REAL NOT NULL DEFAULT 0.0,
+                    rice_cons REAL NOT NULL DEFAULT 0.0,
+                    rice_cl REAL NOT NULL DEFAULT 0.0,
+                    oil_op REAL NOT NULL DEFAULT 0.0,
+                    oil_rec REAL NOT NULL DEFAULT 0.0,
+                    oil_cons REAL NOT NULL DEFAULT 0.0,
+                    oil_cl REAL NOT NULL DEFAULT 0.0
                 )
             """)
             conn.commit()
@@ -201,51 +199,34 @@ class DatabaseManager:
             "net_bank": net_bank
         }
 
-    def record_mdm_monthly_batch(self, year_month, working_days, lp_meals, up_meals, total_meals, 
-                                 lp_rate=6.78, up_rate=10.15, rice_opening_kg=0.0, rice_received_kg=0.0, fund_received=0.0):
-        lp_consumed_kg = round(lp_meals * 0.100, 3)
-        up_consumed_kg = round(up_meals * 0.150, 3)
-        total_rice_consumed = round(lp_consumed_kg + up_consumed_kg, 3)
-        rice_closing = round(rice_opening_kg + rice_received_kg - total_rice_consumed, 3)
-
-        lp_cost = round(lp_meals * float(lp_rate), 2)
-        up_cost = round(up_meals * float(up_rate), 2)
-        total_spent = round(lp_cost + up_cost, 2)
-        fund_closing = round(fund_received - total_spent, 2)
-
+    def save_mdm_stock(self, year_month, working_days, lp_meals, up_meals, total_meals,
+                       rice_op, rice_rec, rice_cons, rice_cl,
+                       oil_op, oil_rec, oil_cons, oil_cl):
         with self.get_connection() as conn:
             cur = conn.cursor()
             cur.execute("""
                 INSERT INTO mdm_stock_monthly 
-                (year_month, working_days, lp_meals, up_meals, total_meals, lp_rate, up_rate, 
-                 rice_opening_kg, rice_received_kg, rice_consumed_kg, rice_closing_kg, 
-                 fund_opening, fund_received, fund_spent, fund_closing)
-                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0.0, ?, ?, ?)
+                (year_month, working_days, lp_meals, up_meals, total_meals, 
+                 rice_op, rice_rec, rice_cons, rice_cl, 
+                 oil_op, oil_rec, oil_cons, oil_cl)
+                VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
                 ON CONFLICT(year_month) DO UPDATE SET
                     working_days = excluded.working_days,
                     lp_meals = excluded.lp_meals,
                     up_meals = excluded.up_meals,
                     total_meals = excluded.total_meals,
-                    lp_rate = excluded.lp_rate,
-                    up_rate = excluded.up_rate,
-                    rice_opening_kg = excluded.rice_opening_kg,
-                    rice_received_kg = excluded.rice_received_kg,
-                    rice_consumed_kg = excluded.rice_consumed_kg,
-                    rice_closing_kg = excluded.rice_closing_kg,
-                    fund_received = excluded.fund_received,
-                    fund_spent = excluded.fund_spent,
-                    fund_closing = excluded.fund_closing
+                    rice_op = excluded.rice_op,
+                    rice_rec = excluded.rice_rec,
+                    rice_cons = excluded.rice_cons,
+                    rice_cl = excluded.rice_cl,
+                    oil_op = excluded.oil_op,
+                    oil_rec = excluded.oil_rec,
+                    oil_cons = excluded.oil_cons,
+                    oil_cl = excluded.oil_cl
             """, (year_month, int(working_days), int(lp_meals), int(up_meals), int(total_meals),
-                  float(lp_rate), float(up_rate), float(rice_opening_kg), float(rice_received_kg),
-                  total_rice_consumed, rice_closing, float(fund_received), total_spent, fund_closing))
+                  float(rice_op), float(rice_rec), float(rice_cons), float(rice_cl),
+                  float(oil_op), float(oil_rec), float(oil_cons), float(oil_cl)))
             conn.commit()
-
-        return {
-            "rice_consumed": total_rice_consumed,
-            "rice_closing": rice_closing,
-            "fund_spent": total_spent,
-            "fund_closing": fund_closing
-        }
 
     def get_mdm_stock_record(self, year_month):
         with self.get_connection() as conn:

@@ -38,14 +38,13 @@ jobs:
 
       - name: Vendor Pure ReportLab
         run: |
-          # Install pure python reportlab directly into source tree so buildozer packages it seamlessly
           pip install reportlab --target ./vendor_temp
           cp -r ./vendor_temp/reportlab ./reportlab
           rm -rf ./vendor_temp
 
-      - name: Build with Buildozer
+      - name: Build with Buildozer & Auto Accept Licenses
         run: |
-          buildozer android debug
+          yes | buildozer android debug
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4

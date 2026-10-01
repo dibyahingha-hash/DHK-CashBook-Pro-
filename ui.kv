@@ -1,1136 +1,527 @@
-#:kivy 2.2.0
+#:kivy 2.0.0
 
-<Spacer@Widget>:
-    size_hint_y: 1
+<RootScreenManager>:
+    WelcomeScreen:
+        name: 'welcome'
+    MDMPortalScreen:
+        name: 'mdm_portal'
+    SMCPortalScreen:
+        name: 'smc_portal'
 
-<PinScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.07, 0.11, 0.17, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    BoxLayout:
-        orientation: 'vertical'
-        padding: [24, 25, 24, 20]
-        spacing: 10
-
-        Spacer:
-            size_hint_y: 0.05
-
-        Label:
-            text: "DHK CashBook Pro"
-            font_size: '22sp'
-            bold: True
-            color: 1, 1, 1, 1
-            size_hint_y: None
-            height: '35dp'
-
-        Label:
-            text: "Government School Double-Entry Bookkeeping"
-            font_size: '12sp'
-            color: 0.6, 0.7, 0.8, 1
-            size_hint_y: None
-            height: '20dp'
-
-        Spacer:
-            size_hint_y: 0.05
-
-        Label:
-            text: root.pin_display
-            font_size: '28sp'
-            bold: True
-            color: 0.3, 0.7, 1.0, 1
-            size_hint_y: None
-            height: '40dp'
-
-        Label:
-            text: root.error_msg
-            font_size: '11sp'
-            color: 1, 0.3, 0.3, 1
-            size_hint_y: None
-            height: '18dp'
-
-        GridLayout:
-            cols: 3
-            spacing: 8
-            size_hint_y: 0.55
-
-            Button:
-                text: "1"
-                font_size: '20sp'
-                on_press: root.append_digit(1)
-            Button:
-                text: "2"
-                font_size: '20sp'
-                on_press: root.append_digit(2)
-            Button:
-                text: "3"
-                font_size: '20sp'
-                on_press: root.append_digit(3)
-            Button:
-                text: "4"
-                font_size: '20sp'
-                on_press: root.append_digit(4)
-            Button:
-                text: "5"
-                font_size: '20sp'
-                on_press: root.append_digit(5)
-            Button:
-                text: "6"
-                font_size: '20sp'
-                on_press: root.append_digit(6)
-            Button:
-                text: "7"
-                font_size: '20sp'
-                on_press: root.append_digit(7)
-            Button:
-                text: "8"
-                font_size: '20sp'
-                on_press: root.append_digit(8)
-            Button:
-                text: "9"
-                font_size: '20sp'
-                on_press: root.append_digit(9)
-            Button:
-                text: "C"
-                font_size: '16sp'
-                background_color: 0.7, 0.2, 0.2, 1
-                on_press: root.backspace()
-            Button:
-                text: "0"
-                font_size: '20sp'
-                on_press: root.append_digit(0)
-            Button:
-                text: "DEL"
-                font_size: '14sp'
-                on_press: root.backspace()
-
-        Button:
-            text: "Skip PIN / Open Directly"
-            background_color: 0.2, 0.4, 0.6, 1
-            size_hint_y: None
-            height: '42dp'
-            on_press: root.skip_pin()
-
-
-<OnboardingScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.95, 0.96, 0.98, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    ScrollView:
-        do_scroll_x: False
-        do_scroll_y: True
-
-        BoxLayout:
-            orientation: 'vertical'
-            padding: [20, 20, 20, 25]
-            spacing: 10
-            size_hint_y: None
-            height: self.minimum_height
-
-            Label:
-                text: "School Setup & Opening Balances"
-                font_size: '18sp'
-                bold: True
-                color: 0.1, 0.15, 0.22, 1
-                size_hint_y: None
-                height: '35dp'
-
-            TextInput:
-                id: in_school_name
-                hint_text: "School Name (e.g. Betoni LP School)"
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            TextInput:
-                id: in_udise
-                hint_text: "11-Digit UDISE Code"
-                input_filter: 'int'
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            Label:
-                text: "MDM Portal Opening Balances"
-                font_size: '12sp'
-                bold: True
-                color: 0.2, 0.4, 0.6, 1
-                size_hint_y: None
-                height: '22dp'
-
-            TextInput:
-                id: in_mdm_cash
-                hint_text: "MDM Opening Cash (₹)"
-                input_filter: 'float'
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            TextInput:
-                id: in_mdm_bank
-                hint_text: "MDM Opening Bank Balance (₹)"
-                input_filter: 'float'
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            TextInput:
-                id: in_mdm_rice
-                hint_text: "MDM Opening Rice (kg, e.g. 150)"
-                input_filter: 'float'
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            Label:
-                text: "General Grants Opening Balances"
-                font_size: '12sp'
-                bold: True
-                color: 0.2, 0.4, 0.6, 1
-                size_hint_y: None
-                height: '22dp'
-
-            TextInput:
-                id: in_smc_cash
-                hint_text: "SMC General Opening Cash (₹)"
-                input_filter: 'float'
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            TextInput:
-                id: in_smc_bank
-                hint_text: "SMC General Opening Bank (₹)"
-                input_filter: 'float'
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            TextInput:
-                id: in_canara_limit
-                hint_text: "Canara Bank SNA Limit / Opening Balance (₹)"
-                input_filter: 'float'
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            Label:
-                text: root.status_text
-                font_size: '11sp'
-                color: 1, 0.2, 0.2, 1
-                size_hint_y: None
-                height: '20dp'
-
-            Button:
-                text: "Save & Open Hub"
-                bold: True
-                background_color: 0.12, 0.55, 0.28, 1
-                size_hint_y: None
-                height: '48dp'
-                on_press: root.save_initial_setup(in_school_name.text, in_udise.text, in_mdm_cash.text, in_mdm_bank.text, in_mdm_rice.text, in_smc_cash.text, in_smc_bank.text, in_canara_limit.text)
-
-
-<HubScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.94, 0.95, 0.97, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
+# ==========================================
+# 1. WELCOME SCREEN
+# ==========================================
+<WelcomeScreen>:
     BoxLayout:
         orientation: 'vertical'
         padding: 24
-        spacing: 16
+        spacing: 20
 
-        Spacer:
+        canvas.before:
+            Color:
+                rgba: (0.95, 0.96, 0.98, 1)
+            Rectangle:
+                pos: self.pos
+                size: self.size
+
+        # Header Title
+        BoxLayout:
+            size_hint_y: None
+            height: 100
+            orientation: 'vertical'
+            spacing: 6
+            Label:
+                text: "Welcome to DHK"
+                font_size: '28sp'
+                bold: True
+                color: (0.1, 0.15, 0.25, 1)
+            Label:
+                text: "Elementary School Bookkeeping & Stock Register"
+                font_size: '14sp'
+                color: (0.4, 0.45, 0.55, 1)
+
+        Widget:
             size_hint_y: 0.1
 
-        Label:
-            text: "DHK CashBook Pro"
-            font_size: '22sp'
-            bold: True
-            color: 0.1, 0.15, 0.25, 1
+        # Navigation Buttons
+        BoxLayout:
+            orientation: 'vertical'
+            spacing: 16
             size_hint_y: None
-            height: '35dp'
+            height: 220
 
-        Label:
-            text: "Select Accounting Portal"
-            font_size: '14sp'
-            color: 0.4, 0.5, 0.6, 1
-            size_hint_y: None
-            height: '25dp'
+            Button:
+                text: "MDM Portal\n(Stock Register & Savings Cash Book)"
+                font_size: '16sp'
+                bold: True
+                background_normal: ''
+                background_color: (0.12, 0.45, 0.85, 1)
+                on_release: app.root.current = 'mdm_portal'
 
-        Spacer:
-            size_hint_y: 0.05
+            Button:
+                text: "SMC Portal\n(Normal Savings & Canara Bank SNA)"
+                font_size: '16sp'
+                bold: True
+                background_normal: ''
+                background_color: (0.15, 0.65, 0.45, 1)
+                on_release: app.root.current = 'smc_portal'
 
-        Button:
-            text: "PORTAL 1: Mid-Day Meal (MDM)\nCooking Cost, Food Grain & Reimbursements"
-            font_size: '15sp'
-            bold: True
-            halign: 'center'
-            background_color: 0.15, 0.45, 0.75, 1
-            size_hint_y: None
-            height: '110dp'
-            on_press: root.open_mdm()
+        Widget:
 
-        Button:
-            text: "PORTAL 2: General School Grants\nSMC General Account & Canara Bank SNA"
-            font_size: '15sp'
-            bold: True
-            halign: 'center'
-            background_color: 0.18, 0.55, 0.35, 1
-            size_hint_y: None
-            height: '110dp'
-            on_press: root.open_general()
-
-        Spacer:
-            size_hint_y: 0.3
-
-
+# ==========================================
+# 2. MDM PORTAL SCREEN
+# ==========================================
 <MDMPortalScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.94, 0.95, 0.97, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    ScrollView:
-        do_scroll_x: False
-        do_scroll_y: True
-
-        BoxLayout:
-            orientation: 'vertical'
-            padding: 16
-            spacing: 10
-            size_hint_y: None
-            height: self.minimum_height
-
-            # Header & Hub Back
-            BoxLayout:
-                size_hint_y: None
-                height: '36dp'
-                Button:
-                    text: "◀ Back to Hub"
-                    size_hint_x: 0.35
-                    background_color: 0.4, 0.4, 0.4, 1
-                    on_press: root.back_to_hub()
-                Label:
-                    text: "MDM Portal"
-                    bold: True
-                    font_size: '17sp'
-                    color: 0.1, 0.2, 0.3, 1
-
-            # Month Navigator Bar
-            BoxLayout:
-                size_hint_y: None
-                height: '42dp'
-                spacing: 8
-                Button:
-                    text: "◀ Prev"
-                    size_hint_x: 0.25
-                    background_color: 0.2, 0.35, 0.55, 1
-                    on_press: root.prev_month()
-                Label:
-                    text: root.month_name
-                    bold: True
-                    font_size: '15sp'
-                    color: 0.1, 0.15, 0.2, 1
-                Button:
-                    text: "Next ▶"
-                    size_hint_x: 0.25
-                    background_color: 0.2, 0.35, 0.55, 1
-                    on_press: root.next_month()
-
-            # Government Rates Board
-            BoxLayout:
-                orientation: 'vertical'
-                size_hint_y: None
-                height: '100dp'
-                padding: 10
-                spacing: 4
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    RoundedRectangle:
-                        pos: self.pos
-                        size: self.size
-                        radius: [8, 8, 8, 8]
-
-                BoxLayout:
-                    size_hint_y: None
-                    height: '24dp'
-                    Label:
-                        text: "Active MDM Rates Norms"
-                        bold: True
-                        font_size: '12sp'
-                        color: 0.2, 0.3, 0.4, 1
-                        halign: 'left'
-                    Button:
-                        text: "Edit Rates"
-                        size_hint_x: 0.3
-                        font_size: '11sp'
-                        background_color: 0.8, 0.4, 0.1, 1
-                        on_press: root.open_rate_editor()
-
-                Label:
-                    text: "Lower Primary (LP): " + root.lp_rate_str
-                    color: 0.2, 0.2, 0.2, 1
-                    font_size: '12sp'
-                    size_hint_y: None
-                    height: '18dp'
-
-                Label:
-                    text: "Upper Primary (UP): " + root.up_rate_str
-                    color: 0.2, 0.2, 0.2, 1
-                    font_size: '12sp'
-                    size_hint_y: None
-                    height: '18dp'
-
-                Button:
-                    text: "Active Grade Level: [" + root.active_level + "] (Tap to Toggle)"
-                    font_size: '11sp'
-                    size_hint_y: None
-                    height: '24dp'
-                    background_color: 0.3, 0.5, 0.7, 1
-                    on_press: root.toggle_level()
-
-            # Balance & Stock Status Card
-            BoxLayout:
-                orientation: 'vertical'
-                size_hint_y: None
-                height: '150dp'
-                padding: 12
-                spacing: 4
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    RoundedRectangle:
-                        pos: self.pos
-                        size: self.size
-                        radius: [8, 8, 8, 8]
-
-                Label:
-                    text: "Cash-in-Hand: " + root.cash_display
-                    color: 0.1, 0.6, 0.2, 1
-                    font_size: '16sp'
-                    bold: True
-                    size_hint_y: None
-                    height: '24dp'
-                Label:
-                    text: "Bank Balance: " + root.bank_display
-                    color: 0.1, 0.3, 0.7, 1
-                    font_size: '16sp'
-                    bold: True
-                    size_hint_y: None
-                    height: '24dp'
-                Label:
-                    text: "Food Grain (Rice): " + root.rice_display
-                    color: 0.6, 0.35, 0.1, 1
-                    font_size: '14sp'
-                    bold: True
-                    size_hint_y: None
-                    height: '22dp'
-                Label:
-                    text: "Due to Teacher (Advance): " + root.teacher_advance_display
-                    color: 0.7, 0.2, 0.2, 1
-                    font_size: '13sp'
-                    bold: True
-                    size_hint_y: None
-                    height: '22dp'
-                Label:
-                    text: root.warning_text
-                    color: 0.45, 0.45, 0.45, 1
-                    font_size: '11sp'
-
-            Button:
-                text: "Monthly Batch Attendance (No Date Stress)"
-                bold: True
-                background_color: 0.12, 0.5, 0.7, 1
-                size_hint_y: None
-                height: '46dp'
-                on_press: root.open_batch_attendance()
-
-            Button:
-                text: "Record Cooking Expenditure (Voucher / Advance)"
-                background_color: 0.85, 0.35, 0.2, 1
-                size_hint_y: None
-                height: '46dp'
-                on_press: root.open_voucher_entry()
-
-            Button:
-                text: "Record Cooking Cost Grant (Bank Inflow)"
-                background_color: 0.18, 0.6, 0.3, 1
-                size_hint_y: None
-                height: '46dp'
-                on_press: root.open_money_inflow()
-
-            Button:
-                text: "Self Bank-to-Cash Withdrawal (Contra)"
-                background_color: 0.4, 0.3, 0.65, 1
-                size_hint_y: None
-                height: '46dp'
-                on_press: root.open_contra()
-
-            Button:
-                text: "Open Live Cash Book Register & PDF"
-                bold: True
-                background_color: 0.2, 0.3, 0.4, 1
-                size_hint_y: None
-                height: '48dp'
-                on_press: root.open_cashbook_view()
-
-
-<GeneralPortalScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.94, 0.95, 0.97, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    ScrollView:
-        do_scroll_x: False
-        do_scroll_y: True
-
-        BoxLayout:
-            orientation: 'vertical'
-            padding: 16
-            spacing: 10
-            size_hint_y: None
-            height: self.minimum_height
-
-            BoxLayout:
-                size_hint_y: None
-                height: '36dp'
-                Button:
-                    text: "◀ Back to Hub"
-                    size_hint_x: 0.35
-                    background_color: 0.4, 0.4, 0.4, 1
-                    on_press: root.back_to_hub()
-                Label:
-                    text: "General Grants Portal"
-                    bold: True
-                    font_size: '17sp'
-                    color: 0.1, 0.2, 0.3, 1
-
-            # Account Switcher
-            BoxLayout:
-                size_hint_y: None
-                height: '42dp'
-                spacing: 8
-                Button:
-                    text: "SMC GENERAL"
-                    bold: True
-                    background_color: (0.15, 0.55, 0.35, 1) if root.selected_account == "SMC_GEN" else (0.7, 0.7, 0.7, 1)
-                    on_press: root.set_account("SMC_GEN")
-                Button:
-                    text: "CANARA BANK SNA"
-                    bold: True
-                    background_color: (0.15, 0.55, 0.35, 1) if root.selected_account == "CANARA_SNA" else (0.7, 0.7, 0.7, 1)
-                    on_press: root.set_account("CANARA_SNA")
-
-            # Month Navigator Bar
-            BoxLayout:
-                size_hint_y: None
-                height: '42dp'
-                spacing: 8
-                Button:
-                    text: "◀ Prev"
-                    size_hint_x: 0.25
-                    background_color: 0.2, 0.35, 0.55, 1
-                    on_press: root.prev_month()
-                Label:
-                    text: root.month_name
-                    bold: True
-                    font_size: '15sp'
-                    color: 0.1, 0.15, 0.2, 1
-                Button:
-                    text: "Next ▶"
-                    size_hint_x: 0.25
-                    background_color: 0.2, 0.35, 0.55, 1
-                    on_press: root.next_month()
-
-            # Balances Card
-            BoxLayout:
-                orientation: 'vertical'
-                size_hint_y: None
-                height: '115dp'
-                padding: 12
-                spacing: 6
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    RoundedRectangle:
-                        pos: self.pos
-                        size: self.size
-                        radius: [8, 8, 8, 8]
-
-                Label:
-                    text: "Cash-in-Hand: " + root.cash_display
-                    color: 0.1, 0.6, 0.2, 1
-                    font_size: '16sp'
-                    bold: True
-                    size_hint_y: None
-                    height: '24dp'
-                Label:
-                    text: ("Bank / SNA Limit: " if root.selected_account == "CANARA_SNA" else "Bank Balance: ") + root.bank_display
-                    color: 0.1, 0.3, 0.7, 1
-                    font_size: '16sp'
-                    bold: True
-                    size_hint_y: None
-                    height: '24dp'
-                Label:
-                    text: root.warning_text
-                    color: 0.45, 0.45, 0.45, 1
-                    font_size: '11sp'
-
-            Button:
-                text: "Record Voucher Expenditure"
-                background_color: 0.85, 0.35, 0.2, 1
-                size_hint_y: None
-                height: '46dp'
-                on_press: root.open_voucher_entry()
-
-            Button:
-                text: "Record Grant / Limit Credit (Receipt)"
-                background_color: 0.18, 0.6, 0.3, 1
-                size_hint_y: None
-                height: '46dp'
-                on_press: root.open_money_inflow()
-
-            Button:
-                text: "Self Bank Withdrawal (Contra)"
-                background_color: 0.4, 0.3, 0.65, 1
-                size_hint_y: None
-                height: '46dp'
-                on_press: root.open_contra()
-
-            Button:
-                text: "Open Live Cash Book Register & PDF"
-                bold: True
-                background_color: 0.2, 0.3, 0.4, 1
-                size_hint_y: None
-                height: '48dp'
-                on_press: root.open_cashbook_view()
-
-
-<RateEditorScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.95, 0.96, 0.98, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
     BoxLayout:
         orientation: 'vertical'
-        padding: 20
-        spacing: 10
 
-        Label:
-            text: "Edit Government MDM Norms"
-            bold: True
-            font_size: '18sp'
-            color: 0.1, 0.15, 0.2, 1
-            size_hint_y: None
-            height: '35dp'
-
-        Label:
-            text: "Lower Primary (LP) Norms:"
-            bold: True
-            color: 0.3, 0.3, 0.3, 1
-            size_hint_y: None
-            height: '20dp'
-
-        TextInput:
-            id: lp_rate
-            hint_text: "LP Cooking Cost (₹, e.g. 6.78)"
-            multiline: False
-            size_hint_y: None
-            height: '44dp'
-
-        TextInput:
-            id: lp_grain
-            hint_text: "LP Rice Scale (grams, e.g. 100)"
-            multiline: False
-            size_hint_y: None
-            height: '44dp'
-
-        Label:
-            text: "Upper Primary (UP) Norms:"
-            bold: True
-            color: 0.3, 0.3, 0.3, 1
-            size_hint_y: None
-            height: '20dp'
-
-        TextInput:
-            id: up_rate
-            hint_text: "UP Cooking Cost (₹, e.g. 10.17)"
-            multiline: False
-            size_hint_y: None
-            height: '44dp'
-
-        TextInput:
-            id: up_grain
-            hint_text: "UP Rice Scale (grams, e.g. 150)"
-            multiline: False
-            size_hint_y: None
-            height: '44dp'
-
-        Label:
-            text: root.status_text
-            color: 1, 0.2, 0.2, 1
-            font_size: '11sp'
-            size_hint_y: None
-            height: '20dp'
-
-        Spacer:
-            size_hint_y: 0.1
-
+        # Action Bar / Top Nav
         BoxLayout:
             size_hint_y: None
-            height: '48dp'
-            spacing: 10
+            height: 56
+            padding: [8, 4]
+            spacing: 8
+            canvas.before:
+                Color:
+                    rgba: (0.12, 0.45, 0.85, 1)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
+
             Button:
-                text: "Cancel"
-                background_color: 0.6, 0.6, 0.6, 1
-                on_press: root.cancel()
-            Button:
-                text: "Save Norms"
-                background_color: 0.12, 0.55, 0.28, 1
-                on_press: root.save_rates()
-
-
-<BatchAttendanceScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.95, 0.96, 0.98, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    ScrollView:
-        do_scroll_x: False
-        do_scroll_y: True
-
-        BoxLayout:
-            orientation: 'vertical'
-            padding: 20
-            spacing: 10
-            size_hint_y: None
-            height: self.minimum_height
+                text: "< Home"
+                size_hint_x: None
+                width: 75
+                background_color: (0.2, 0.55, 0.95, 1)
+                on_release: app.root.current = 'welcome'
 
             Label:
-                text: "Monthly Batch Attendance"
-                bold: True
+                text: "MDM Administration"
                 font_size: '18sp'
-                color: 0.1, 0.15, 0.2, 1
-                size_hint_y: None
-                height: '35dp'
-
-            TextInput:
-                id: period_label
-                hint_text: "Description (e.g. September 2026 Attendance)"
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            TextInput:
-                id: working_days
-                hint_text: "Total MDM Serving Days (e.g. 24)"
-                input_filter: 'int'
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-                on_text: root.calculate_preview()
-
-            TextInput:
-                id: avg_students
-                hint_text: "Average Daily Students Fed (e.g. 42)"
-                input_filter: 'int'
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-                on_text: root.calculate_preview()
-
-            BoxLayout:
-                orientation: 'vertical'
-                size_hint_y: None
-                height: '80dp'
-                padding: 10
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    RoundedRectangle:
-                        pos: self.pos
-                        size: self.size
-                        radius: [6, 6, 6, 6]
-
-                Label:
-                    text: root.calc_preview
-                    color: 0.1, 0.4, 0.6, 1
-                    font_size: '13sp'
-                    bold: True
-
-            BoxLayout:
-                size_hint_y: None
-                height: '48dp'
-                spacing: 10
-                Button:
-                    text: "Cancel"
-                    background_color: 0.6, 0.6, 0.6, 1
-                    on_press: root.cancel()
-                Button:
-                    text: "Generate & Save"
-                    background_color: 0.12, 0.55, 0.28, 1
-                    on_press: root.save_batch()
-
-
-<PortalVoucherScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.95, 0.96, 0.98, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    ScrollView:
-        do_scroll_x: False
-        do_scroll_y: True
-
-        BoxLayout:
-            orientation: 'vertical'
-            padding: 20
-            spacing: 10
-            size_hint_y: None
-            height: self.minimum_height
-
-            Label:
-                text: "Record Expenditure Voucher"
                 bold: True
-                font_size: '18sp'
-                color: 0.1, 0.15, 0.2, 1
-                size_hint_y: None
-                height: '35dp'
+                halign: 'left'
 
-            TextInput:
-                id: v_no
-                hint_text: "Voucher Number (e.g. 01)"
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            TextInput:
-                id: v_date
-                hint_text: "Date (YYYY-MM-DD)"
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            TextInput:
-                id: v_amount
-                hint_text: "Amount Spent (₹)"
-                input_filter: 'float'
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            TextInput:
-                id: v_purpose
-                hint_text: "Expenditure Head / Particulars"
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
+        # Module Switch Tabs
+        BoxLayout:
+            size_hint_y: None
+            height: 48
+            spacing: 2
+            padding: 2
 
             Button:
-                text: "Paid From: [ Teacher's Personal Advance ]" if root.is_teacher_advance else "Paid From: [ School Cash Box ]"
-                background_color: (0.8, 0.35, 0.15, 1) if root.is_teacher_advance else (0.2, 0.5, 0.7, 1)
-                size_hint_y: None
-                height: '42dp'
-                on_press: root.toggle_advance()
-
-            Label:
-                text: root.status_text
-                color: 1, 0.2, 0.2, 1
-                font_size: '11sp'
-                size_hint_y: None
-                height: '20dp'
-
-            BoxLayout:
-                size_hint_y: None
-                height: '48dp'
-                spacing: 10
-                Button:
-                    text: "Cancel"
-                    background_color: 0.6, 0.6, 0.6, 1
-                    on_press: root.cancel()
-                Button:
-                    text: "Save Voucher"
-                    background_color: 0.12, 0.55, 0.28, 1
-                    on_press: root.save_voucher()
-
-
-<PortalInflowScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.95, 0.96, 0.98, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    ScrollView:
-        do_scroll_x: False
-        do_scroll_y: True
-
-        BoxLayout:
-            orientation: 'vertical'
-            padding: 20
-            spacing: 10
-            size_hint_y: None
-            height: self.minimum_height
-
-            Label:
-                text: "Record Grant / Money Receipt"
+                text: "Stock & Meal Register"
                 bold: True
-                font_size: '18sp'
-                color: 0.1, 0.15, 0.2, 1
-                size_hint_y: None
-                height: '35dp'
-
-            TextInput:
-                id: inflow_date
-                hint_text: "Date (YYYY-MM-DD)"
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            TextInput:
-                id: inflow_amount
-                hint_text: "Amount Credited (₹)"
-                input_filter: 'float'
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            TextInput:
-                id: inflow_head
-                text: "Grant Received into Bank"
-                hint_text: "Sanction / Grant Purpose"
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            TextInput:
-                id: inflow_ref
-                hint_text: "Advice / Cheque / Sanction Reference"
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
-
-            Label:
-                text: root.status_text
-                color: 1, 0.2, 0.2, 1
-                font_size: '11sp'
-                size_hint_y: None
-                height: '20dp'
-
-            BoxLayout:
-                size_hint_y: None
-                height: '48dp'
-                spacing: 10
-                Button:
-                    text: "Cancel"
-                    background_color: 0.6, 0.6, 0.6, 1
-                    on_press: root.cancel()
-                Button:
-                    text: "Save Receipt"
-                    background_color: 0.12, 0.55, 0.28, 1
-                    on_press: root.save_inflow()
-
-
-<PortalContraScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.95, 0.96, 0.98, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
-
-    ScrollView:
-        do_scroll_x: False
-        do_scroll_y: True
-
-        BoxLayout:
-            orientation: 'vertical'
-            padding: 20
-            spacing: 10
-            size_hint_y: None
-            height: self.minimum_height
-
-            Label:
-                text: "Self Bank Withdrawal (Contra)"
+                on_release: root.switch_sub_view('stock')
+            Button:
+                text: "MDM Cash Book (Savings)"
                 bold: True
-                font_size: '18sp'
-                color: 0.1, 0.15, 0.2, 1
-                size_hint_y: None
-                height: '35dp'
+                on_release: root.switch_sub_view('cashbook')
 
-            Label:
-                text: "Withdrawn from Bank Account and added into physical Cash Box."
-                font_size: '11sp'
-                color: 0.45, 0.5, 0.55, 1
-                size_hint_y: None
-                height: '20dp'
+        # Dynamic Content Panel
+        ScreenManager:
+            id: mdm_sub_sm
 
-            TextInput:
-                id: contra_date
-                hint_text: "Date (YYYY-MM-DD)"
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
+            # Sub-Tab A: Stock & Meal Register
+            Screen:
+                name: 'stock_view'
+                ScrollView:
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: 16
+                        spacing: 12
 
-            TextInput:
-                id: contra_amount
-                hint_text: "Amount Withdrawn (₹)"
-                input_filter: 'float'
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
+                        # Rate Info Card (Editable)
+                        BoxLayout:
+                            orientation: 'vertical'
+                            size_hint_y: None
+                            height: 105
+                            padding: 10
+                            canvas.before:
+                                Color:
+                                    rgba: (0.9, 0.93, 0.97, 1)
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [8]
 
-            TextInput:
-                id: contra_chq
-                hint_text: "Self Cheque No. / Withdrawal Slip No."
-                multiline: False
-                size_hint_y: None
-                height: '44dp'
+                            Label:
+                                text: "Active PM POSHAN Rates (Tap to override):"
+                                color: (0.15, 0.2, 0.3, 1)
+                                bold: True
+                                size_hint_y: None
+                                height: 24
 
-            Label:
-                text: root.status_text
-                color: 1, 0.2, 0.2, 1
-                font_size: '11sp'
-                size_hint_y: None
-                height: '20dp'
+                            BoxLayout:
+                                spacing: 8
+                                Label:
+                                    text: "LP Rate: ₹"
+                                    color: (0.2, 0.2, 0.2, 1)
+                                    size_hint_x: 0.3
+                                TextInput:
+                                    id: lp_rate_input
+                                    text: "6.78"
+                                    multiline: False
+                                    size_hint_x: 0.2
+                                Label:
+                                    text: "UP Rate: ₹"
+                                    color: (0.2, 0.2, 0.2, 1)
+                                    size_hint_x: 0.3
+                                TextInput:
+                                    id: up_rate_input
+                                    text: "10.15"
+                                    multiline: False
+                                    size_hint_x: 0.2
 
-            BoxLayout:
-                size_hint_y: None
-                height: '48dp'
-                spacing: 10
-                Button:
-                    text: "Cancel"
-                    background_color: 0.6, 0.6, 0.6, 1
-                    on_press: root.cancel()
-                Button:
-                    text: "Record Contra"
-                    background_color: 0.35, 0.25, 0.65, 1
-                    on_press: root.save_contra()
+                        # Inputs Section
+                        GridLayout:
+                            cols: 2
+                            size_hint_y: None
+                            height: 280
+                            row_default_height: 40
+                            spacing: 8
 
+                            Label:
+                                text: "Month & Year (YYYY-MM):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: stock_ym
+                                text: "2026-09"
+                                multiline: False
 
-<CashBookViewScreen>:
-    canvas.before:
-        Color:
-            rgba: 0.94, 0.95, 0.97, 1
-        Rectangle:
-            pos: self.pos
-            size: self.size
+                            Label:
+                                text: "Total Working Days:"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: stock_wd
+                                text: "22"
+                                multiline: False
 
-    ScrollView:
-        do_scroll_x: False
-        do_scroll_y: True
+                            Label:
+                                text: "LP Students Fed (Box 1):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: stock_lp_meals
+                                text: "0"
+                                multiline: False
+                                on_text: root.sync_meals_boxes('from_lp')
 
+                            Label:
+                                text: "UP Students Fed (Box 2):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: stock_up_meals
+                                text: "0"
+                                multiline: False
+                                on_text: root.sync_meals_boxes('from_up')
+
+                            Label:
+                                text: "Total (LP + UP) (Box 3):"
+                                bold: True
+                                color: (0.1, 0.3, 0.7, 1)
+                            TextInput:
+                                id: stock_total_meals
+                                text: "0"
+                                multiline: False
+                                on_text: root.sync_meals_boxes('from_total')
+
+                            Label:
+                                text: "Rice Received on Challan (kg):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: stock_rice_rcv
+                                text: "0"
+                                multiline: False
+
+                            Label:
+                                text: "Cooking Grant Received (₹):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: stock_fund_rcv
+                                text: "0"
+                                multiline: False
+
+                        Button:
+                            text: "Save & Calculate Stock Register"
+                            size_hint_y: None
+                            height: 48
+                            bold: True
+                            background_color: (0.12, 0.45, 0.85, 1)
+                            on_release: root.save_stock_batch()
+
+                        # Calculation Results Box
+                        Label:
+                            id: stock_results_lbl
+                            text: "Enter data above to calculate grain and cooking balances."
+                            color: (0.15, 0.2, 0.3, 1)
+                            size_hint_y: None
+                            height: 90
+
+            # Sub-Tab B: MDM Cash Book
+            Screen:
+                name: 'cashbook_view'
+                ScrollView:
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: 16
+                        spacing: 12
+
+                        # Month & Opening Balances
+                        GridLayout:
+                            cols: 2
+                            size_hint_y: None
+                            height: 120
+                            row_default_height: 38
+                            spacing: 8
+
+                            Label:
+                                text: "Month & Year (YYYY-MM):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: mdm_cb_ym
+                                text: "2026-09"
+                                multiline: False
+
+                            Label:
+                                text: "Opening Cash in Hand (₹):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: mdm_cb_op_cash
+                                text: "0"
+                                multiline: False
+
+                            Label:
+                                text: "Opening Bank Balance (₹):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: mdm_cb_op_bank
+                                text: "0"
+                                multiline: False
+
+                        Button:
+                            text: "Save Opening Balances"
+                            size_hint_y: None
+                            height: 36
+                            on_release: root.save_opening_balances('MDM_SAVINGS')
+
+                        # Transaction Cards Buttons
+                        BoxLayout:
+                            size_hint_y: None
+                            height: 42
+                            spacing: 8
+                            Button:
+                                text: "+ Add Inflow (Dr.)"
+                                background_color: (0.2, 0.65, 0.3, 1)
+                                on_release: root.show_receipt_popup('MDM_SAVINGS')
+                            Button:
+                                text: "+ Bank Withdrawal"
+                                background_color: (0.85, 0.5, 0.1, 1)
+                                on_release: root.show_withdrawal_popup('MDM_SAVINGS')
+                            Button:
+                                text: "+ Add Voucher (Cr.)"
+                                background_color: (0.85, 0.25, 0.2, 1)
+                                on_release: root.show_voucher_popup('MDM_SAVINGS')
+
+                        # Balanced Cash Book Display Box
+                        Button:
+                            text: "Generate Audit-Balanced Cash Book"
+                            size_hint_y: None
+                            height: 48
+                            bold: True
+                            background_color: (0.1, 0.4, 0.75, 1)
+                            on_release: root.render_cashbook('MDM_SAVINGS')
+
+                        Label:
+                            id: mdm_cb_summary_lbl
+                            text: "Receipts and payments will appear balanced here."
+                            size_hint_y: None
+                            height: 120
+                            color: (0.1, 0.15, 0.2, 1)
+
+# ==========================================
+# 3. SMC PORTAL SCREEN
+# ==========================================
+<SMCPortalScreen>:
+    BoxLayout:
+        orientation: 'vertical'
+
+        # Top Action Bar
         BoxLayout:
-            orientation: 'vertical'
-            padding: 16
-            spacing: 10
             size_hint_y: None
-            height: self.minimum_height
-
-            Label:
-                text: root.title_label
-                bold: True
-                font_size: '17sp'
-                color: 0.1, 0.15, 0.2, 1
-                size_hint_y: None
-                height: '30dp'
-
-            # Dr. (Receipts) Section Card
-            BoxLayout:
-                orientation: 'vertical'
-                size_hint_y: None
-                height: '130dp'
-                padding: 10
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    RoundedRectangle:
-                        pos: self.pos
-                        size: self.size
-                        radius: [6, 6, 6, 6]
-
-                Label:
-                    text: "Receipts / Inflows (Dr.)"
-                    bold: True
-                    font_size: '13sp'
-                    color: 0.1, 0.5, 0.2, 1
-                    size_hint_y: None
-                    height: '20dp'
-                Label:
-                    text: root.receipts_summary
-                    font_size: '11sp'
-                    color: 0.2, 0.2, 0.2, 1
-
-            # Cr. (Payments) Section Card
-            BoxLayout:
-                orientation: 'vertical'
-                size_hint_y: None
-                height: '130dp'
-                padding: 10
-                canvas.before:
-                    Color:
-                        rgba: 1, 1, 1, 1
-                    RoundedRectangle:
-                        pos: self.pos
-                        size: self.size
-                        radius: [6, 6, 6, 6]
-
-                Label:
-                    text: "Payments / Expenses (Cr.)"
-                    bold: True
-                    font_size: '13sp'
-                    color: 0.7, 0.2, 0.2, 1
-                    size_hint_y: None
-                    height: '20dp'
-                Label:
-                    text: root.payments_summary
-                    font_size: '11sp'
-                    color: 0.2, 0.2, 0.2, 1
-
-            Label:
-                text: root.export_status
-                font_size: '11sp'
-                color: 0.1, 0.5, 0.2, 1
-                size_hint_y: None
-                height: '35dp'
+            height: 56
+            padding: [8, 4]
+            spacing: 8
+            canvas.before:
+                Color:
+                    rgba: (0.15, 0.65, 0.45, 1)
+                Rectangle:
+                    pos: self.pos
+                    size: self.size
 
             Button:
-                text: "Export Audit Double-Spread Cash Book (PDF)"
+                text: "< Home"
+                size_hint_x: None
+                width: 75
+                background_color: (0.2, 0.75, 0.55, 1)
+                on_release: app.root.current = 'welcome'
+
+            Label:
+                text: "SMC Administration (2 Accounts)"
+                font_size: '18sp'
                 bold: True
-                background_color: 0.15, 0.45, 0.75, 1
-                size_hint_y: None
-                height: '46dp'
-                on_press: root.export_pdf_safe()
+                halign: 'left'
+
+        # Two-Account Switch Tabs
+        BoxLayout:
+            size_hint_y: None
+            height: 48
+            spacing: 2
+            padding: 2
 
             Button:
-                text: "Back to Portal"
-                background_color: 0.5, 0.5, 0.5, 1
-                size_hint_y: None
-                height: '44dp'
-                on_press: root.cancel()
+                text: "Normal Savings Account"
+                bold: True
+                on_release: root.switch_smc_view('smc_savings')
+            Button:
+                text: "Canara Bank SNA (0-Balance)"
+                bold: True
+                on_release: root.switch_smc_view('smc_canara')
+
+        ScreenManager:
+            id: smc_sub_sm
+
+            # Sub-Tab A: SMC Normal Savings Account
+            Screen:
+                name: 'smc_savings_view'
+                ScrollView:
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: 16
+                        spacing: 12
+
+                        Label:
+                            text: "Account: Normal Savings Account (Supports Cash & Bank)"
+                            bold: True
+                            color: (0.15, 0.6, 0.4, 1)
+                            size_hint_y: None
+                            height: 24
+
+                        GridLayout:
+                            cols: 2
+                            size_hint_y: None
+                            height: 120
+                            row_default_height: 38
+                            spacing: 8
+
+                            Label:
+                                text: "Month & Year (YYYY-MM):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: smc_sav_ym
+                                text: "2026-09"
+                                multiline: False
+
+                            Label:
+                                text: "Opening Cash in Hand (₹):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: smc_sav_op_cash
+                                text: "0"
+                                multiline: False
+
+                            Label:
+                                text: "Opening Bank Balance (₹):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: smc_sav_op_bank
+                                text: "0"
+                                multiline: False
+
+                        Button:
+                            text: "Save Opening Balances"
+                            size_hint_y: None
+                            height: 36
+                            on_release: root.save_opening_balances('SMC_SAVINGS')
+
+                        BoxLayout:
+                            size_hint_y: None
+                            height: 42
+                            spacing: 8
+                            Button:
+                                text: "+ Add Inflow (Dr.)"
+                                background_color: (0.2, 0.65, 0.3, 1)
+                                on_release: root.show_receipt_popup('SMC_SAVINGS')
+                            Button:
+                                text: "+ Bank Withdrawal"
+                                background_color: (0.85, 0.5, 0.1, 1)
+                                on_release: root.show_withdrawal_popup('SMC_SAVINGS')
+                            Button:
+                                text: "+ Add Voucher (Cr.)"
+                                background_color: (0.85, 0.25, 0.2, 1)
+                                on_release: root.show_voucher_popup('SMC_SAVINGS')
+
+                        Button:
+                            text: "Generate Audit-Balanced Cash Book"
+                            size_hint_y: None
+                            height: 48
+                            bold: True
+                            background_color: (0.15, 0.65, 0.45, 1)
+                            on_release: root.render_cashbook('SMC_SAVINGS')
+
+                        Label:
+                            id: smc_sav_summary_lbl
+                            text: "Balanced register summary appears here."
+                            size_hint_y: None
+                            height: 120
+                            color: (0.1, 0.15, 0.2, 1)
+
+            # Sub-Tab B: SMC Canara Bank SNA (0-Balance)
+            Screen:
+                name: 'smc_canara_view'
+                ScrollView:
+                    BoxLayout:
+                        orientation: 'vertical'
+                        size_hint_y: None
+                        height: self.minimum_height
+                        padding: 16
+                        spacing: 12
+
+                        Label:
+                            text: "Account: Canara Bank SNA (Strictly Bank / Direct Cheque / Vendor Advice)"
+                            bold: True
+                            color: (0.8, 0.3, 0.1, 1)
+                            size_hint_y: None
+                            height: 24
+
+                        GridLayout:
+                            cols: 2
+                            size_hint_y: None
+                            height: 80
+                            row_default_height: 38
+                            spacing: 8
+
+                            Label:
+                                text: "Month & Year (YYYY-MM):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: smc_canara_ym
+                                text: "2026-09"
+                                multiline: False
+
+                            Label:
+                                text: "Opening Bank Balance / Limit (₹):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: smc_canara_op_bank
+                                text: "0"
+                                multiline: False
+
+                        Button:
+                            text: "Save Opening Limit"
+                            size_hint_y: None
+                 

@@ -1,6 +1,5 @@
 import os
 import sys
-from datetime import datetime
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -14,66 +13,22 @@ from kivy.uix.button import Button
 from kivy.uix.spinner import Spinner
 
 from db_manager import DatabaseManager
-
-# ReportLab imports for audit-ready PDF generation
-from reportlab.lib.pagesizes import letter, landscape
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
-from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
-from reportlab.lib import colors
+from pdf_generator import generate_cashbook_pdf, generate_stock_register_pdf
 
 
 def get_safe_storage_dir():
-    """
-    Returns an Android-safe write directory.
-    Uses app-specific external files dir on Android to prevent permission crashes.
-    """
+    """Returns permission-free, app-specific external storage on Android."""
     try:
         from jnius import autoclass
         PythonActivity = autoclass('org.kivy.android.PythonActivity')
         context = PythonActivity.mActivity
-        # getExternalFilesDir(None) does not require WRITE_EXTERNAL_STORAGE permissions
-        file_dir = context.getExternalFilesDir(None).getAbsolutePath()
-        return file_dir
+        ext_dir = context.getExternalFilesDir(None)
+        if ext_dir:
+            return ext_dir.getAbsolutePath()
     except Exception:
-        # Fallback for desktop testing / generic environments
-        fallback_dir = os.path.join(os.path.expanduser("~"), "DHK_School_Ledger")
-        os.makedirs(fallback_dir, exist_ok=True)
-        return fallback_dir
+        pass
+    return os.path.dirname(os.path.abspath(__file__))
 
-
-def open_or_share_file(filepath):
-    """
-    Triggers native Android share/view intent so the teacher can immediately view or print.
-    """
-    try:
-        from jnius import autoclass, cast
-        PythonActivity = autoclass('org.kivy.android.PythonActivity')
-        Intent = autoclass('android.content.Intent')
-        File = autoclass('java.io.File')
-        FileProvider = autoclass('androidx.core.content.FileProvider')
-        Uri = autoclass('android.net.Uri')
-
-        currentActivity = PythonActivity.mActivity
-        context = currentActivity.getApplicationContext()
-
-        pdf_file = File(filepath)
-        # Use authorities configured in AndroidManifest.xml
-        authority = context.getPackageName() + ".fileprovider"
-        file_uri = FileProvider.getUriForFile(context, authority, pdf_file)
-
-        intent = Intent(Intent.ACTION_VIEW)
-        intent.setDataAndType(file_uri, "application/pdf")
-        intent.setFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION | Intent.FLAG_ACTIVITY_CLEAR_TOP)
-
-        chooser = Intent.createChooser(intent, "Open or Share PDF")
-        currentActivity.startActivity(chooser)
-    except Exception as e:
-        print(f"Android Intent invocation fallback (Desktop or Dev): {e}")
-
-
-# ==========================================
-# SCREENS
-# ==========================================
 
 class RootScreenManager(ScreenManager):
     pass
@@ -85,13 +40,9 @@ class WelcomeScreen(Screen):
 
 class MDMPortalScreen(Screen):
     def switch_sub_view(self, view_name):
-        sm = self.ids.mdm_sub_sm
-        sm.current = 'stock_view' if view_name == 'stock' else 'cashbook_view'
+        self.ids.mdm_sub_sm.current = 'stock_view' if view_name == 'stock' else 'cashbook_view'
 
     def sync_meals_boxes(self, source):
-        """
-        Maintains synchronization across Box 1 (LP), Box 2 (UP), and Box 3 (Combined).
-        """
         try:
             if source in ('from_lp', 'from_up'):
                 lp_txt = self.ids.stock_lp_meals.text.strip()
@@ -99,15 +50,10 @@ class MDMPortalScreen(Screen):
                 lp_val = int(lp_txt) if lp_txt.isdigit() else 0
                 up_val = int(up_txt) if up_txt.isdigit() else 0
                 total = lp_val + up_val
-                # Update without triggering feedback loop
-                self.ids.stock_total_meals.unbind(on_text=self._on_total_changed)
-                self.ids.stock_total_meals.text = str(total)
-                self.ids.stock_total_meals.bind(on_text=self._on_total_changed)
+                if self.ids.stock_total_meals.text != str(total):
+                    self.ids.stock_total_meals.text = str(total)
         except Exception:
             pass
-
-    def _on_total_changed(self, instance, value):
-        self.sync_meals_boxes('from_total')
 
     def save_stock_batch(self):
         try:
@@ -116,10 +62,8 @@ class MDMPortalScreen(Screen):
             lp_m = int(self.ids.stock_lp_meals.text.strip() or "0")
             up_m = int(self.ids.stock_up_meals.text.strip() or "0")
             tot_m = int(self.ids.stock_total_meals.text.strip() or "0")
-
             lp_r = float(self.ids.lp_rate_input.text.strip() or "6.78")
             up_r = float(self.ids.up_rate_input.text.strip() or "10.15")
-
             rice_rcv = float(self.ids.stock_rice_rcv.text.strip() or "0.0")
             fund_rcv = float(self.ids.stock_fund_rcv.text.strip() or "0.0")
 
@@ -128,18 +72,33 @@ class MDMPortalScreen(Screen):
                 lp_rate=lp_r, up_rate=up_r, rice_opening_kg=0.0, rice_received_kg=rice_rcv, fund_received=fund_rcv
             )
 
-            status_fund = f"Closing Fund: ₹{res['fund_closing']:.2f}"
+            status_fund = f"Closing Fund: Rs. {res['fund_closing']:.2f}"
             if res['fund_closing'] < 0:
-                status_fund = f"[b]Payable to Head Teacher: -₹{abs(res['fund_closing']):.2f}[/b]"
+                status_fund = f"[b]Payable to Head Teacher: -Rs. {abs(res['fund_closing']):.2f}[/b]"
 
             self.ids.stock_results_lbl.markup = True
             self.ids.stock_results_lbl.text = (
                 f"[b]Saved Successfully for {ym}![/b]\n"
                 f"Rice Consumed: {res['rice_consumed']:.3f} kg | Closing Rice: {res['rice_closing']:.3f} kg\n"
-                f"Cooking Cost Incurred: ₹{res['fund_spent']:.2f} | {status_fund}"
+                f"Cooking Cost: Rs. {res['fund_spent']:.2f} | {status_fund}"
             )
         except Exception as e:
             self.ids.stock_results_lbl.text = f"Error: {str(e)}"
+
+    def export_stock_pdf(self):
+        try:
+            ym = self.ids.stock_ym.text.strip() or "2026-09"
+            rec = App.get_running_app().db.get_mdm_stock_record(ym)
+            if not rec:
+                self.save_stock_batch()
+                rec = App.get_running_app().db.get_mdm_stock_record(ym)
+
+            out_dir = get_safe_storage_dir()
+            filename = os.path.join(out_dir, f"MDM_Stock_{ym}.pdf")
+            generate_stock_register_pdf(ym, dict(rec), output_path=filename)
+            self.ids.stock_results_lbl.text = f"PDF Saved to App Folder:\n{filename}"
+        except Exception as e:
+            self.ids.stock_results_lbl.text = f"PDF Error: {str(e)}"
 
     def save_opening_balances(self, account_key):
         try:
@@ -152,37 +111,43 @@ class MDMPortalScreen(Screen):
             self.ids.mdm_cb_summary_lbl.text = f"Input Error: {str(e)}"
 
     def show_receipt_popup(self, account_key):
-        ReceiptDialog(account_key, self.ids.mdm_cb_ym.text.strip(), self.refresh_cashbook_ui).open()
+        ReceiptDialog(account_key, self.ids.mdm_cb_ym.text.strip(), lambda: self.render_cashbook(account_key)).open()
 
     def show_withdrawal_popup(self, account_key):
-        WithdrawalDialog(account_key, self.ids.mdm_cb_ym.text.strip(), self.refresh_cashbook_ui).open()
+        WithdrawalDialog(account_key, self.ids.mdm_cb_ym.text.strip(), lambda: self.render_cashbook(account_key)).open()
 
     def show_voucher_popup(self, account_key):
-        VoucherDialog(account_key, self.ids.mdm_cb_ym.text.strip(), self.refresh_cashbook_ui).open()
-
-    def refresh_cashbook_ui(self):
-        self.render_cashbook('MDM_SAVINGS')
+        VoucherDialog(account_key, self.ids.mdm_cb_ym.text.strip(), lambda: self.render_cashbook(account_key)).open()
 
     def render_cashbook(self, account_key):
         ym = self.ids.mdm_cb_ym.text.strip()
         data = App.get_running_app().db.calculate_audit_cashbook(account_key, ym)
-        
-        status_cash = f"Cash in Hand: ₹{data['net_cash']:.2f}"
+        status_cash = f"Cash in Hand: Rs. {data['net_cash']:.2f}"
         if data['net_cash'] < 0:
-            status_cash = f"Due to Head Teacher: -₹{abs(data['net_cash']):.2f}"
+            status_cash = f"Due to Head Teacher: -Rs. {abs(data['net_cash']):.2f}"
 
         self.ids.mdm_cb_summary_lbl.text = (
-            f"Month: {ym} | Total Dr: ₹{data['total_dr_cash']:.2f} (Cash) / ₹{data['total_dr_bank']:.2f} (Bank)\n"
-            f"Total Cr: ₹{data['total_cr_cash']:.2f} (Cash) / ₹{data['total_cr_bank']:.2f} (Bank)\n"
-            f"Status: {status_cash} | Bank Balance: ₹{data['net_bank']:.2f}\n"
-            f"[Ledger is perfectly balanced]"
+            f"Month: {ym} | Dr Total: Cash Rs.{data['total_dr_cash']:.2f} / Bank Rs.{data['total_dr_bank']:.2f}\n"
+            f"Cr Total: Cash Rs.{data['total_cr_cash']:.2f} / Bank Rs.{data['total_cr_bank']:.2f}\n"
+            f"Status: {status_cash} | Bank: Rs.{data['net_bank']:.2f}\n"
+            f"[Ledger Balanced]"
         )
+
+    def export_cashbook_pdf(self, account_key):
+        try:
+            ym = self.ids.mdm_cb_ym.text.strip()
+            data = App.get_running_app().db.calculate_audit_cashbook(account_key, ym)
+            out_dir = get_safe_storage_dir()
+            filename = os.path.join(out_dir, f"{account_key}_{ym}_CashBook.pdf")
+            generate_cashbook_pdf("MDM Savings Account", ym, data, output_path=filename)
+            self.ids.mdm_cb_summary_lbl.text = f"PDF Saved to App Folder:\n{filename}"
+        except Exception as e:
+            self.ids.mdm_cb_summary_lbl.text = f"PDF Error: {str(e)}"
 
 
 class SMCPortalScreen(Screen):
     def switch_smc_view(self, view_name):
-        sm = self.ids.smc_sub_sm
-        sm.current = 'smc_savings_view' if view_name == 'smc_savings' else 'smc_canara_view'
+        self.ids.smc_sub_sm.current = 'smc_savings_view' if view_name == 'smc_savings' else 'smc_canara_view'
 
     def save_opening_balances(self, account_key):
         try:
@@ -193,7 +158,7 @@ class SMCPortalScreen(Screen):
                 lbl = self.ids.smc_sav_summary_lbl
             else:
                 ym = self.ids.smc_canara_ym.text.strip()
-                c = 0.0  # Canara SNA has 0 cash
+                c = 0.0
                 b = float(self.ids.smc_canara_op_bank.text.strip() or "0.0")
                 lbl = self.ids.smc_canara_summary_lbl
 
@@ -218,21 +183,40 @@ class SMCPortalScreen(Screen):
         if account_key == 'SMC_SAVINGS':
             ym = self.ids.smc_sav_ym.text.strip()
             lbl = self.ids.smc_sav_summary_lbl
+            data = App.get_running_app().db.calculate_audit_cashbook(account_key, ym)
+            status_cash = f"Cash in Hand: Rs. {data['net_cash']:.2f}"
+            if data['net_cash'] < 0:
+                status_cash = f"Due to Head Teacher: -Rs. {abs(data['net_cash']):.2f}"
+            lbl.text = (
+                f"Month: {ym} | Dr: Cash Rs.{data['total_dr_cash']:.2f} / Bank Rs.{data['total_dr_bank']:.2f}\n"
+                f"Cr: Cash Rs.{data['total_cr_cash']:.2f} / Bank Rs.{data['total_cr_bank']:.2f}\n"
+                f"Status: {status_cash} | Bank: Rs.{data['net_bank']:.2f}\n"
+                f"[Ledger Balanced]"
+            )
         else:
             ym = self.ids.smc_canara_ym.text.strip()
             lbl = self.ids.smc_canara_summary_lbl
+            data = App.get_running_app().db.calculate_audit_cashbook(account_key, ym)
+            lbl.text = (
+                f"Month: {ym} | Total Limit Dr: Rs.{data['total_dr_bank']:.2f}\n"
+                f"Total Vouchers Cr: Rs.{data['total_cr_bank']:.2f}\n"
+                f"Available Bank Limit: Rs.{data['net_bank']:.2f}\n"
+                f"[SNA Balanced]"
+            )
 
-        data = App.get_running_app().db.calculate_audit_cashbook(account_key, ym)
-        lbl.text = (
-            f"Month: {ym} | Dr Total: ₹{data['total_dr_bank']:.2f} | Cr Total: ₹{data['total_cr_bank']:.2f}\n"
-            f"Closing Bank Balance / Limit: ₹{data['net_bank']:.2f}\n"
-            f"[Ledger is perfectly balanced]"
-        )
+    def export_cashbook_pdf(self, account_key):
+        try:
+            ym = self.ids.smc_sav_ym.text.strip() if account_key == 'SMC_SAVINGS' else self.ids.smc_canara_ym.text.strip()
+            lbl = self.ids.smc_sav_summary_lbl if account_key == 'SMC_SAVINGS' else self.ids.smc_canara_summary_lbl
+            title = "SMC Savings Account" if account_key == 'SMC_SAVINGS' else "SMC Canara Bank SNA"
+            data = App.get_running_app().db.calculate_audit_cashbook(account_key, ym)
+            out_dir = get_safe_storage_dir()
+            filename = os.path.join(out_dir, f"{account_key}_{ym}_CashBook.pdf")
+            generate_cashbook_pdf(title, ym, data, output_path=filename)
+            lbl.text = f"PDF Saved to App Folder:\n{filename}"
+        except Exception as e:
+            lbl.text = f"PDF Error: {str(e)}"
 
-
-# ==========================================
-# INPUT DIALOGS (RECEIPTS, CONTRA, VOUCHERS)
-# ==========================================
 
 class ReceiptDialog(Popup):
     def __init__(self, account_key, year_month, on_saved_callback, **kwargs):
@@ -260,12 +244,11 @@ class ReceiptDialog(Popup):
         grid.add_widget(self.txt_ref)
 
         grid.add_widget(Label(text="Received Into:"))
-        # Canara SNA only accepts Bank inflow
         modes = ['BANK'] if account_key == 'SMC_CANARA_SNA' else ['BANK', 'CASH']
         self.spn_mode = Spinner(text='BANK', values=modes)
         grid.add_widget(self.spn_mode)
 
-        grid.add_widget(Label(text="Amount (₹):"))
+        grid.add_widget(Label(text="Amount (Rs.):"))
         self.txt_amt = TextInput(text="0.0", multiline=False)
         grid.add_widget(self.txt_amt)
 
@@ -315,7 +298,7 @@ class WithdrawalDialog(Popup):
         self.txt_slip = TextInput(text="Self Slip", multiline=False)
         grid.add_widget(self.txt_slip)
 
-        grid.add_widget(Label(text="Amount (₹):"))
+        grid.add_widget(Label(text="Amount (Rs.):"))
         self.txt_amt = TextInput(text="0.0", multiline=False)
         grid.add_widget(self.txt_amt)
 
@@ -356,7 +339,6 @@ class VoucherDialog(Popup):
         layout = BoxLayout(orientation='vertical', padding=12, spacing=8)
         grid = GridLayout(cols=2, spacing=8, row_default_height=38)
 
-        # Auto-fetch next voucher number
         next_v = App.get_running_app().db.get_next_voucher_number(account_key, year_month)
 
         grid.add_widget(Label(text="Voucher Number:"))
@@ -374,14 +356,13 @@ class VoucherDialog(Popup):
 
         grid.add_widget(Label(text="Payment Mode:"))
         if account_key == 'SMC_CANARA_SNA':
-            # Purely Bank / Direct Cheque or Teacher Advance (No Cash-in-hand)
             modes = ['BANK', 'TEACHER_ADVANCE']
         else:
             modes = ['CASH', 'BANK', 'TEACHER_ADVANCE']
         self.spn_mode = Spinner(text=modes[0], values=modes)
         grid.add_widget(self.spn_mode)
 
-        grid.add_widget(Label(text="Amount (₹):"))
+        grid.add_widget(Label(text="Amount (Rs.):"))
         self.txt_amt = TextInput(text="0.0", multiline=False)
         grid.add_widget(self.txt_amt)
 
@@ -411,16 +392,13 @@ class VoucherDialog(Popup):
             print(f"Error saving voucher: {e}")
 
 
-# ==========================================
-# MAIN APPLICATION
-# ==========================================
-
-class DHKApp(App):
+class DHKCashBookApp(App):
     def build(self):
-        self.title = "DHK School Ledger"
-        self.db = DatabaseManager()
+        self.title = "DHK CashBook Pro"
+        db_file = os.path.join(get_safe_storage_dir(), "school_ledger.db")
+        self.db = DatabaseManager(db_file)
         return Builder.load_file("ui.kv")
 
 
 if __name__ == '__main__':
-    DHKApp().run()
+    DHKCashBookApp().run()

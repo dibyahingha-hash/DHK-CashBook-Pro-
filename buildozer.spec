@@ -8,6 +8,7 @@ version = 1.0.0
 
 requirements = python3==3.10.11,hostpython3==3.10.11,kivy==2.2.0,pillow,sqlite3,pyjnius
 
+
 orientation = portrait
 fullscreen = 0
 

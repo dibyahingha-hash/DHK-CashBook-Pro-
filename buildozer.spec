@@ -6,7 +6,7 @@ source.dir = .
 source.include_exts = py,png,jpg,kv,atlas,ttf,json,db
 version = 1.0.0
 
-requirements = python3==3.10.11,hostpython3==3.10.11,kivy==2.2.0,pillow,reportlab,sqlite3,pyjnius
+requirements = python3==3.10.11,hostpython3==3.10.11,kivy==2.2.0,pillow,sqlite3,pyjnius
 
 orientation = portrait
 fullscreen = 0

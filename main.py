@@ -13,7 +13,7 @@ from kivy.uix.button import Button
 from kivy.uix.spinner import Spinner
 
 from db_manager import DatabaseManager
-from pdf_generator import generate_cashbook_pdf, generate_stock_register_pdf
+
 
 
 def get_safe_storage_dir():

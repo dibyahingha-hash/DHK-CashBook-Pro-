@@ -164,8 +164,8 @@
                         GridLayout:
                             cols: 2
                             size_hint_y: None
-                            height: 280
-                            row_default_height: 40
+                            height: 440
+                            row_default_height: 38
                             spacing: 8
 
                             Label:
@@ -210,21 +210,36 @@
                                 id: stock_total_meals
                                 text: "0"
                                 multiline: False
-                                on_text: root.sync_meals_boxes('from_total')
 
                             Label:
-                                text: "Rice Received on Challan (kg):"
+                                text: "Rice Opening Balance (kg):"
                                 color: (0.2, 0.2, 0.2, 1)
                             TextInput:
-                                id: stock_rice_rcv
+                                id: stock_rice_op
                                 text: "0"
                                 multiline: False
 
                             Label:
-                                text: "Cooking Grant Received (Rs.):"
+                                text: "Rice Received (kg):"
                                 color: (0.2, 0.2, 0.2, 1)
                             TextInput:
-                                id: stock_fund_rcv
+                                id: stock_rice_rec
+                                text: "0"
+                                multiline: False
+
+                            Label:
+                                text: "Oil Opening Balance (L):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: stock_oil_op
+                                text: "0"
+                                multiline: False
+
+                            Label:
+                                text: "Oil Received (L):"
+                                color: (0.2, 0.2, 0.2, 1)
+                            TextInput:
+                                id: stock_oil_rec
                                 text: "0"
                                 multiline: False
 
@@ -245,7 +260,7 @@
 
                         Label:
                             id: stock_results_lbl
-                            text: "Enter data above to calculate grain and cooking balances."
+                            text: "Enter data above to calculate grain and oil balances."
                             color: (0.15, 0.2, 0.3, 1)
                             size_hint_y: None
                             height: 90
@@ -296,23 +311,6 @@
                             size_hint_y: None
                             height: 36
                             on_release: root.save_opening_balances('MDM_SAVINGS')
-
-                        BoxLayout:
-                            size_hint_y: None
-                            height: 42
-                            spacing: 8
-                            Button:
-                                text: "+ Inflow (Dr.)"
-                                background_color: (0.2, 0.65, 0.3, 1)
-                                on_release: root.show_receipt_popup('MDM_SAVINGS')
-                            Button:
-                                text: "+ Bank Withdrawal"
-                                background_color: (0.85, 0.5, 0.1, 1)
-                                on_release: root.show_withdrawal_popup('MDM_SAVINGS')
-                            Button:
-                                text: "+ Voucher (Cr.)"
-                                background_color: (0.85, 0.25, 0.2, 1)
-                                on_release: root.show_voucher_popup('MDM_SAVINGS')
 
                         BoxLayout:
                             size_hint_y: None
@@ -439,23 +437,6 @@
 
                         BoxLayout:
                             size_hint_y: None
-                            height: 42
-                            spacing: 8
-                            Button:
-                                text: "+ Inflow (Dr.)"
-                                background_color: (0.2, 0.65, 0.3, 1)
-                                on_release: root.show_receipt_popup('SMC_SAVINGS')
-                            Button:
-                                text: "+ Bank Withdrawal"
-                                background_color: (0.85, 0.5, 0.1, 1)
-                                on_release: root.show_withdrawal_popup('SMC_SAVINGS')
-                            Button:
-                                text: "+ Voucher (Cr.)"
-                                background_color: (0.85, 0.25, 0.2, 1)
-                                on_release: root.show_voucher_popup('SMC_SAVINGS')
-
-                        BoxLayout:
-                            size_hint_y: None
                             height: 48
                             spacing: 10
                             Button:
@@ -520,39 +501,26 @@
                             text: "Save Opening Limit"
                             size_hint_y: None
                             height: 36
-                            on_release: root.save_opening_balances('SMC_CANARA_SNA')
-
-                        BoxLayout:
-                            size_hint_y: None
-                            height: 42
-                            spacing: 8
-                            Button:
-                                text: "+ Limit Received (Dr.)"
-                                background_color: (0.2, 0.65, 0.3, 1)
-                                on_release: root.show_receipt_popup('SMC_CANARA_SNA')
-                            Button:
-                                text: "+ Direct Cheque Voucher"
-                                background_color: (0.85, 0.25, 0.2, 1)
-                                on_release: root.show_voucher_popup('SMC_CANARA_SNA')
+                            on_release: root.save_opening_balances('SMC_CANARA')
 
                         BoxLayout:
                             size_hint_y: None
                             height: 48
                             spacing: 10
                             Button:
-                                text: "View SNA Ledger"
+                                text: "View Balanced Ledger"
                                 bold: True
-                                background_color: (0.8, 0.35, 0.15, 1)
-                                on_release: root.render_cashbook('SMC_CANARA_SNA')
+                                background_color: (0.8, 0.3, 0.1, 1)
+                                on_release: root.render_cashbook('SMC_CANARA')
                             Button:
-                                text: "Export SNA PDF"
+                                text: "Export Ledger PDF"
                                 bold: True
                                 background_color: (0.0, 0.5, 0.4, 1)
-                                on_release: root.export_cashbook_pdf('SMC_CANARA_SNA')
+                                on_release: root.export_cashbook_pdf('SMC_CANARA')
 
                         Label:
                             id: smc_canara_summary_lbl
-                            text: "Canara Bank SNA ledger balance appears here."
+                            text: "Zero-balance audit summary appears here."
                             size_hint_y: None
                             height: 120
                             color: (0.1, 0.15, 0.2, 1)

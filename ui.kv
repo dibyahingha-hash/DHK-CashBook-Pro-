@@ -8,9 +8,6 @@
     SMCPortalScreen:
         name: 'smc_portal'
 
-# ==========================================
-# 1. WELCOME SCREEN
-# ==========================================
 <WelcomeScreen>:
     BoxLayout:
         orientation: 'vertical'
@@ -24,7 +21,6 @@
                 pos: self.pos
                 size: self.size
 
-        # Header Title
         BoxLayout:
             size_hint_y: None
             height: 100
@@ -43,7 +39,6 @@
         Widget:
             size_hint_y: 0.1
 
-        # Navigation Buttons
         BoxLayout:
             orientation: 'vertical'
             spacing: 16
@@ -68,14 +63,10 @@
 
         Widget:
 
-# ==========================================
-# 2. MDM PORTAL SCREEN
-# ==========================================
 <MDMPortalScreen>:
     BoxLayout:
         orientation: 'vertical'
 
-        # Action Bar / Top Nav
         BoxLayout:
             size_hint_y: None
             height: 56
@@ -101,7 +92,6 @@
                 bold: True
                 halign: 'left'
 
-        # Module Switch Tabs
         BoxLayout:
             size_hint_y: None
             height: 48
@@ -117,11 +107,9 @@
                 bold: True
                 on_release: root.switch_sub_view('cashbook')
 
-        # Dynamic Content Panel
         ScreenManager:
             id: mdm_sub_sm
 
-            # Sub-Tab A: Stock & Meal Register
             Screen:
                 name: 'stock_view'
                 ScrollView:
@@ -132,7 +120,6 @@
                         padding: 16
                         spacing: 12
 
-                        # Rate Info Card (Editable)
                         BoxLayout:
                             orientation: 'vertical'
                             size_hint_y: None
@@ -147,7 +134,7 @@
                                     radius: [8]
 
                             Label:
-                                text: "Active PM POSHAN Rates (Tap to override):"
+                                text: "Active PM POSHAN Rates (Tap to edit):"
                                 color: (0.15, 0.2, 0.3, 1)
                                 bold: True
                                 size_hint_y: None
@@ -156,7 +143,7 @@
                             BoxLayout:
                                 spacing: 8
                                 Label:
-                                    text: "LP Rate: ₹"
+                                    text: "LP Rate: Rs."
                                     color: (0.2, 0.2, 0.2, 1)
                                     size_hint_x: 0.3
                                 TextInput:
@@ -165,7 +152,7 @@
                                     multiline: False
                                     size_hint_x: 0.2
                                 Label:
-                                    text: "UP Rate: ₹"
+                                    text: "UP Rate: Rs."
                                     color: (0.2, 0.2, 0.2, 1)
                                     size_hint_x: 0.3
                                 TextInput:
@@ -174,7 +161,6 @@
                                     multiline: False
                                     size_hint_x: 0.2
 
-                        # Inputs Section
                         GridLayout:
                             cols: 2
                             size_hint_y: None
@@ -235,22 +221,28 @@
                                 multiline: False
 
                             Label:
-                                text: "Cooking Grant Received (₹):"
+                                text: "Cooking Grant Received (Rs.):"
                                 color: (0.2, 0.2, 0.2, 1)
                             TextInput:
                                 id: stock_fund_rcv
                                 text: "0"
                                 multiline: False
 
-                        Button:
-                            text: "Save & Calculate Stock Register"
+                        BoxLayout:
                             size_hint_y: None
                             height: 48
-                            bold: True
-                            background_color: (0.12, 0.45, 0.85, 1)
-                            on_release: root.save_stock_batch()
+                            spacing: 10
+                            Button:
+                                text: "Save & Calculate Register"
+                                bold: True
+                                background_color: (0.12, 0.45, 0.85, 1)
+                                on_release: root.save_stock_batch()
+                            Button:
+                                text: "Download PDF"
+                                bold: True
+                                background_color: (0.0, 0.5, 0.4, 1)
+                                on_release: root.export_stock_pdf()
 
-                        # Calculation Results Box
                         Label:
                             id: stock_results_lbl
                             text: "Enter data above to calculate grain and cooking balances."
@@ -258,7 +250,6 @@
                             size_hint_y: None
                             height: 90
 
-            # Sub-Tab B: MDM Cash Book
             Screen:
                 name: 'cashbook_view'
                 ScrollView:
@@ -269,7 +260,6 @@
                         padding: 16
                         spacing: 12
 
-                        # Month & Opening Balances
                         GridLayout:
                             cols: 2
                             size_hint_y: None
@@ -286,7 +276,7 @@
                                 multiline: False
 
                             Label:
-                                text: "Opening Cash in Hand (₹):"
+                                text: "Opening Cash in Hand (Rs.):"
                                 color: (0.2, 0.2, 0.2, 1)
                             TextInput:
                                 id: mdm_cb_op_cash
@@ -294,7 +284,7 @@
                                 multiline: False
 
                             Label:
-                                text: "Opening Bank Balance (₹):"
+                                text: "Opening Bank Balance (Rs.):"
                                 color: (0.2, 0.2, 0.2, 1)
                             TextInput:
                                 id: mdm_cb_op_bank
@@ -307,13 +297,12 @@
                             height: 36
                             on_release: root.save_opening_balances('MDM_SAVINGS')
 
-                        # Transaction Cards Buttons
                         BoxLayout:
                             size_hint_y: None
                             height: 42
                             spacing: 8
                             Button:
-                                text: "+ Add Inflow (Dr.)"
+                                text: "+ Inflow (Dr.)"
                                 background_color: (0.2, 0.65, 0.3, 1)
                                 on_release: root.show_receipt_popup('MDM_SAVINGS')
                             Button:
@@ -321,18 +310,24 @@
                                 background_color: (0.85, 0.5, 0.1, 1)
                                 on_release: root.show_withdrawal_popup('MDM_SAVINGS')
                             Button:
-                                text: "+ Add Voucher (Cr.)"
+                                text: "+ Voucher (Cr.)"
                                 background_color: (0.85, 0.25, 0.2, 1)
                                 on_release: root.show_voucher_popup('MDM_SAVINGS')
 
-                        # Balanced Cash Book Display Box
-                        Button:
-                            text: "Generate Audit-Balanced Cash Book"
+                        BoxLayout:
                             size_hint_y: None
                             height: 48
-                            bold: True
-                            background_color: (0.1, 0.4, 0.75, 1)
-                            on_release: root.render_cashbook('MDM_SAVINGS')
+                            spacing: 10
+                            Button:
+                                text: "View Balanced Ledger"
+                                bold: True
+                                background_color: (0.1, 0.4, 0.75, 1)
+                                on_release: root.render_cashbook('MDM_SAVINGS')
+                            Button:
+                                text: "Export Ledger PDF"
+                                bold: True
+                                background_color: (0.0, 0.5, 0.4, 1)
+                                on_release: root.export_cashbook_pdf('MDM_SAVINGS')
 
                         Label:
                             id: mdm_cb_summary_lbl
@@ -341,14 +336,10 @@
                             height: 120
                             color: (0.1, 0.15, 0.2, 1)
 
-# ==========================================
-# 3. SMC PORTAL SCREEN
-# ==========================================
 <SMCPortalScreen>:
     BoxLayout:
         orientation: 'vertical'
 
-        # Top Action Bar
         BoxLayout:
             size_hint_y: None
             height: 56
@@ -374,7 +365,6 @@
                 bold: True
                 halign: 'left'
 
-        # Two-Account Switch Tabs
         BoxLayout:
             size_hint_y: None
             height: 48
@@ -393,7 +383,6 @@
         ScreenManager:
             id: smc_sub_sm
 
-            # Sub-Tab A: SMC Normal Savings Account
             Screen:
                 name: 'smc_savings_view'
                 ScrollView:
@@ -405,7 +394,7 @@
                         spacing: 12
 
                         Label:
-                            text: "Account: Normal Savings Account (Supports Cash & Bank)"
+                            text: "Account: Normal Savings Account (Cash & Bank)"
                             bold: True
                             color: (0.15, 0.6, 0.4, 1)
                             size_hint_y: None
@@ -427,7 +416,7 @@
                                 multiline: False
 
                             Label:
-                                text: "Opening Cash in Hand (₹):"
+                                text: "Opening Cash in Hand (Rs.):"
                                 color: (0.2, 0.2, 0.2, 1)
                             TextInput:
                                 id: smc_sav_op_cash
@@ -435,7 +424,7 @@
                                 multiline: False
 
                             Label:
-                                text: "Opening Bank Balance (₹):"
+                                text: "Opening Bank Balance (Rs.):"
                                 color: (0.2, 0.2, 0.2, 1)
                             TextInput:
                                 id: smc_sav_op_bank
@@ -453,7 +442,7 @@
                             height: 42
                             spacing: 8
                             Button:
-                                text: "+ Add Inflow (Dr.)"
+                                text: "+ Inflow (Dr.)"
                                 background_color: (0.2, 0.65, 0.3, 1)
                                 on_release: root.show_receipt_popup('SMC_SAVINGS')
                             Button:
@@ -461,17 +450,24 @@
                                 background_color: (0.85, 0.5, 0.1, 1)
                                 on_release: root.show_withdrawal_popup('SMC_SAVINGS')
                             Button:
-                                text: "+ Add Voucher (Cr.)"
+                                text: "+ Voucher (Cr.)"
                                 background_color: (0.85, 0.25, 0.2, 1)
                                 on_release: root.show_voucher_popup('SMC_SAVINGS')
 
-                        Button:
-                            text: "Generate Audit-Balanced Cash Book"
+                        BoxLayout:
                             size_hint_y: None
                             height: 48
-                            bold: True
-                            background_color: (0.15, 0.65, 0.45, 1)
-                            on_release: root.render_cashbook('SMC_SAVINGS')
+                            spacing: 10
+                            Button:
+                                text: "View Balanced Ledger"
+                                bold: True
+                                background_color: (0.15, 0.65, 0.45, 1)
+                                on_release: root.render_cashbook('SMC_SAVINGS')
+                            Button:
+                                text: "Export Ledger PDF"
+                                bold: True
+                                background_color: (0.0, 0.5, 0.4, 1)
+                                on_release: root.export_cashbook_pdf('SMC_SAVINGS')
 
                         Label:
                             id: smc_sav_summary_lbl
@@ -480,7 +476,6 @@
                             height: 120
                             color: (0.1, 0.15, 0.2, 1)
 
-            # Sub-Tab B: SMC Canara Bank SNA (0-Balance)
             Screen:
                 name: 'smc_canara_view'
                 ScrollView:
@@ -492,7 +487,7 @@
                         spacing: 12
 
                         Label:
-                            text: "Account: Canara Bank SNA (Strictly Bank / Direct Cheque / Vendor Advice)"
+                            text: "Account: Canara Bank SNA (Direct Cheque / Vendor Advice)"
                             bold: True
                             color: (0.8, 0.3, 0.1, 1)
                             size_hint_y: None
@@ -514,7 +509,7 @@
                                 multiline: False
 
                             Label:
-                                text: "Opening Bank Balance / Limit (₹):"
+                                text: "Opening Bank Balance / Limit (Rs.):"
                                 color: (0.2, 0.2, 0.2, 1)
                             TextInput:
                                 id: smc_canara_op_bank
@@ -524,4 +519,40 @@
                         Button:
                             text: "Save Opening Limit"
                             size_hint_y: None
-                 
+                            height: 36
+                            on_release: root.save_opening_balances('SMC_CANARA_SNA')
+
+                        BoxLayout:
+                            size_hint_y: None
+                            height: 42
+                            spacing: 8
+                            Button:
+                                text: "+ Limit Received (Dr.)"
+                                background_color: (0.2, 0.65, 0.3, 1)
+                                on_release: root.show_receipt_popup('SMC_CANARA_SNA')
+                            Button:
+                                text: "+ Direct Cheque Voucher"
+                                background_color: (0.85, 0.25, 0.2, 1)
+                                on_release: root.show_voucher_popup('SMC_CANARA_SNA')
+
+                        BoxLayout:
+                            size_hint_y: None
+                            height: 48
+                            spacing: 10
+                            Button:
+                                text: "View SNA Ledger"
+                                bold: True
+                                background_color: (0.8, 0.35, 0.15, 1)
+                                on_release: root.render_cashbook('SMC_CANARA_SNA')
+                            Button:
+                                text: "Export SNA PDF"
+                                bold: True
+                                background_color: (0.0, 0.5, 0.4, 1)
+                                on_release: root.export_cashbook_pdf('SMC_CANARA_SNA')
+
+                        Label:
+                            id: smc_canara_summary_lbl
+                            text: "Canara Bank SNA ledger balance appears here."
+                            size_hint_y: None
+                            height: 120
+                            color: (0.1, 0.15, 0.2, 1)

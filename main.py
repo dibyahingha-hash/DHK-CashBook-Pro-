@@ -13,7 +13,8 @@ from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
 from kivy.uix.spinner import Spinner
 
-from db_manager import DatabaseManager
+from core.db_manager import DatabaseManager
+
 
 
 def get_safe_storage_dir():

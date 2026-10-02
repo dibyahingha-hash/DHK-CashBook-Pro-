@@ -16,7 +16,6 @@ from kivy.uix.spinner import Spinner
 from core.db_manager import DatabaseManager
 
 
-
 def get_safe_storage_dir():
     """Returns permission-free, app-specific external storage on Android."""
     try:
@@ -42,17 +41,17 @@ class WelcomeScreen(Screen):
 
 class MDMPortalScreen(Screen):
     def switch_sub_view(self, view_name):
-        if hasattr(self.ids, 'mdm_sub_sm'):
+        if 'mdm_sub_sm' in self.ids:
             self.ids.mdm_sub_sm.current = 'stock_view' if view_name == 'stock' else 'cashbook_view'
 
     def sync_meals_boxes(self, source):
         try:
-            if source in ('from_lp', 'from_up'):
-                lp_txt = self.ids.stock_lp_meals.text.strip()
-                up_txt = self.ids.stock_up_meals.text.strip()
-                lp_val = int(lp_txt) if lp_txt.isdigit() else 0
-                up_val = int(up_txt) if up_txt.isdigit() else 0
-                total = lp_val + up_val
+            lp_txt = self.ids.stock_lp_meals.text.strip() if 'stock_lp_meals' in self.ids else "0"
+            up_txt = self.ids.stock_up_meals.text.strip() if 'stock_up_meals' in self.ids else "0"
+            lp_val = int(lp_txt) if lp_txt.isdigit() else 0
+            up_val = int(up_txt) if up_txt.isdigit() else 0
+            total = lp_val + up_val
+            if 'stock_total_meals' in self.ids:
                 if self.ids.stock_total_meals.text != str(total):
                     self.ids.stock_total_meals.text = str(total)
         except Exception:
@@ -60,44 +59,50 @@ class MDMPortalScreen(Screen):
 
     def save_stock_batch(self):
         try:
-            ym = self.ids.stock_ym.text.strip() or "2026-09"
-            wd = int(self.ids.stock_wd.text.strip() or "0")
-            lp_m = int(self.ids.stock_lp_meals.text.strip() or "0")
-            up_m = int(self.ids.stock_up_meals.text.strip() or "0")
-            tot_m = int(self.ids.stock_total_meals.text.strip() or "0")
-            if tot_m == 0:
-                tot_m = lp_m + up_m
+            ym = self.ids.stock_ym.text.strip() if 'stock_ym' in self.ids else "2026-09"
+            wd = int(self.ids.stock_wd.text.strip() if 'stock_wd' in self.ids and self.ids.stock_wd.text.strip() else "0")
+            lp_m = int(self.ids.stock_lp_meals.text.strip() if 'stock_lp_meals' in self.ids and self.ids.stock_lp_meals.text.strip() else "0")
+            up_m = int(self.ids.stock_up_meals.text.strip() if 'stock_up_meals' in self.ids and self.ids.stock_up_meals.text.strip() else "0")
+            tot_m = lp_m + up_m
 
-            rice_op = float(self.ids.stock_rice_op.text.strip() or "0.0")
-            rice_rec = float(self.ids.stock_rice_rec.text.strip() or "0.0")
-            oil_op = float(self.ids.stock_oil_op.text.strip() or "0.0")
-            oil_rec = float(self.ids.stock_oil_rec.text.strip() or "0.0")
+            # Rates
+            lp_r = float(self.ids.lp_rate_input.text.strip() if 'lp_rate_input' in self.ids and self.ids.lp_rate_input.text.strip() else "6.78")
+            up_r = float(self.ids.up_rate_input.text.strip() if 'up_rate_input' in self.ids and self.ids.up_rate_input.text.strip() else "10.15")
 
-            rice_cons = (lp_m * 0.100) + (up_m * 0.150)
-            rice_cl = (rice_op + rice_rec) - rice_cons
+            # Food Grains (kg)
+            grain_op = float(self.ids.stock_rice_op.text.strip() if 'stock_rice_op' in self.ids and self.ids.stock_rice_op.text.strip() else "0.0")
+            grain_rec = float(self.ids.stock_rice_rec.text.strip() if 'stock_rice_rec' in self.ids and self.ids.stock_rice_rec.text.strip() else "0.0")
+            grain_cons = (lp_m * 0.100) + (up_m * 0.150)
+            grain_cl = (grain_op + grain_rec) - grain_cons
 
-            oil_cons = (lp_m * 0.005) + (up_m * 0.0075)
-            oil_cl = (oil_op + oil_rec) - oil_cons
+            # Cooking Cost Entitlement (Rs.)
+            cost_op = float(self.ids.cost_op_input.text.strip() if 'cost_op_input' in self.ids and self.ids.cost_op_input.text.strip() else "0.0")
+            cost_rec = float(self.ids.cost_rec_input.text.strip() if 'cost_rec_input' in self.ids and self.ids.cost_rec_input.text.strip() else "0.0")
+            cost_exp = (lp_m * lp_r) + (up_m * up_r)
+            cost_cl = (cost_op + cost_rec) - cost_exp
 
             app = App.get_running_app()
             if hasattr(app, 'db'):
                 app.db.save_mdm_stock(
                     ym, wd, lp_m, up_m, tot_m,
-                    rice_op, rice_rec, rice_cons, rice_cl,
-                    oil_op, oil_rec, oil_cons, oil_cl
+                    lp_r, up_r,
+                    grain_op, grain_rec, grain_cons, grain_cl,
+                    cost_op, cost_rec, cost_exp, cost_cl
                 )
-            if hasattr(self.ids, 'stock_results_lbl'):
+
+            cost_status = f"Surplus: Rs. {cost_cl:.2f}" if cost_cl >= 0 else f"Deficit: -Rs. {abs(cost_cl):.2f}"
+            if 'stock_results_lbl' in self.ids:
                 self.ids.stock_results_lbl.text = (
-                    f"Saved! Rice Cons: {rice_cons:.2f}kg (Cl: {rice_cl:.2f}kg) | "
-                    f"Oil Cons: {oil_cons:.2f}L (Cl: {oil_cl:.2f}L)"
+                    f"Saved! Grains Cons: {grain_cons:.2f}kg (Cl: {grain_cl:.2f}kg) | "
+                    f"Cost Exp: Rs.{cost_exp:.2f} ({cost_status})"
                 )
         except Exception as e:
-            if hasattr(self.ids, 'stock_results_lbl'):
+            if 'stock_results_lbl' in self.ids:
                 self.ids.stock_results_lbl.text = f"Stock Save Error: {e}"
 
     def export_stock_pdf(self):
         try:
-            ym = self.ids.stock_ym.text.strip() or "2026-09"
+            ym = self.ids.stock_ym.text.strip() if 'stock_ym' in self.ids else "2026-09"
             app = App.get_running_app()
             rec = app.db.get_mdm_stock_record(ym) if hasattr(app, 'db') else None
             if not rec:
@@ -108,48 +113,81 @@ class MDMPortalScreen(Screen):
             filename = os.path.join(out_dir, f"MDM_Stock_{ym}.pdf")
             from pdf_generator import generate_stock_register
             generate_stock_register(ym, dict(rec) if rec else {}, output_path=filename)
-            if hasattr(self.ids, 'stock_results_lbl'):
+            if 'stock_results_lbl' in self.ids:
                 self.ids.stock_results_lbl.text = f"PDF Saved to App Folder:\n{filename}"
         except Exception as e:
-            if hasattr(self.ids, 'stock_results_lbl'):
+            if 'stock_results_lbl' in self.ids:
                 self.ids.stock_results_lbl.text = f"PDF Error: {e}"
 
     def save_opening_balances(self, account_key):
         try:
-            ym = self.ids.mdm_cb_ym.text.strip()
-            c = float(self.ids.mdm_cb_op_cash.text.strip() or "0.0")
-            b = float(self.ids.mdm_cb_op_bank.text.strip() or "0.0")
+            ym = self.ids.mdm_cb_ym.text.strip() if 'mdm_cb_ym' in self.ids else "2026-09"
+            c = float(self.ids.mdm_cb_op_cash.text.strip() if 'mdm_cb_op_cash' in self.ids and self.ids.mdm_cb_op_cash.text.strip() else "0.0")
+            b = float(self.ids.mdm_cb_op_bank.text.strip() if 'mdm_cb_op_bank' in self.ids and self.ids.mdm_cb_op_bank.text.strip() else "0.0")
             app = App.get_running_app()
             if hasattr(app, 'db'):
                 app.db.set_opening_balances(account_key, ym, c, b)
-            if hasattr(self.ids, 'mdm_cb_summary_lbl'):
-                self.ids.mdm_cb_summary_lbl.text = f"Opening balances saved for {ym}."
+            if 'mdm_cb_summary_lbl' in self.ids:
+                self.ids.mdm_cb_summary_lbl.text = f"To O/B saved for {ym} (Cash: Rs.{c:.2f}, Bank: Rs.{b:.2f})."
         except Exception as e:
-            if hasattr(self.ids, 'mdm_cb_summary_lbl'):
+            if 'mdm_cb_summary_lbl' in self.ids:
                 self.ids.mdm_cb_summary_lbl.text = f"Input Error: {e}"
 
-    def show_receipt_popup(self, account_key):
-        pass
+    def show_transaction_popup(self, account_key):
+        ym = self.ids.mdm_cb_ym.text.strip() if 'mdm_cb_ym' in self.ids else "2026-09"
+        content = BoxLayout(orientation='vertical', spacing=10, padding=12)
 
-    def show_withdrawal_popup(self, account_key):
-        pass
+        type_spinner = Spinner(text='To MDM (Grant Received)', values=('To MDM (Grant Received)', 'By MDM (Expenditure)', 'To Bank (Contra T/P)'), size_hint_y=None, height=44)
+        date_in = TextInput(text=f"{ym}-15", multiline=False, size_hint_y=None, height=44)
+        particulars_in = TextInput(text="To MDM Cooking Cost Grant", multiline=False, size_hint_y=None, height=44)
+        mode_spinner = Spinner(text='BANK', values=('BANK', 'CASH'), size_hint_y=None, height=44)
+        amt_in = TextInput(hint_text="Amount in Rs.", multiline=False, size_hint_y=None, height=44)
 
-    def show_voucher_popup(self, account_key):
-        pass
+        content.add_widget(Label(text="Transaction Type / Particulars / Mode / Amount", size_hint_y=None, height=24))
+        content.add_widget(type_spinner)
+        content.add_widget(date_in)
+        content.add_widget(particulars_in)
+        content.add_widget(mode_spinner)
+        content.add_widget(amt_in)
+
+        popup = Popup(title=f"Add Voucher - {account_key}", content=content, size_hint=(0.92, 0.7))
+
+        def on_add(btn):
+            try:
+                amt = float(amt_in.text.strip() or "0.0")
+                if amt <= 0:
+                    return
+                app = App.get_running_app()
+                t_choice = type_spinner.text
+                if 'To Bank' in t_choice:
+                    app.db.add_contra_withdrawal(account_key, ym, date_in.text.strip(), "Slip", amt)
+                elif 'To MDM' in t_choice:
+                    app.db.add_receipt(account_key, ym, date_in.text.strip(), particulars_in.text.strip(), "-", mode_spinner.text, amt)
+                else:
+                    app.db.add_payment_voucher(account_key, ym, date_in.text.strip(), "1", particulars_in.text.strip(), mode_spinner.text, amt)
+                popup.dismiss()
+                self.render_cashbook(account_key)
+            except Exception:
+                pass
+
+        btn_add = Button(text="Save Entry", size_hint_y=None, height=48, bold=True, background_normal='', background_color=(0.12, 0.45, 0.85, 1))
+        btn_add.bind(on_release=on_add)
+        content.add_widget(btn_add)
+        popup.open()
 
     def render_cashbook(self, account_key):
         try:
-            ym = self.ids.mdm_cb_ym.text.strip()
+            ym = self.ids.mdm_cb_ym.text.strip() if 'mdm_cb_ym' in self.ids else "2026-09"
             app = App.get_running_app()
             data = app.db.calculate_audit_cashbook(account_key, ym) if hasattr(app, 'db') else {}
             status_cash = f"Cash in Hand: Rs. {data.get('net_cash', 0.0):.2f}"
             if data.get('net_cash', 0.0) < 0:
-                status_cash = f"Due to Head Teacher: -Rs. {abs(data.get('net_cash', 0.0)):.2f}"
+                status_cash = f"Due to In-Charge: -Rs. {abs(data.get('net_cash', 0.0)):.2f}"
 
-            if hasattr(self.ids, 'mdm_cb_summary_lbl'):
+            if 'mdm_cb_summary_lbl' in self.ids:
                 self.ids.mdm_cb_summary_lbl.text = (
-                    f"Month: {ym} | Dr Total: Cash Rs.{data.get('total_dr_cash', 0.0):.2f} / Bank Rs.{data.get('total_dr_bank', 0.0):.2f}\n"
-                    f"Cr Total: Cash Rs.{data.get('total_cr_cash', 0.0):.2f} / Bank Rs.{data.get('total_cr_bank', 0.0):.2f}\n"
+                    f"Month: {ym} | Dr (T/P): Cash Rs.{data.get('total_dr_cash', 0.0):.2f} / Bank Rs.{data.get('total_dr_bank', 0.0):.2f}\n"
+                    f"Cr (T/P): Cash Rs.{data.get('total_cr_cash', 0.0):.2f} / Bank Rs.{data.get('total_cr_bank', 0.0):.2f}\n"
                     f"Status: {status_cash} | Bank: Rs.{data.get('net_bank', 0.0):.2f}\n[Ledger Balanced]"
                 )
         except Exception:
@@ -157,67 +195,76 @@ class MDMPortalScreen(Screen):
 
     def export_cashbook_pdf(self, account_key):
         try:
-            ym = self.ids.mdm_cb_ym.text.strip()
+            ym = self.ids.mdm_cb_ym.text.strip() if 'mdm_cb_ym' in self.ids else "2026-09"
             app = App.get_running_app()
             data = app.db.calculate_audit_cashbook(account_key, ym) if hasattr(app, 'db') else {}
             out_dir = get_safe_storage_dir()
             filename = os.path.join(out_dir, f"{account_key}_{ym}_CashBook.pdf")
             from pdf_generator import generate_cashbook_pdf
             generate_cashbook_pdf("MDM Savings Account", ym, data, output_path=filename)
-            if hasattr(self.ids, 'mdm_cb_summary_lbl'):
+            if 'mdm_cb_summary_lbl' in self.ids:
                 self.ids.mdm_cb_summary_lbl.text = f"PDF Saved to App Folder:\n{filename}"
         except Exception as e:
-            if hasattr(self.ids, 'mdm_cb_summary_lbl'):
+            if 'mdm_cb_summary_lbl' in self.ids:
                 self.ids.mdm_cb_summary_lbl.text = f"PDF Error: {e}"
 
 
 class SMCPortalScreen(Screen):
     def switch_smc_view(self, view_name):
-        if hasattr(self.ids, 'smc_sub_sm'):
+        if 'smc_sub_sm' in self.ids:
             self.ids.smc_sub_sm.current = 'smc_savings_view' if view_name == 'smc_savings' else 'smc_canara_view'
 
     def save_opening_balances(self, account_key):
         try:
             if account_key == 'SMC_SAVINGS':
-                ym = self.ids.smc_sav_ym.text.strip()
-                c = float(self.ids.smc_sav_op_cash.text.strip() or "0.0")
-                b = float(self.ids.smc_sav_op_bank.text.strip() or "0.0")
-                lbl = self.ids.smc_sav_summary_lbl
+                ym = self.ids.smc_sav_ym.text.strip() if 'smc_sav_ym' in self.ids else "2026-09"
+                c = float(self.ids.smc_sav_op_cash.text.strip() if 'smc_sav_op_cash' in self.ids and self.ids.smc_sav_op_cash.text.strip() else "0.0")
+                b = float(self.ids.smc_sav_op_bank.text.strip() if 'smc_sav_op_bank' in self.ids and self.ids.smc_sav_op_bank.text.strip() else "0.0")
+                lbl = self.ids.get('smc_sav_summary_lbl')
             else:
-                ym = self.ids.smc_canara_ym.text.strip()
+                ym = self.ids.smc_canara_ym.text.strip() if 'smc_canara_ym' in self.ids else "2026-09"
                 c = 0.0
-                b = float(self.ids.smc_canara_op_bank.text.strip() or "0.0")
-                lbl = self.ids.smc_canara_summary_lbl
+                b = float(self.ids.smc_canara_op_bank.text.strip() if 'smc_canara_op_bank' in self.ids and self.ids.smc_canara_op_bank.text.strip() else "0.0")
+                lbl = self.ids.get('smc_canara_summary_lbl')
 
             app = App.get_running_app()
             if hasattr(app, 'db'):
                 app.db.set_opening_balances(account_key, ym, c, b)
-            lbl.text = f"Opening balance saved for {ym}."
-        except Exception as e:
+            if lbl:
+                lbl.text = f"To O/B saved for {ym}."
+        except Exception:
             pass
 
-    def show_receipt_popup(self, account_key):
-        pass
-
-    def show_withdrawal_popup(self, account_key):
-        pass
-
-    def show_voucher_popup(self, account_key):
-        pass
-
     def render_cashbook(self, account_key):
-        pass
+        try:
+            if account_key == 'SMC_SAVINGS':
+                ym = self.ids.smc_sav_ym.text.strip() if 'smc_sav_ym' in self.ids else "2026-09"
+                lbl = self.ids.get('smc_sav_summary_lbl')
+            else:
+                ym = self.ids.smc_canara_ym.text.strip() if 'smc_canara_ym' in self.ids else "2026-09"
+                lbl = self.ids.get('smc_canara_summary_lbl')
+
+            app = App.get_running_app()
+            data = app.db.calculate_audit_cashbook(account_key, ym) if hasattr(app, 'db') else {}
+            if lbl:
+                lbl.text = (
+                    f"Month: {ym} | Dr (T/P): Cash Rs.{data.get('total_dr_cash', 0.0):.2f} / Bank Rs.{data.get('total_dr_bank', 0.0):.2f}\n"
+                    f"Cr (T/P): Cash Rs.{data.get('total_cr_cash', 0.0):.2f} / Bank Rs.{data.get('total_cr_bank', 0.0):.2f}\n"
+                    f"Status: In Hand Rs.{data.get('net_cash', 0.0):.2f} | Bank: Rs.{data.get('net_bank', 0.0):.2f}\n[Ledger Balanced]"
+                )
+        except Exception:
+            pass
 
     def export_cashbook_pdf(self, account_key):
         try:
             if account_key == 'SMC_SAVINGS':
-                ym = self.ids.smc_sav_ym.text.strip()
-                lbl = self.ids.smc_sav_summary_lbl
+                ym = self.ids.smc_sav_ym.text.strip() if 'smc_sav_ym' in self.ids else "2026-09"
+                lbl = self.ids.get('smc_sav_summary_lbl')
                 title = "SMC Savings Account"
             else:
-                ym = self.ids.smc_canara_ym.text.strip()
-                lbl = self.ids.smc_canara_summary_lbl
-                title = "Canara Bank (Zero Balance) Account"
+                ym = self.ids.smc_canara_ym.text.strip() if 'smc_canara_ym' in self.ids else "2026-09"
+                lbl = self.ids.get('smc_canara_summary_lbl')
+                title = "Canara Bank SNA (Zero Balance) Account"
 
             app = App.get_running_app()
             data = app.db.calculate_audit_cashbook(account_key, ym) if hasattr(app, 'db') else {}
@@ -225,9 +272,11 @@ class SMCPortalScreen(Screen):
             filename = os.path.join(out_dir, f"{account_key}_{ym}_CashBook.pdf")
             from pdf_generator import generate_cashbook_pdf
             generate_cashbook_pdf(title, ym, data, output_path=filename)
-            lbl.text = f"PDF Saved to App Folder:\n{filename}"
+            if lbl:
+                lbl.text = f"PDF Saved to App Folder:\n{filename}"
         except Exception as e:
-            pass
+            if lbl:
+                lbl.text = f"PDF Error: {e}"
 
 
 class CashBookApp(App):

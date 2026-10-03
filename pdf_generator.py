@@ -1,8 +1,73 @@
 import os
+from kivy.utils import platform
+
 from reportlab.lib.pagesizes import letter, landscape, portrait
 from reportlab.lib import colors
 from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
+
+
+def get_public_export_dir():
+    """
+    Returns the public Downloads folder on Android so files appear 
+    directly in the phone's standard File Manager and Downloads list.
+    """
+    if platform == "android":
+        public_download = "/storage/emulated/0/Download"
+        if os.path.exists(public_download):
+            return public_download
+        
+        public_docs = "/storage/emulated/0/Documents"
+        if os.path.exists(public_docs):
+            return public_docs
+
+        try:
+            from jnius import autoclass
+            Environment = autoclass('android.os.Environment')
+            return Environment.getExternalStoragePublicDirectory(
+                Environment.DIRECTORY_DOWNLOADS
+            ).getAbsolutePath()
+        except Exception:
+            pass
+
+    return os.path.abspath(".")
+
+
+def open_pdf_externally(filepath):
+    """
+    Triggers an Android Intent to automatically open the generated 
+    PDF in the user's default viewer (Drive PDF, Adobe, etc.).
+    """
+    if platform == "android":
+        try:
+            from jnius import autoclass
+            PythonActivity = autoclass('org.kivy.android.PythonActivity')
+            Intent = autoclass('android.content.Intent')
+            File = autoclass('java.io.File')
+            Uri = autoclass('android.net.Uri')
+
+            activity = PythonActivity.mActivity
+            file_obj = File(filepath)
+
+            intent = Intent(Intent.ACTION_VIEW)
+
+            try:
+                FileProvider = autoclass('androidx.core.content.FileProvider')
+                uri = FileProvider.getUriForFile(
+                    activity,
+                    activity.getPackageName() + ".fileprovider",
+                    file_obj
+                )
+                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+            except Exception:
+                uri = Uri.fromFile(file_obj)
+
+            intent.setDataAndType(uri, "application/pdf")
+            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
+            activity.startActivity(intent)
+        except Exception as e:
+            print(f"Could not open PDF via Android Intent: {e}")
+
 
 def generate_cashbook_pdf(account_name, year_month, data, output_path="cashbook_export.pdf"):
     doc = SimpleDocTemplate(
@@ -87,7 +152,6 @@ def generate_cashbook_pdf(account_name, year_month, data, output_path="cashbook_
 
         table_data.append(row)
 
-    # Balancing Row (T/P)
     table_data.append([
         Paragraph("<b>T/P Dr. Total</b>", cell_bold), "",
         Paragraph(f"<b>Rs. {data.get('total_dr_cash', 0.0):.2f}</b>", cell_bold),
@@ -124,7 +188,6 @@ def generate_cashbook_pdf(account_name, year_month, data, output_path="cashbook_
     elements.append(Paragraph(status_text, subtitle_style))
     elements.append(Spacer(1, 20))
 
-    # Official Signatures
     sig_data = [
         [
             Paragraph("Prepared By:<br/><br/>_______________________<br/>Cook-in-Charge / Asst. Teacher", cell_style),
@@ -135,6 +198,7 @@ def generate_cashbook_pdf(account_name, year_month, data, output_path="cashbook_
     elements.append(sig_table)
 
     doc.build(elements)
+    open_pdf_externally(output_path)
     return output_path
 
 
@@ -216,4 +280,5 @@ def generate_stock_register(year_month, stock_data, output_path="stock_register_
     elements.append(sig_table)
 
     doc.build(elements)
+    open_pdf_externally(output_path)
     return output_path

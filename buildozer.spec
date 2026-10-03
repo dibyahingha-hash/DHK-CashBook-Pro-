@@ -7,7 +7,8 @@ source.include_exts = py,png,jpg,kv,atlas,ttf,json,db
 source.exclude_dirs = tests, bin, .git, .github
 version = 1.0.0
 
-requirements = python3==3.10.11,hostpython3==3.10.11,kivy==2.2.0,pillow,sqlite3,pyjnius
+requirements = python3==3.10.11,hostpython3==3.10.11,kivy==2.2.0,pillow,sqlite3,pyjnius,reportlab
+
 
 orientation = portrait
 fullscreen = 0

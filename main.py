@@ -1,6 +1,7 @@
 import os
 import sys
 import traceback
+from datetime import date
 
 from kivy.app import App
 from kivy.lang import Builder
@@ -8,6 +9,7 @@ from kivy.uix.screenmanager import ScreenManager, Screen
 from kivy.uix.popup import Popup
 from kivy.uix.boxlayout import BoxLayout
 from kivy.uix.gridlayout import GridLayout
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.label import Label
 from kivy.uix.textinput import TextInput
 from kivy.uix.button import Button
@@ -15,88 +17,7 @@ from kivy.uix.spinner import Spinner
 
 from core.db_manager import DatabaseManager
 
-from kivy.uix.popup import Popup
-from kivy.uix.boxlayout import BoxLayout
-from kivy.uix.scrollview import ScrollView
-from kivy.uix.gridlayout import GridLayout
-from kivy.uix.label import Label
-from kivy.uix.button import Button
-from core.db_manager import get_month_transactions, delete_transaction, reset_month_data
 
-def view_ledger(self, account_type):
-    month_str = self.ids.month_input.text.strip()
-    records = get_month_transactions(account_type, month_str)
-
-    content = BoxLayout(orientation='vertical', spacing=10, padding=10)
-    
-    # Title / Header
-    header = Label(
-        text=f"[b]{account_type} - {month_str}[/b]\nTotal Vouchers: {len(records)}",
-        markup=True,
-        size_hint_y=None,
-        height='50dp',
-        color=(0.1, 0.3, 0.7, 1)
-    )
-    content.add_widget(header)
-
-    # Scrollable transaction list
-    scroll = ScrollView(size_hint=(1, 1))
-    grid = GridLayout(cols=1, spacing=8, size_hint_y=None)
-    grid.bind(minimum_height=grid.setter('height'))
-
-    if not records:
-        grid.add_widget(Label(text="No transactions found for this month.", size_hint_y=None, height='40dp', color=(0.4, 0.4, 0.4, 1)))
-    else:
-        for item in records:
-            t_id, t_date, particular, t_type, mode, amt = item
-            row = BoxLayout(orientation='horizontal', size_hint_y=None, height='45dp', spacing=5)
-            
-            # Details label
-            desc = f"{t_date} | {t_type} | {particular} ({mode}): Rs. {amt:.2f}"
-            row.add_widget(Label(text=desc, size_hint_x=0.75, halign='left', valign='middle', color=(0, 0, 0, 1)))
-            
-            # Inline Delete button
-            del_btn = Button(text="Delete", size_hint_x=0.25, background_color=(0.85, 0.2, 0.2, 1))
-            del_btn.bind(on_release=lambda btn, item_id=t_id: self._delete_entry(item_id, account_type))
-            row.add_widget(del_btn)
-            
-            grid.add_widget(row)
-
-    scroll.add_widget(grid)
-    content.add_widget(scroll)
-
-    # Action bar: Close + Reset Month
-    action_bar = BoxLayout(size_hint_y=None, height='48dp', spacing=10)
-    
-    reset_btn = Button(text="Reset All for Month", background_color=(0.7, 0.1, 0.1, 1))
-    reset_btn.bind(on_release=lambda btn: self._reset_month(account_type, month_str))
-    action_bar.add_widget(reset_btn)
-
-    close_btn = Button(text="Close", background_color=(0.2, 0.5, 0.8, 1))
-    action_bar.add_widget(close_btn)
-
-    content.add_widget(action_bar)
-
-    self._ledger_popup = Popup(
-        title="Ledger Entries & Corrections",
-        content=content,
-        size_hint=(0.95, 0.85)
-    )
-    close_btn.bind(on_release=self._ledger_popup.dismiss)
-    self._ledger_popup.open()
-
-def _delete_entry(self, trans_id, account_type):
-    delete_transaction(trans_id)
-    if hasattr(self, '_ledger_popup'):
-        self._ledger_popup.dismiss()
-    self.view_ledger(account_type)
-
-def _reset_month(self, account_type, month_str):
-    reset_month_data(account_type, month_str)
-    if hasattr(self, '_ledger_popup'):
-        self._ledger_popup.dismiss()
-    self.view_ledger(account_type)
-    
 def get_safe_storage_dir():
     """Returns permission-free, app-specific external storage on Android."""
     try:
@@ -218,20 +139,43 @@ class MDMPortalScreen(Screen):
         ym = self.ids.mdm_cb_ym.text.strip() if 'mdm_cb_ym' in self.ids else "2026-09"
         content = BoxLayout(orientation='vertical', spacing=10, padding=12)
 
-        type_spinner = Spinner(text='To MDM (Grant Received)', values=('To MDM (Grant Received)', 'By MDM (Expenditure)', 'To Bank (Contra T/P)'), size_hint_y=None, height=44)
-        date_in = TextInput(text=f"{ym}-15", multiline=False, size_hint_y=None, height=44)
-        particulars_in = TextInput(text="To MDM Cooking Cost Grant", multiline=False, size_hint_y=None, height=44)
-        mode_spinner = Spinner(text='BANK', values=('BANK', 'CASH'), size_hint_y=None, height=44)
-        amt_in = TextInput(hint_text="Amount in Rs.", multiline=False, size_hint_y=None, height=44)
+        grid = GridLayout(cols=2, spacing=8, row_default_height=42, size_hint_y=None)
+        grid.bind(minimum_height=grid.setter('height'))
 
-        content.add_widget(Label(text="Transaction Type / Particulars / Mode / Amount", size_hint_y=None, height=24))
-        content.add_widget(type_spinner)
-        content.add_widget(date_in)
-        content.add_widget(particulars_in)
-        content.add_widget(mode_spinner)
-        content.add_widget(amt_in)
+        grid.add_widget(Label(text="Transaction Date:", color=(0.2, 0.2, 0.2, 1), halign='left', text_size=(150, None)))
+        date_in = TextInput(text=f"{ym}-15", multiline=False)
+        grid.add_widget(date_in)
 
-        popup = Popup(title=f"Add Voucher - {account_key}", content=content, size_hint=(0.92, 0.7))
+        grid.add_widget(Label(text="Type / Head:", color=(0.2, 0.2, 0.2, 1), halign='left', text_size=(150, None)))
+        type_spinner = Spinner(
+            text='To MDM (Grant Received)',
+            values=('To MDM (Grant Received)', 'By MDM (Expenditure)', 'To Bank (Contra T/P)'),
+            sync_height=True
+        )
+        grid.add_widget(type_spinner)
+
+        grid.add_widget(Label(text="Particulars:", color=(0.2, 0.2, 0.2, 1), halign='left', text_size=(150, None)))
+        particulars_in = TextInput(text="To MDM Cooking Cost Grant", multiline=False)
+        grid.add_widget(particulars_in)
+
+        grid.add_widget(Label(text="Payment Mode:", color=(0.2, 0.2, 0.2, 1), halign='left', text_size=(150, None)))
+        mode_spinner = Spinner(text='BANK', values=('BANK', 'CASH'), sync_height=True)
+        grid.add_widget(mode_spinner)
+
+        grid.add_widget(Label(text="Amount in Rs.:", color=(0.2, 0.2, 0.2, 1), halign='left', text_size=(150, None)))
+        amt_in = TextInput(hint_text="0.00", multiline=False, input_filter='float')
+        grid.add_widget(amt_in)
+
+        content.add_widget(grid)
+
+        btn_bar = BoxLayout(size_hint_y=None, height=46, spacing=10)
+        cancel_btn = Button(text="Cancel", background_color=(0.55, 0.55, 0.55, 1))
+        save_btn = Button(text="Save Entry", background_color=(0.12, 0.45, 0.85, 1), bold=True)
+        btn_bar.add_widget(cancel_btn)
+        btn_bar.add_widget(save_btn)
+        content.add_widget(btn_bar)
+
+        popup = Popup(title=f"Add Voucher - {account_key}", content=content, size_hint=(0.92, 0.65), auto_dismiss=False)
 
         def on_add(btn):
             try:
@@ -251,10 +195,81 @@ class MDMPortalScreen(Screen):
             except Exception:
                 pass
 
-        btn_add = Button(text="Save Entry", size_hint_y=None, height=48, bold=True, background_normal='', background_color=(0.12, 0.45, 0.85, 1))
-        btn_add.bind(on_release=on_add)
-        content.add_widget(btn_add)
+        cancel_btn.bind(on_release=popup.dismiss)
+        save_btn.bind(on_release=on_add)
         popup.open()
+
+    def view_ledger(self, account_key):
+        ym = self.ids.mdm_cb_ym.text.strip() if 'mdm_cb_ym' in self.ids else "2026-09"
+        app = App.get_running_app()
+        records = app.db.get_entries_for_month(account_key, ym) if hasattr(app, 'db') else []
+
+        content = BoxLayout(orientation='vertical', spacing=10, padding=10)
+
+        header = Label(
+            text=f"[b]{account_key} Ledger ({ym})[/b]\nTotal Entries: {len(records)}",
+            markup=True,
+            size_hint_y=None,
+            height='45dp',
+            color=(0.1, 0.3, 0.7, 1)
+        )
+        content.add_widget(header)
+
+        scroll = ScrollView(size_hint=(1, 1))
+        grid = GridLayout(cols=1, spacing=8, size_hint_y=None)
+        grid.bind(minimum_height=grid.setter('height'))
+
+        if not records:
+            grid.add_widget(Label(text="No transactions recorded this month.", size_hint_y=None, height='40dp', color=(0.4, 0.4, 0.4, 1)))
+        else:
+            for item in records:
+                t_id = item["id"]
+                t_date = item["entry_date"]
+                particular = item["particulars"]
+                mode = item["mode"]
+                amt = float(item["amount"])
+
+                row = BoxLayout(orientation='horizontal', size_hint_y=None, height='44dp', spacing=5)
+                desc = f"{t_date} | {particular} ({mode}): Rs.{amt:.2f}"
+                row.add_widget(Label(text=desc, size_hint_x=0.75, halign='left', text_size=(230, None), color=(0, 0, 0, 1)))
+
+                del_btn = Button(text="Delete", size_hint_x=0.25, background_color=(0.85, 0.2, 0.2, 1))
+                del_btn.bind(on_release=lambda btn, i=t_id: self._delete_entry(i, account_key))
+                row.add_widget(del_btn)
+                grid.add_widget(row)
+
+        scroll.add_widget(grid)
+        content.add_widget(scroll)
+
+        action_bar = BoxLayout(size_hint_y=None, height='46dp', spacing=10)
+        reset_btn = Button(text="Reset All This Month", background_color=(0.7, 0.1, 0.1, 1))
+        reset_btn.bind(on_release=lambda btn: self._reset_month(account_key, ym))
+        close_btn = Button(text="Close", background_color=(0.2, 0.5, 0.8, 1))
+        action_bar.add_widget(reset_btn)
+        action_bar.add_widget(close_btn)
+        content.add_widget(action_bar)
+
+        self._ledger_popup = Popup(title="Ledger Entries & Corrections", content=content, size_hint=(0.95, 0.85))
+        close_btn.bind(on_release=self._ledger_popup.dismiss)
+        self._ledger_popup.open()
+
+    def _delete_entry(self, trans_id, account_key):
+        app = App.get_running_app()
+        if hasattr(app, 'db'):
+            app.db.delete_transaction(trans_id)
+        if hasattr(self, '_ledger_popup'):
+            self._ledger_popup.dismiss()
+        self.render_cashbook(account_key)
+        self.view_ledger(account_key)
+
+    def _reset_month(self, account_key, ym):
+        app = App.get_running_app()
+        if hasattr(app, 'db'):
+            app.db.reset_month_data(account_key, ym)
+        if hasattr(self, '_ledger_popup'):
+            self._ledger_popup.dismiss()
+        self.render_cashbook(account_key)
+        self.view_ledger(account_key)
 
     def render_cashbook(self, account_key):
         try:
@@ -315,6 +330,78 @@ class SMCPortalScreen(Screen):
                 lbl.text = f"To O/B saved for {ym}."
         except Exception:
             pass
+
+    def view_ledger(self, account_key):
+        ym = (self.ids.smc_sav_ym.text.strip() if account_key == 'SMC_SAVINGS' else self.ids.smc_canara_ym.text.strip()) if hasattr(self, 'ids') else "2026-09"
+        app = App.get_running_app()
+        records = app.db.get_entries_for_month(account_key, ym) if hasattr(app, 'db') else []
+
+        content = BoxLayout(orientation='vertical', spacing=10, padding=10)
+
+        header = Label(
+            text=f"[b]{account_key} Ledger ({ym})[/b]\nTotal Entries: {len(records)}",
+            markup=True,
+            size_hint_y=None,
+            height='45dp',
+            color=(0.1, 0.3, 0.7, 1)
+        )
+        content.add_widget(header)
+
+        scroll = ScrollView(size_hint=(1, 1))
+        grid = GridLayout(cols=1, spacing=8, size_hint_y=None)
+        grid.bind(minimum_height=grid.setter('height'))
+
+        if not records:
+            grid.add_widget(Label(text="No transactions recorded this month.", size_hint_y=None, height='40dp', color=(0.4, 0.4, 0.4, 1)))
+        else:
+            for item in records:
+                t_id = item["id"]
+                t_date = item["entry_date"]
+                particular = item["particulars"]
+                mode = item["mode"]
+                amt = float(item["amount"])
+
+                row = BoxLayout(orientation='horizontal', size_hint_y=None, height='44dp', spacing=5)
+                desc = f"{t_date} | {particular} ({mode}): Rs.{amt:.2f}"
+                row.add_widget(Label(text=desc, size_hint_x=0.75, halign='left', text_size=(230, None), color=(0, 0, 0, 1)))
+
+                del_btn = Button(text="Delete", size_hint_x=0.25, background_color=(0.85, 0.2, 0.2, 1))
+                del_btn.bind(on_release=lambda btn, i=t_id: self._delete_entry(i, account_key))
+                row.add_widget(del_btn)
+                grid.add_widget(row)
+
+        scroll.add_widget(grid)
+        content.add_widget(scroll)
+
+        action_bar = BoxLayout(size_hint_y=None, height='46dp', spacing=10)
+        reset_btn = Button(text="Reset All This Month", background_color=(0.7, 0.1, 0.1, 1))
+        reset_btn.bind(on_release=lambda btn: self._reset_month(account_key, ym))
+        close_btn = Button(text="Close", background_color=(0.2, 0.5, 0.8, 1))
+        action_bar.add_widget(reset_btn)
+        action_bar.add_widget(close_btn)
+        content.add_widget(action_bar)
+
+        self._smc_ledger_popup = Popup(title="SMC Ledger Entries", content=content, size_hint=(0.95, 0.85))
+        close_btn.bind(on_release=self._smc_ledger_popup.dismiss)
+        self._smc_ledger_popup.open()
+
+    def _delete_entry(self, trans_id, account_key):
+        app = App.get_running_app()
+        if hasattr(app, 'db'):
+            app.db.delete_transaction(trans_id)
+        if hasattr(self, '_smc_ledger_popup'):
+            self._smc_ledger_popup.dismiss()
+        self.render_cashbook(account_key)
+        self.view_ledger(account_key)
+
+    def _reset_month(self, account_key, ym):
+        app = App.get_running_app()
+        if hasattr(app, 'db'):
+            app.db.reset_month_data(account_key, ym)
+        if hasattr(self, '_smc_ledger_popup'):
+            self._smc_ledger_popup.dismiss()
+        self.render_cashbook(account_key)
+        self.view_ledger(account_key)
 
     def render_cashbook(self, account_key):
         try:

@@ -1,284 +1,305 @@
 import os
-from kivy.utils import platform
-
-from reportlab.lib.pagesizes import letter, landscape, portrait
+from reportlab.lib.pagesizes import A4, landscape
 from reportlab.lib import colors
-from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle
+from reportlab.platypus import SimpleDocTemplate, Paragraph, Spacer, Table, TableStyle, PageBreak
 from reportlab.lib.styles import getSampleStyleSheet, ParagraphStyle
 
-
-def get_public_export_dir():
+def generate_cashbook_pdf(account_name, ym, data, output_path="CashBook.pdf"):
     """
-    Returns the public Downloads folder on Android so files appear 
-    directly in the phone's standard File Manager and Downloads list.
+    Renders the exact Assam 2-page Physical Cash Book Spread:
+    Page 1: RECEIPTS (Dr.)
+    Page 2: PAYMENTS (Cr.)
     """
-    if platform == "android":
-        public_download = "/storage/emulated/0/Download"
-        if os.path.exists(public_download):
-            return public_download
-        
-        public_docs = "/storage/emulated/0/Documents"
-        if os.path.exists(public_docs):
-            return public_docs
-
-        try:
-            from jnius import autoclass
-            Environment = autoclass('android.os.Environment')
-            return Environment.getExternalStoragePublicDirectory(
-                Environment.DIRECTORY_DOWNLOADS
-            ).getAbsolutePath()
-        except Exception:
-            pass
-
-    return os.path.abspath(".")
-
-
-def open_pdf_externally(filepath):
-    """
-    Triggers an Android Intent to automatically open the generated 
-    PDF in the user's default viewer (Drive PDF, Adobe, etc.).
-    """
-    if platform == "android":
-        try:
-            from jnius import autoclass
-            PythonActivity = autoclass('org.kivy.android.PythonActivity')
-            Intent = autoclass('android.content.Intent')
-            File = autoclass('java.io.File')
-            Uri = autoclass('android.net.Uri')
-
-            activity = PythonActivity.mActivity
-            file_obj = File(filepath)
-
-            intent = Intent(Intent.ACTION_VIEW)
-
-            try:
-                FileProvider = autoclass('androidx.core.content.FileProvider')
-                uri = FileProvider.getUriForFile(
-                    activity,
-                    activity.getPackageName() + ".fileprovider",
-                    file_obj
-                )
-                intent.addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
-            except Exception:
-                uri = Uri.fromFile(file_obj)
-
-            intent.setDataAndType(uri, "application/pdf")
-            intent.addFlags(Intent.FLAG_ACTIVITY_NEW_TASK)
-            activity.startActivity(intent)
-        except Exception as e:
-            print(f"Could not open PDF via Android Intent: {e}")
-
-
-def generate_cashbook_pdf(account_name, year_month, data, output_path="cashbook_export.pdf"):
+    # Standard landscape A4 to mirror the physical cash register book
     doc = SimpleDocTemplate(
         output_path,
-        pagesize=landscape(letter),
-        leftMargin=24,
-        rightMargin=24,
-        topMargin=24,
-        bottomMargin=24
+        pagesize=landscape(A4),
+        leftMargin=20,
+        rightMargin=20,
+        topMargin=25,
+        bottomMargin=25
     )
 
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
         'TitleStyle',
         parent=styles['Heading1'],
-        fontSize=14,
-        leading=16,
-        alignment=1,
-        textColor=colors.HexColor('#0F172A')
+        fontSize=15,
+        alignment=1, # Center
+        spaceAfter=10,
+        textColor=colors.HexColor('#1A237E')
     )
-    subtitle_style = ParagraphStyle(
-        'SubtitleStyle',
+    cell_style = ParagraphStyle(
+        'CellStyle',
         parent=styles['Normal'],
-        fontSize=9,
-        leading=12,
-        alignment=1,
-        textColor=colors.HexColor('#334155')
+        fontSize=8,
+        leading=10
     )
-    cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=8, leading=10)
-    cell_bold = ParagraphStyle('CellBold', parent=styles['Normal'], fontSize=8, leading=10, fontName='Helvetica-Bold')
+    cell_bold = ParagraphStyle(
+        'CellBold',
+        parent=styles['Normal'],
+        fontSize=8,
+        leading=10,
+        fontName='Helvetica-Bold'
+    )
 
-    elements = []
-    elements.append(Paragraph("<b>ELEMENTARY SCHOOL AUDIT CASH BOOK REGISTER</b>", title_style))
-    elements.append(Paragraph(f"Account: <b>{account_name}</b> &nbsp;|&nbsp; Month: <b>{year_month}</b>", subtitle_style))
-    elements.append(Spacer(1, 8))
+    story = []
+    summary = data.get("summary", {})
+    entries = data.get("entries", [])
 
-    table_data = [
+    op_cash = summary.get('op_cash', 0.0)
+    op_bank = summary.get('op_bank', 0.0)
+    cl_cash = summary.get('cl_cash', 0.0)
+    cl_bank = summary.get('cl_bank', 0.0)
+    tot_dr_cash = summary.get('dr_cash', 0.0)
+    tot_dr_bank = summary.get('dr_bank', 0.0)
+    tot_cr_cash = summary.get('cr_cash', 0.0)
+    tot_cr_bank = summary.get('cr_bank', 0.0)
+
+    # ================= PAGE 1: RECEIPTS (Dr.) =================
+    header_text = f"<b>{account_name.upper()} - CASH BOOK REGISTER (RECEIPTS / Dr.)</b><br/><font size=10>For the Month of: {ym}</font>"
+    story.append(Paragraph(header_text, title_style))
+    story.append(Spacer(1, 10))
+
+    # Receipts Table Columns: Month & Date | PARTICULARS | Ledger Folio | Amount (Cash) | Bank Amount | Total Amount
+    dr_data = [
         [
-            Paragraph("<b>RECEIPTS (DEBIT / Dr.)</b>", cell_bold), "", "", "",
-            Paragraph("<b>PAYMENTS (CREDIT / Cr.)</b>", cell_bold), "", "", ""
-        ],
-        [
-            Paragraph("<b>Date</b>", cell_bold),
-            Paragraph("<b>Particulars</b>", cell_bold),
-            Paragraph("<b>Cash (Rs.)</b>", cell_bold),
-            Paragraph("<b>Bank (Rs.)</b>", cell_bold),
-            Paragraph("<b>Date</b>", cell_bold),
-            Paragraph("<b>Particulars (V. No.)</b>", cell_bold),
-            Paragraph("<b>Cash (Rs.)</b>", cell_bold),
-            Paragraph("<b>Bank (Rs.)</b>", cell_bold)
+            Paragraph("<b>Month &<br/>Date</b>", cell_bold),
+            Paragraph("<b>PARTICULARS</b>", cell_bold),
+            Paragraph("<b>LF</b>", cell_bold),
+            Paragraph("<b>Cash Amount<br/>(Rs.)</b>", cell_bold),
+            Paragraph("<b>Bank Amount<br/>(Rs.)</b>", cell_bold),
+            Paragraph("<b>Total Amount<br/>(Rs.)</b>", cell_bold)
         ]
     ]
 
-    dr_rows = data.get("dr_rows", [])
-    cr_rows = data.get("cr_rows", [])
-    max_len = max(len(dr_rows), len(cr_rows), 1)
-
-    for i in range(max_len):
-        row = []
-        if i < len(dr_rows):
-            d = dr_rows[i]
-            row.extend([
-                Paragraph(str(d.get("date", "")), cell_style),
-                Paragraph(str(d.get("particulars", "")), cell_style),
-                Paragraph(f"{d.get('cash', 0.0):.2f}" if d.get('cash', 0.0) > 0 else "-", cell_style),
-                Paragraph(f"{d.get('bank', 0.0):.2f}" if d.get('bank', 0.0) > 0 else "-", cell_style)
-            ])
-        else:
-            row.extend(["", "", "", ""])
-
-        if i < len(cr_rows):
-            c = cr_rows[i]
-            ref_txt = f" (V-{c.get('ref')})" if c.get('ref') and c.get('ref') != '-' else ""
-            row.extend([
-                Paragraph(str(c.get("date", "")), cell_style),
-                Paragraph(f"{c.get('particulars', '')}{ref_txt}", cell_style),
-                Paragraph(f"{c.get('cash', 0.0):.2f}" if c.get('cash', 0.0) > 0 else "-", cell_style),
-                Paragraph(f"{c.get('bank', 0.0):.2f}" if c.get('bank', 0.0) > 0 else "-", cell_style)
-            ])
-        else:
-            row.extend(["", "", "", ""])
-
-        table_data.append(row)
-
-    table_data.append([
-        Paragraph("<b>T/P Dr. Total</b>", cell_bold), "",
-        Paragraph(f"<b>Rs. {data.get('total_dr_cash', 0.0):.2f}</b>", cell_bold),
-        Paragraph(f"<b>Rs. {data.get('total_dr_bank', 0.0):.2f}</b>", cell_bold),
-        Paragraph("<b>T/P Cr. Total</b>", cell_bold), "",
-        Paragraph(f"<b>Rs. {data.get('total_cr_cash', 0.0):.2f}</b>", cell_bold),
-        Paragraph(f"<b>Rs. {data.get('total_cr_bank', 0.0):.2f}</b>", cell_bold)
+    # Line 1: Opening Balance b/f
+    dr_data.append([
+        Paragraph(f"{ym}-01", cell_style),
+        Paragraph("<b>To Opening Balance b/f:</b><br/>&nbsp;&nbsp;Cash in Hand & Bank Balances", cell_style),
+        Paragraph("-", cell_style),
+        Paragraph(f"{op_cash:.2f}", cell_style),
+        Paragraph(f"{op_bank:.2f}", cell_style),
+        Paragraph(f"{(op_cash + op_bank):.2f}", cell_style)
     ])
 
-    col_widths = [65, 180, 60, 65, 65, 180, 60, 65]
-    t = Table(table_data, colWidths=col_widths, repeatRows=2)
-    t.setStyle(TableStyle([
-        ('SPAN', (0, 0), (3, 0)),
-        ('SPAN', (4, 0), (7, 0)),
-        ('BACKGROUND', (0, 0), (3, 0), colors.HexColor('#E2E8F0')),
-        ('BACKGROUND', (4, 0), (7, 0), colors.HexColor('#FEE2E2')),
-        ('ALIGN', (0, 0), (-1, 0), 'CENTER'),
-        ('BACKGROUND', (0, 1), (-1, 1), colors.HexColor('#CBD5E1')),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#94A3B8')),
-        ('LINEBEFORE', (4, 0), (4, -1), 1.5, colors.HexColor('#334155')),
-        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#F1F5F9')),
+    # Receipt Entries
+    for e in entries:
+        e_type = e.get('entry_type')
+        c_amt = float(e.get('cash_amount') or 0.0)
+        b_amt = float(e.get('bank_amount') or 0.0)
+
+        if e_type == 'RECEIPT':
+            narration = f"To {e.get('particulars')}"
+            dr_data.append([
+                Paragraph(e.get('entry_date', ''), cell_style),
+                Paragraph(narration, cell_style),
+                Paragraph(e.get('voucher_no', '-'), cell_style),
+                Paragraph(f"{c_amt:.2f}" if c_amt > 0 else "-", cell_style),
+                Paragraph(f"{b_amt:.2f}" if b_amt > 0 else "-", cell_style),
+                Paragraph(f"{(c_amt + b_amt):.2f}", cell_style)
+            ])
+        elif e_type == 'CONTRA':
+            # Cash withdrawal from Bank
+            narration = f"To Bank (Cash Withdrawn vide Slip/Chq No. {e.get('voucher_no', '-')})"
+            dr_data.append([
+                Paragraph(e.get('entry_date', ''), cell_style),
+                Paragraph(narration, cell_style),
+                Paragraph("C", cell_bold),
+                Paragraph(f"{c_amt:.2f}", cell_style),
+                Paragraph("-", cell_style),
+                Paragraph(f"{c_amt:.2f}", cell_style)
+            ])
+
+    # Pad empty rows to maintain physical register look
+    for _ in range(max(1, 10 - len(dr_data))):
+        dr_data.append(["", "", "", "", "", ""])
+
+    # Total Receipts Line
+    dr_data.append([
+        Paragraph("<b>TOTAL</b>", cell_bold),
+        Paragraph("<b>Total Receipts Carried Over</b>", cell_bold),
+        Paragraph("", cell_bold),
+        Paragraph(f"<b>{tot_dr_cash:.2f}</b>", cell_bold),
+        Paragraph(f"<b>{tot_dr_bank:.2f}</b>", cell_bold),
+        Paragraph(f"<b>{(tot_dr_cash + tot_dr_bank):.2f}</b>", cell_bold)
+    ])
+
+    table_style_setting = TableStyle([
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#E8EAF6')),
+        ('ALIGN', (0, 0), (-1, -1), 'LEFT'),
+        ('ALIGN', (3, 1), (-1, -1), 'RIGHT'),
         ('VALIGN', (0, 0), (-1, -1), 'TOP'),
-        ('TOPPADDING', (0, 0), (-1, -1), 2),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 2),
-    ]))
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#9E9E9E')),
+        ('BACKGROUND', (0, -1), (-1, -1), colors.HexColor('#EEEEEE')),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('TOPPADDING', (0, 0), (-1, -1), 4),
+    ])
 
-    elements.append(t)
-    elements.append(Spacer(1, 10))
+    t_dr = Table(dr_data, colWidths=[70, 360, 40, 95, 95, 100])
+    t_dr.setStyle(table_style_setting)
+    story.append(t_dr)
 
-    net_c = data.get("net_cash", 0.0)
-    net_b = data.get("net_bank", 0.0)
-    cash_note = f"By C/B (Cash in Hand): Rs. {net_c:.2f}" if net_c >= 0 else f"To C/B (Deficit / Due to In-Charge): -Rs. {abs(net_c):.2f}"
-    status_text = f"<b>Balance Summary:</b> {cash_note} &nbsp;|&nbsp; By C/B (Bank Account): Rs. {net_b:.2f}"
-    elements.append(Paragraph(status_text, subtitle_style))
-    elements.append(Spacer(1, 20))
+    # Page Break to Right Page (Page 5)
+    story.append(PageBreak())
 
-    sig_data = [
+    # ================= PAGE 2: PAYMENTS (Cr.) =================
+    header_text_cr = f"<b>{account_name.upper()} - CASH BOOK REGISTER (PAYMENTS / Cr.)</b><br/><font size=10>For the Month of: {ym}</font>"
+    story.append(Paragraph(header_text_cr, title_style))
+    story.append(Spacer(1, 10))
+
+    # Payments Table Columns: Month & Date | PARTICULARS | Ledger Folio | Amount (Cash) | Bank Amount | Total Amount
+    cr_data = [
         [
-            Paragraph("Prepared By:<br/><br/>_______________________<br/>Cook-in-Charge / Asst. Teacher", cell_style),
-            Paragraph("Verified & Passed By:<br/><br/>_______________________<br/>Head Teacher / Secretary, SMC", cell_style)
+            Paragraph("<b>Month &<br/>Date</b>", cell_bold),
+            Paragraph("<b>PARTICULARS</b>", cell_bold),
+            Paragraph("<b>Voucher<br/>/ LF</b>", cell_bold),
+            Paragraph("<b>Cash Amount<br/>(Rs.)</b>", cell_bold),
+            Paragraph("<b>Bank Amount<br/>(Rs.)</b>", cell_bold),
+            Paragraph("<b>Total Amount<br/>(Rs.)</b>", cell_bold)
         ]
     ]
-    sig_table = Table(sig_data, colWidths=[370, 370])
-    elements.append(sig_table)
 
-    doc.build(elements)
-    open_pdf_externally(output_path)
-    return output_path
+    # Payment Entries
+    for e in entries:
+        e_type = e.get('entry_type')
+        c_amt = float(e.get('cash_amount') or 0.0)
+        b_amt = float(e.get('bank_amount') or 0.0)
+
+        if e_type == 'PAYMENT':
+            narration = f"By {e.get('particulars')} (Voucher No. {e.get('voucher_no', '-')})"
+            cr_data.append([
+                Paragraph(e.get('entry_date', ''), cell_style),
+                Paragraph(narration, cell_style),
+                Paragraph(e.get('voucher_no', '-'), cell_style),
+                Paragraph(f"{c_amt:.2f}" if c_amt > 0 else "-", cell_style),
+                Paragraph(f"{b_amt:.2f}" if b_amt > 0 else "-", cell_style),
+                Paragraph(f"{(c_amt + b_amt):.2f}", cell_style)
+            ])
+        elif e_type == 'CONTRA':
+            # Contra on credit side: Deducts from bank
+            narration = f"By Cash (Self Withdrawn vide Slip/Chq No. {e.get('voucher_no', '-')})"
+            cr_data.append([
+                Paragraph(e.get('entry_date', ''), cell_style),
+                Paragraph(narration, cell_style),
+                Paragraph("C", cell_bold),
+                Paragraph("-", cell_style),
+                Paragraph(f"{b_amt:.2f}", cell_style),
+                Paragraph(f"{b_amt:.2f}", cell_style)
+            ])
+
+    # Month-end closing line
+    cr_data.append([
+        Paragraph(f"{ym}-30", cell_style),
+        Paragraph("<b>By Closing Balance c/d:</b><br/>&nbsp;&nbsp;Cash in Hand & Bank Balances", cell_style),
+        Paragraph("-", cell_style),
+        Paragraph(f"{cl_cash:.2f}", cell_style),
+        Paragraph(f"{cl_bank:.2f}", cell_style),
+        Paragraph(f"{(cl_cash + cl_bank):.2f}", cell_style)
+    ])
+
+    # Pad empty rows to maintain format
+    for _ in range(max(1, 10 - len(cr_data))):
+        cr_data.append(["", "", "", "", "", ""])
+
+    # Total Payments Balancing Line
+    cr_data.append([
+        Paragraph("<b>TOTAL</b>", cell_bold),
+        Paragraph("<b>Grand Total Balanced</b>", cell_bold),
+        Paragraph("", cell_bold),
+        Paragraph(f"<b>{(tot_cr_cash + cl_cash):.2f}</b>", cell_bold),
+        Paragraph(f"<b>{(tot_cr_bank + cl_bank):.2f}</b>", cell_bold),
+        Paragraph(f"<b>{(tot_cr_cash + cl_cash + tot_cr_bank + cl_bank):.2f}</b>", cell_bold)
+    ])
+
+    t_cr = Table(cr_data, colWidths=[70, 360, 40, 95, 95, 100])
+    t_cr.setStyle(table_style_setting)
+    story.append(t_cr)
+
+    # Sign-off Blocks at Bottom
+    story.append(Spacer(1, 20))
+    sig_data = [
+        [
+            Paragraph("<br/><br/>_____________________________________<br/><b>Signature of Cook-in-Charge / Teacher</b>", cell_style),
+            Paragraph("<br/><br/>_____________________________________<br/><b>Signature of Head Teacher / SMC Secretary</b>", cell_style)
+        ]
+    ]
+    sig_table = Table(sig_data, colWidths=[380, 380])
+    sig_table.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
+    story.append(sig_table)
+
+    doc.build(story)
 
 
-def generate_stock_register(year_month, stock_data, output_path="stock_register_export.pdf"):
+def generate_stock_register(ym, rec, output_path="Stock_Register.pdf"):
+    """
+    Renders the MDM Monthly Food Grains and Cooking Cost Entitlement Register.
+    """
     doc = SimpleDocTemplate(
         output_path,
-        pagesize=portrait(letter),
-        leftMargin=36,
-        rightMargin=36,
-        topMargin=36,
-        bottomMargin=36
+        pagesize=A4,
+        leftMargin=30,
+        rightMargin=30,
+        topMargin=30,
+        bottomMargin=30
     )
 
     styles = getSampleStyleSheet()
     title_style = ParagraphStyle(
-        'StockTitle',
+        'TitleStyle',
         parent=styles['Heading1'],
-        fontSize=14,
-        leading=16,
+        fontSize=15,
         alignment=1,
-        textColor=colors.HexColor('#0F172A')
+        textColor=colors.HexColor('#1B5E20'),
+        spaceAfter=15
     )
-    subtitle_style = ParagraphStyle(
-        'StockSubtitle',
-        parent=styles['Normal'],
-        fontSize=9,
-        leading=12,
-        alignment=1,
-        textColor=colors.HexColor('#334155')
-    )
-    cell_style = ParagraphStyle('StockCell', parent=styles['Normal'], fontSize=8.5, leading=11)
-    cell_bold = ParagraphStyle('StockCellBold', parent=styles['Normal'], fontSize=8.5, leading=11, fontName='Helvetica-Bold')
+    cell_style = ParagraphStyle('CellStyle', parent=styles['Normal'], fontSize=9, leading=12)
+    cell_bold = ParagraphStyle('CellBold', parent=styles['Normal'], fontSize=9, leading=12, fontName='Helvetica-Bold')
 
-    elements = []
-    elements.append(Paragraph("<b>PM POSHAN (MDM) MONTHLY REGISTER</b>", title_style))
-    elements.append(Paragraph("<b>FOOD GRAINS CONSUMPTION & COOKING COST ACCOUNT</b>", subtitle_style))
-    elements.append(Paragraph(f"Reporting Month: <b>{year_month}</b> &nbsp;|&nbsp; Working Days: <b>{stock_data.get('working_days', 0)}</b>", subtitle_style))
-    elements.append(Spacer(1, 12))
+    story = []
+    story.append(Paragraph(f"<b>PM POSHAN - MONTHLY STOCK & COST REGISTER</b><br/><font size=11>Month: {ym}</font>", title_style))
+    story.append(Spacer(1, 10))
 
-    cost_cl = stock_data.get('cost_cl', 0.0)
-    cost_status = f"Rs. {cost_cl:.2f} (Surplus in Hand/Bank)" if cost_cl >= 0 else f"<font color='#B91C1C'><b>-Rs. {abs(cost_cl):.2f} (Deficit / Due to In-Charge)</b></font>"
-
+    # Summary table
     table_data = [
-        [Paragraph("<b>Component / Head</b>", cell_bold), Paragraph("<b>Particulars / Audit Quantity</b>", cell_bold)],
-        [Paragraph("LP Meals Served (Classes 1–5 @ 100g)", cell_style), Paragraph(str(stock_data.get('lp_meals', 0)), cell_style)],
-        [Paragraph("UP Meals Served (Classes 6–8 @ 150g)", cell_style), Paragraph(str(stock_data.get('up_meals', 0)), cell_style)],
-        [Paragraph("<b>Total Meals Served in Month</b>", cell_bold), Paragraph(f"<b>{stock_data.get('total_meals', 0)}</b>", cell_bold)],
-        [Paragraph("PM POSHAN Rate (LP / Lower Primary)", cell_style), Paragraph(f"Rs. {stock_data.get('lp_rate', 6.78):.2f} per meal", cell_style)],
-        [Paragraph("PM POSHAN Rate (UP / Upper Primary)", cell_style), Paragraph(f"Rs. {stock_data.get('up_rate', 10.15):.2f} per meal", cell_style)],
-        [Paragraph("To O/B - Food Grains (Opening Balance)", cell_style), Paragraph(f"{stock_data.get('grain_op', 0.0):.3f} kg", cell_style)],
-        [Paragraph("To MDM - Food Grains Received on Challan", cell_style), Paragraph(f"{stock_data.get('grain_rec', 0.0):.3f} kg", cell_style)],
-        [Paragraph("By MDM - Food Grains Consumed (Auto Entitlement)", cell_style), Paragraph(f"{stock_data.get('grain_cons', 0.0):.3f} kg", cell_style)],
-        [Paragraph("<b>By C/B - Food Grains Balance in Hand</b>", cell_bold), Paragraph(f"<b>{stock_data.get('grain_cl', 0.0):.3f} kg</b>", cell_bold)],
-        [Paragraph("To O/B - Cooking Cost (Opening Balance / Past Deficit)", cell_style), Paragraph(f"Rs. {stock_data.get('cost_op', 0.0):.2f}", cell_style)],
-        [Paragraph("To MDM - Cooking Cost Grant Received via SNA/Bank", cell_style), Paragraph(f"Rs. {stock_data.get('cost_rec', 0.0):.2f}", cell_style)],
-        [Paragraph("By MDM - Cooking Cost Entitlement Expenditure", cell_style), Paragraph(f"Rs. {stock_data.get('cost_exp', 0.0):.2f}", cell_style)],
-        [Paragraph("<b>By C/B - Cooking Cost Net Balance Status</b>", cell_bold), Paragraph(cost_status, cell_bold)]
+        [Paragraph("<b>Component / Particulars</b>", cell_bold), Paragraph("<b>Details / Values</b>", cell_bold)],
+        [Paragraph("School Working Days", cell_style), Paragraph(str(rec.get('working_days', 0)), cell_style)],
+        [Paragraph("Lower Primary (LP) Meals Fed", cell_style), Paragraph(str(rec.get('lp_meals', 0)), cell_style)],
+        [Paragraph("Upper Primary (UP) Meals Fed", cell_style), Paragraph(str(rec.get('up_meals', 0)), cell_style)],
+        [Paragraph("Total Meals Served", cell_bold), Paragraph(str(rec.get('total_meals', 0)), cell_bold)],
+        [Paragraph("<b>FOOD GRAINS (RICE in kg)</b>", cell_bold), Paragraph("", cell_style)],
+        [Paragraph("&nbsp;&nbsp;Opening Balance", cell_style), Paragraph(f"{rec.get('grain_opening', 0.0):.2f} kg", cell_style)],
+        [Paragraph("&nbsp;&nbsp;Received during month", cell_style), Paragraph(f"{rec.get('grain_received', 0.0):.2f} kg", cell_style)],
+        [Paragraph("&nbsp;&nbsp;Consumption (@100g LP / 150g UP)", cell_style), Paragraph(f"{rec.get('grain_consumed', 0.0):.2f} kg", cell_style)],
+        [Paragraph("&nbsp;&nbsp;<b>Closing Stock Balance</b>", cell_bold), Paragraph(f"<b>{rec.get('grain_closing', 0.0):.2f} kg</b>", cell_bold)],
+        [Paragraph("<b>COOKING COST (Rs.)</b>", cell_bold), Paragraph("", cell_style)],
+        [Paragraph("&nbsp;&nbsp;Opening Balance / Past Deficit", cell_style), Paragraph(f"Rs. {rec.get('cost_opening', 0.0):.2f}", cell_style)],
+        [Paragraph("&nbsp;&nbsp;Cooking Cost Grant Received", cell_style), Paragraph(f"Rs. {rec.get('cost_received', 0.0):.2f}", cell_style)],
+        [Paragraph("&nbsp;&nbsp;Cooking Cost Entitlement Utilized", cell_style), Paragraph(f"Rs. {rec.get('cost_expenditure', 0.0):.2f}", cell_style)],
+        [Paragraph("&nbsp;&nbsp;<b>Closing Status (Surplus / Deficit)</b>", cell_bold), Paragraph(f"<b>Rs. {rec.get('cost_closing', 0.0):.2f}</b>", cell_bold)]
     ]
 
-    t = Table(table_data, colWidths=[270, 270])
+    t = Table(table_data, colWidths=[320, 210])
     t.setStyle(TableStyle([
-        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#F1F5F9')),
-        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#CBD5E1')),
-        ('VALIGN', (0, 0), (-1, -1), 'MIDDLE'),
-        ('TOPPADDING', (0, 0), (-1, -1), 4),
-        ('BOTTOMPADDING', (0, 0), (-1, -1), 4),
+        ('BACKGROUND', (0, 0), (-1, 0), colors.HexColor('#C8E6C9')),
+        ('GRID', (0, 0), (-1, -1), 0.5, colors.HexColor('#81C784')),
+        ('BACKGROUND', (0, 5), (-1, 5), colors.HexColor('#E8F5E9')),
+        ('BACKGROUND', (0, 10), (-1, 10), colors.HexColor('#E8F5E9')),
+        ('TOPPADDING', (0, 0), (-1, -1), 5),
+        ('BOTTOMPADDING', (0, 0), (-1, -1), 5),
     ]))
+    story.append(t)
 
-    elements.append(t)
-    elements.append(Spacer(1, 24))
-
+    # Signatures
+    story.append(Spacer(1, 30))
     sig_data = [
         [
-            Paragraph("Prepared By:<br/><br/>_______________________<br/>Cook-in-Charge / Asst. Teacher", cell_style),
-            Paragraph("Verified & Passed By:<br/><br/>_______________________<br/>Head Teacher / Secretary, SMC", cell_style)
+            Paragraph("____________________________<br/><b>Prepared by Teacher-in-Charge</b>", cell_style),
+            Paragraph("____________________________<br/><b>Verified by Head Teacher / SMC</b>", cell_style)
         ]
     ]
     sig_table = Table(sig_data, colWidths=[270, 270])
-    elements.append(sig_table)
+    sig_table.setStyle(TableStyle([('ALIGN', (0,0), (-1,-1), 'CENTER')]))
+    story.append(sig_table)
 
-    doc.build(elements)
-    open_pdf_externally(output_path)
-    return output_path
+    doc.build(story)

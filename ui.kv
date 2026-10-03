@@ -1,8 +1,8 @@
 <RootScreenManager>:
-    MDMPortalScreen:
-        name: 'mdm_portal'
+    MainScreen:
+        name: 'main_screen'
 
-<MDMPortalScreen>:
+<MainScreen>:
     ScrollView:
         do_scroll_x: False
         BoxLayout:
@@ -10,176 +10,244 @@
             size_hint_y: None
             height: self.minimum_height
             padding: 16
-            spacing: 14
+            spacing: 12
 
-            # Header
+            # Main Header & Mode Selector
             Label:
-                text: "PM POSHAN & Cash Book"
+                text: "School Accounts & Registers"
                 font_size: '20sp'
                 bold: True
                 size_hint_y: None
                 height: '36dp'
                 color: 0.15, 0.4, 0.8, 1
 
-            # 1. Month & Days
-            GridLayout:
-                cols: 2
+            Spinner:
+                id: account_selector
+                text: '1. MDM Stock Register'
+                values: ('1. MDM Stock Register', '2. MDM Savings Cash Book', '3. SMC Savings Cash Book', '4. SMC Canara Bank SNA')
                 size_hint_y: None
-                height: '76dp'
+                height: '44dp'
+                bold: True
+                on_text: root.on_account_changed(self.text)
+
+            # Month & Year Row
+            BoxLayout:
+                size_hint_y: None
+                height: '40dp'
                 spacing: 8
                 Label:
                     text: "Month (YYYY-MM):"
-                    size_hint_x: 0.5
+                    size_hint_x: 0.45
                     halign: 'left'
                 TextInput:
                     id: in_ym
                     text: "2026-09"
                     multiline: False
-                    size_hint_x: 0.5
-                Label:
-                    text: "Working Days:"
-                    size_hint_x: 0.5
-                    halign: 'left'
-                TextInput:
-                    id: in_wd
-                    text: "22"
-                    multiline: False
-                    size_hint_x: 0.5
+                    size_hint_x: 0.55
 
-            # 2. Attendance & Entitlement Inputs
-            Label:
-                text: "Attendance & Rates"
-                bold: True
-                size_hint_y: None
-                height: '28dp'
-                color: 0.2, 0.6, 0.4, 1
-
-            GridLayout:
-                cols: 2
-                size_hint_y: None
-                height: '152dp'
-                spacing: 8
-                Label:
-                    text: "LP Meals Fed:"
-                    size_hint_x: 0.5
-                TextInput:
-                    id: in_lp_meals
-                    text: "0"
-                    multiline: False
-                    size_hint_x: 0.5
-                Label:
-                    text: "UP Meals Fed:"
-                    size_hint_x: 0.5
-                TextInput:
-                    id: in_up_meals
-                    text: "0"
-                    multiline: False
-                    size_hint_x: 0.5
-                Label:
-                    text: "LP Rate (Rs.):"
-                    size_hint_x: 0.5
-                TextInput:
-                    id: in_lp_rate
-                    text: "6.78"
-                    multiline: False
-                    size_hint_x: 0.5
-                Label:
-                    text: "UP Rate (Rs.):"
-                    size_hint_x: 0.5
-                TextInput:
-                    id: in_up_rate
-                    text: "10.15"
-                    multiline: False
-                    size_hint_x: 0.5
-
-            # 3. Rice Inventory Inputs (kg)
-            Label:
-                text: "Food Grains (Rice in kg)"
-                bold: True
-                size_hint_y: None
-                height: '28dp'
-                color: 0.2, 0.6, 0.4, 1
-
-            GridLayout:
-                cols: 2
-                size_hint_y: None
-                height: '76dp'
-                spacing: 8
-                Label:
-                    text: "Rice Opening Balance:"
-                    size_hint_x: 0.5
-                TextInput:
-                    id: in_rice_op
-                    text: "0.0"
-                    multiline: False
-                    size_hint_x: 0.5
-                Label:
-                    text: "Rice Received (Challan):"
-                    size_hint_x: 0.5
-                TextInput:
-                    id: in_rice_rec
-                    text: "0.0"
-                    multiline: False
-                    size_hint_x: 0.5
-
-            # 4. Cooking Cost Funds Inputs (Rs.)
-            Label:
-                text: "Cooking Cost Funds (Rs.)"
-                bold: True
-                size_hint_y: None
-                height: '28dp'
-                color: 0.2, 0.6, 0.4, 1
-
-            GridLayout:
-                cols: 2
-                size_hint_y: None
-                height: '76dp'
-                spacing: 8
-                Label:
-                    text: "Opening Fund Balance:"
-                    size_hint_x: 0.5
-                TextInput:
-                    id: in_cost_op
-                    text: "0.0"
-                    multiline: False
-                    size_hint_x: 0.5
-                Label:
-                    text: "Grant Received in Bank:"
-                    size_hint_x: 0.5
-                TextInput:
-                    id: in_cost_rec
-                    text: "0.0"
-                    multiline: False
-                    size_hint_x: 0.5
-
-            # Action Buttons
+            # ================= MDM STOCK SECTION =================
             BoxLayout:
+                id: stock_box
+                orientation: 'vertical'
                 size_hint_y: None
-                height: '48dp'
-                spacing: 12
-                Button:
-                    text: "Calculate & Save"
-                    bold: True
-                    background_color: 0.12, 0.5, 0.2, 1
-                    on_release: root.calculate_and_save()
-                Button:
-                    text: "Export PDF"
-                    bold: True
-                    background_color: 0.15, 0.35, 0.7, 1
-                    on_release: root.export_pdf()
+                height: self.minimum_height
+                spacing: 8
 
-            # Result Display Area
+                Label:
+                    text: "Attendance & Grain Inputs"
+                    bold: True
+                    size_hint_y: None
+                    height: '28dp'
+                    color: 0.2, 0.6, 0.4, 1
+
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: '180dp'
+                    spacing: 6
+                    Label:
+                        text: "Working Days:"
+                    TextInput:
+                        id: stock_wd
+                        text: "22"
+                    Label:
+                        text: "LP Fed (1-5 @ 100g):"
+                    TextInput:
+                        id: stock_lp
+                        text: "0"
+                    Label:
+                        text: "UP Fed (6-8 @ 150g):"
+                    TextInput:
+                        id: stock_up
+                        text: "0"
+                    Label:
+                        text: "Rice Opening (kg):"
+                    TextInput:
+                        id: stock_rice_op
+                        text: "0.0"
+                    Label:
+                        text: "Rice Received (kg):"
+                    TextInput:
+                        id: stock_rice_rec
+                        text: "0.0"
+
+                Label:
+                    text: "Cooking Cost Entitlement"
+                    bold: True
+                    size_hint_y: None
+                    height: '28dp'
+                    color: 0.2, 0.6, 0.4, 1
+
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: '76dp'
+                    spacing: 6
+                    Label:
+                        text: "Cost Opening (Rs.):"
+                    TextInput:
+                        id: stock_cost_op
+                        text: "0.0"
+                    Label:
+                        text: "Grant Received (Rs.):"
+                    TextInput:
+                        id: stock_cost_rec
+                        text: "0.0"
+
+                BoxLayout:
+                    size_hint_y: None
+                    height: '46dp'
+                    spacing: 10
+                    Button:
+                        text: "Calculate & Save Stock"
+                        bold: True
+                        background_color: 0.12, 0.5, 0.2, 1
+                        on_release: root.save_stock()
+                    Button:
+                        text: "Export Stock PDF"
+                        bold: True
+                        background_color: 0.15, 0.35, 0.7, 1
+                        on_release: root.export_stock_pdf()
+
+            # ================= 3 CASH BOOKS SECTION =================
+            BoxLayout:
+                id: cashbook_box
+                orientation: 'vertical'
+                size_hint_y: None
+                height: 0
+                opacity: 0
+                disabled: True
+                spacing: 8
+
+                Label:
+                    text: "1. Opening Balances (1st of Month)"
+                    bold: True
+                    size_hint_y: None
+                    height: '28dp'
+                    color: 0.2, 0.6, 0.4, 1
+
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: '76dp'
+                    spacing: 6
+                    Label:
+                        text: "Opening Cash in Hand:"
+                    TextInput:
+                        id: cb_op_cash
+                        text: "0.0"
+                    Label:
+                        text: "Opening Bank Balance:"
+                    TextInput:
+                        id: cb_op_bank
+                        text: "0.0"
+
+                Button:
+                    text: "Save Opening Balances"
+                    size_hint_y: None
+                    height: '38dp'
+                    background_color: 0.3, 0.5, 0.4, 1
+                    on_release: root.save_cb_opening()
+
+                Label:
+                    text: "2. Add Cash Book Entry (Receipt / Voucher)"
+                    bold: True
+                    size_hint_y: None
+                    height: '28dp'
+                    color: 0.2, 0.6, 0.4, 1
+
+                GridLayout:
+                    cols: 2
+                    size_hint_y: None
+                    height: '180dp'
+                    spacing: 6
+                    Label:
+                        text: "Date:"
+                    TextInput:
+                        id: cb_entry_date
+                        text: "2026-09-15"
+                    Label:
+                        text: "Type:"
+                    Spinner:
+                        id: cb_entry_type
+                        text: 'RECEIPT'
+                        values: ('RECEIPT', 'PAYMENT', 'CONTRA')
+                    Label:
+                        text: "Particulars:"
+                    TextInput:
+                        id: cb_particulars
+                        text: "Grant Received"
+                    Label:
+                        text: "Voucher / Slip No.:"
+                    TextInput:
+                        id: cb_vno
+                        text: "1"
+                    Label:
+                        text: "Mode:"
+                    Spinner:
+                        id: cb_mode
+                        text: 'BANK'
+                        values: ('BANK', 'CASH')
+
+                BoxLayout:
+                    size_hint_y: None
+                    height: '40dp'
+                    spacing: 8
+                    Label:
+                        text: "Amount (Rs.):"
+                        size_hint_x: 0.4
+                    TextInput:
+                        id: cb_amt
+                        text: "0.00"
+                        size_hint_x: 0.6
+
+                BoxLayout:
+                    size_hint_y: None
+                    height: '46dp'
+                    spacing: 10
+                    Button:
+                        text: "+ Add Entry"
+                        bold: True
+                        background_color: 0.12, 0.5, 0.2, 1
+                        on_release: root.add_cashbook_entry()
+                    Button:
+                        text: "Export Cash Book PDF"
+                        bold: True
+                        background_color: 0.15, 0.35, 0.7, 1
+                        on_release: root.export_cashbook_pdf()
+
+            # Result Summary Display
             Label:
-                text: "Calculation Results"
+                text: "Monthly Results & Closing Balances"
                 bold: True
                 size_hint_y: None
                 height: '28dp'
-                color: 0.2, 0.2, 0.2, 1
+                color: 0.1, 0.1, 0.1, 1
 
             TextInput:
                 id: out_results
-                text: "Fill in the numbers above and tap 'Calculate & Save'."
+                text: "Select an account above to calculate and review records."
                 readonly: True
                 size_hint_y: None
                 height: '160dp'
-                font_size: '13sp'
+                font_size: '12sp'

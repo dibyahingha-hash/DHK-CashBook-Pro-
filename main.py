@@ -15,7 +15,88 @@ from kivy.uix.spinner import Spinner
 
 from core.db_manager import DatabaseManager
 
+from kivy.uix.popup import Popup
+from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.scrollview import ScrollView
+from kivy.uix.gridlayout import GridLayout
+from kivy.uix.label import Label
+from kivy.uix.button import Button
+from core.db_manager import get_month_transactions, delete_transaction, reset_month_data
 
+def view_ledger(self, account_type):
+    month_str = self.ids.month_input.text.strip()
+    records = get_month_transactions(account_type, month_str)
+
+    content = BoxLayout(orientation='vertical', spacing=10, padding=10)
+    
+    # Title / Header
+    header = Label(
+        text=f"[b]{account_type} - {month_str}[/b]\nTotal Vouchers: {len(records)}",
+        markup=True,
+        size_hint_y=None,
+        height='50dp',
+        color=(0.1, 0.3, 0.7, 1)
+    )
+    content.add_widget(header)
+
+    # Scrollable transaction list
+    scroll = ScrollView(size_hint=(1, 1))
+    grid = GridLayout(cols=1, spacing=8, size_hint_y=None)
+    grid.bind(minimum_height=grid.setter('height'))
+
+    if not records:
+        grid.add_widget(Label(text="No transactions found for this month.", size_hint_y=None, height='40dp', color=(0.4, 0.4, 0.4, 1)))
+    else:
+        for item in records:
+            t_id, t_date, particular, t_type, mode, amt = item
+            row = BoxLayout(orientation='horizontal', size_hint_y=None, height='45dp', spacing=5)
+            
+            # Details label
+            desc = f"{t_date} | {t_type} | {particular} ({mode}): Rs. {amt:.2f}"
+            row.add_widget(Label(text=desc, size_hint_x=0.75, halign='left', valign='middle', color=(0, 0, 0, 1)))
+            
+            # Inline Delete button
+            del_btn = Button(text="Delete", size_hint_x=0.25, background_color=(0.85, 0.2, 0.2, 1))
+            del_btn.bind(on_release=lambda btn, item_id=t_id: self._delete_entry(item_id, account_type))
+            row.add_widget(del_btn)
+            
+            grid.add_widget(row)
+
+    scroll.add_widget(grid)
+    content.add_widget(scroll)
+
+    # Action bar: Close + Reset Month
+    action_bar = BoxLayout(size_hint_y=None, height='48dp', spacing=10)
+    
+    reset_btn = Button(text="Reset All for Month", background_color=(0.7, 0.1, 0.1, 1))
+    reset_btn.bind(on_release=lambda btn: self._reset_month(account_type, month_str))
+    action_bar.add_widget(reset_btn)
+
+    close_btn = Button(text="Close", background_color=(0.2, 0.5, 0.8, 1))
+    action_bar.add_widget(close_btn)
+
+    content.add_widget(action_bar)
+
+    self._ledger_popup = Popup(
+        title="Ledger Entries & Corrections",
+        content=content,
+        size_hint=(0.95, 0.85)
+    )
+    close_btn.bind(on_release=self._ledger_popup.dismiss)
+    self._ledger_popup.open()
+
+def _delete_entry(self, trans_id, account_type):
+    delete_transaction(trans_id)
+    if hasattr(self, '_ledger_popup'):
+        self._ledger_popup.dismiss()
+    self.view_ledger(account_type)
+
+def _reset_month(self, account_type, month_str):
+    reset_month_data(account_type, month_str)
+    if hasattr(self, '_ledger_popup'):
+        self._ledger_popup.dismiss()
+    self.view_ledger(account_type)
+    
 def get_safe_storage_dir():
     """Returns permission-free, app-specific external storage on Android."""
     try:

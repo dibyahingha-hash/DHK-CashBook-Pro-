@@ -1,6 +1,40 @@
 import sqlite3
 import os
+def get_month_transactions(account_type, month_str):
+    """
+    Returns list of tuples: (id, date, particulars, trans_type, payment_mode, amount)
+    """
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("""
+        SELECT id, trans_date, particulars, trans_type, payment_mode, amount 
+        FROM transactions 
+        WHERE account_type = ? AND strftime('%Y-%m', trans_date) = ?
+        ORDER BY trans_date ASC, id ASC
+    """, (account_type, month_str))
+    rows = cursor.fetchall()
+    conn.close()
+    return rows
 
+def delete_transaction(trans_id):
+    """Deletes a specific voucher by ID."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM transactions WHERE id = ?", (trans_id,))
+    conn.commit()
+    conn.close()
+
+def reset_month_data(account_type, month_str):
+    """Clears opening balance and all vouchers for a given month and account."""
+    conn = get_db_connection()
+    cursor = conn.cursor()
+    cursor.execute("DELETE FROM transactions WHERE account_type = ? AND strftime('%Y-%m', trans_date) = ?", 
+                   (account_type, month_str))
+    cursor.execute("DELETE FROM opening_balances WHERE account_type = ? AND month_year = ?", 
+                   (account_type, month_str))
+    conn.commit()
+    conn.close()
+    
 class DatabaseManager:
     def __init__(self, db_path="school_ledger.db"):
         self.db_path = db_path

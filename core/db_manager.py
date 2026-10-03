@@ -1,40 +1,6 @@
 import sqlite3
 import os
-def get_month_transactions(account_type, month_str):
-    """
-    Returns list of tuples: (id, date, particulars, trans_type, payment_mode, amount)
-    """
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("""
-        SELECT id, trans_date, particulars, trans_type, payment_mode, amount 
-        FROM transactions 
-        WHERE account_type = ? AND strftime('%Y-%m', trans_date) = ?
-        ORDER BY trans_date ASC, id ASC
-    """, (account_type, month_str))
-    rows = cursor.fetchall()
-    conn.close()
-    return rows
 
-def delete_transaction(trans_id):
-    """Deletes a specific voucher by ID."""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM transactions WHERE id = ?", (trans_id,))
-    conn.commit()
-    conn.close()
-
-def reset_month_data(account_type, month_str):
-    """Clears opening balance and all vouchers for a given month and account."""
-    conn = get_db_connection()
-    cursor = conn.cursor()
-    cursor.execute("DELETE FROM transactions WHERE account_type = ? AND strftime('%Y-%m', trans_date) = ?", 
-                   (account_type, month_str))
-    cursor.execute("DELETE FROM opening_balances WHERE account_type = ? AND month_year = ?", 
-                   (account_type, month_str))
-    conn.commit()
-    conn.close()
-    
 class DatabaseManager:
     def __init__(self, db_path="school_ledger.db"):
         self.db_path = db_path
@@ -91,6 +57,7 @@ class DatabaseManager:
             """)
             conn.commit()
 
+    # --- Balance Management ---
     def set_opening_balances(self, account_key, year_month, opening_cash, opening_bank):
         with self.get_connection() as conn:
             cur = conn.cursor()
@@ -115,6 +82,7 @@ class DatabaseManager:
                 return float(row["opening_cash"]), float(row["opening_bank"])
             return 0.0, 0.0
 
+    # --- Transaction Management ---
     def add_receipt(self, account_key, year_month, entry_date, particulars, ref_no, mode, amount):
         with self.get_connection() as conn:
             cur = conn.cursor()
@@ -148,12 +116,29 @@ class DatabaseManager:
         with self.get_connection() as conn:
             cur = conn.cursor()
             cur.execute("""
-                SELECT * FROM cashbook_entries 
+                SELECT id, entry_date, particulars, entry_type, mode, amount, ref_voucher_no 
+                FROM cashbook_entries 
                 WHERE account_key = ? AND year_month = ? 
                 ORDER BY entry_date ASC, id ASC
             """, (account_key, year_month))
             return cur.fetchall()
 
+    def delete_transaction(self, entry_id):
+        """Deletes a specific transaction by ID."""
+        with self.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM cashbook_entries WHERE id = ?", (entry_id,))
+            conn.commit()
+
+    def reset_month_data(self, account_key, year_month):
+        """Wipes all transactions and opening balance for the specified account and month."""
+        with self.get_connection() as conn:
+            cur = conn.cursor()
+            cur.execute("DELETE FROM cashbook_entries WHERE account_key = ? AND year_month = ?", (account_key, year_month))
+            cur.execute("DELETE FROM monthly_balances WHERE account_key = ? AND year_month = ?", (account_key, year_month))
+            conn.commit()
+
+    # --- Double-Entry Audit Ledger Calculations ---
     def calculate_audit_cashbook(self, account_key, year_month):
         op_cash, op_bank = self.get_opening_balances(account_key, year_month)
         entries = self.get_entries_for_month(account_key, year_month)
@@ -224,6 +209,7 @@ class DatabaseManager:
             "net_bank": net_bank
         }
 
+    # --- MDM Stock Register ---
     def save_mdm_stock(self, year_month, working_days, lp_meals, up_meals, total_meals,
                        lp_rate, up_rate,
                        grain_op, grain_rec, grain_cons, grain_cl,
@@ -263,3 +249,6 @@ class DatabaseManager:
             cur = conn.cursor()
             cur.execute("SELECT * FROM mdm_stock_monthly WHERE year_month = ?", (year_month,))
             return cur.fetchone()
+
+# Global database instance
+db = DatabaseManager()

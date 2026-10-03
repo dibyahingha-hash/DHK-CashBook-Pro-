@@ -155,7 +155,9 @@
         ScreenManager:
             id: mdm_sub_sm
 
+            # -----------------------------------------------------------
             # TAB 1: STOCK & MEALS
+            # -----------------------------------------------------------
             Screen:
                 name: 'stock_view'
                 ScrollView:
@@ -340,7 +342,7 @@
                                 font_size: '15sp'
                                 padding: ['8dp', '12dp']
 
-                        # Cooking Cost Account Card (With Negative Support)
+                        # Cooking Cost Account Card
                         GridLayout:
                             cols: 2
                             size_hint_y: None
@@ -405,18 +407,32 @@
                                 background_color: (0.0, 0.55, 0.45, 1)
                                 on_release: root.export_stock_pdf()
 
-                        Label:
-                            id: stock_results_lbl
-                            text: "Balances and auto-expenditure will appear here."
-                            color: (0.15, 0.2, 0.3, 1)
-                            font_size: '13sp'
+                        # Summary Display Box
+                        BoxLayout:
+                            orientation: 'vertical'
                             size_hint_y: None
-                            height: '60dp'
-                            halign: 'center'
-                            valign: 'middle'
-                            text_size: (self.width, None)
+                            height: '80dp'
+                            padding: ['10dp', '8dp']
+                            canvas.before:
+                                Color:
+                                    rgba: (0.9, 0.94, 0.98, 1)
+                                RoundedRectangle:
+                                    pos: self.pos
+                                    size: self.size
+                                    radius: [6]
 
+                            Label:
+                                id: stock_results_lbl
+                                text: "Balances and auto-expenditure will appear here."
+                                color: (0.1, 0.2, 0.4, 1)
+                                font_size: '13sp'
+                                halign: 'center'
+                                valign: 'middle'
+                                text_size: (self.width, None)
+
+            # -----------------------------------------------------------
             # TAB 2: MDM CASH BOOK
+            # -----------------------------------------------------------
             Screen:
                 name: 'cashbook_view'
                 ScrollView:
@@ -487,37 +503,42 @@
                                 font_size: '15sp'
                                 padding: ['8dp', '12dp']
 
+                        # Save O/B Button
                         Button:
                             text: "Save To O/B Balances"
-                            size_hint_y: None
-                            height: '48dp'
                             bold: True
                             font_size: '14sp'
+                            size_hint_y: None
+                            height: '48dp'
                             background_normal: ''
-                            background_color: (0.2, 0.35, 0.5, 1)
+                            background_color: (0.2, 0.35, 0.55, 1)
                             on_release: root.save_opening_balances('MDM_SAVINGS')
 
+                        # Add Voucher Button
                         Button:
                             text: "+ Add Voucher (To MDM / By MDM / T/P)"
-                            size_hint_y: None
-                            height: '48dp'
                             bold: True
                             font_size: '14sp'
+                            size_hint_y: None
+                            height: '48dp'
                             background_normal: ''
                             background_color: (0.12, 0.45, 0.85, 1)
                             on_release: root.show_transaction_popup('MDM_SAVINGS')
 
+                        # View Ledger & Export PDF Buttons
                         BoxLayout:
                             size_hint_y: None
-                            height: '48dp'
+                            height: '50dp'
                             spacing: '10dp'
+
                             Button:
                                 text: "View Ledger"
                                 bold: True
                                 font_size: '14sp'
                                 background_normal: ''
-                                background_color: (0.25, 0.45, 0.65, 1)
-                                on_release: root.render_cashbook('MDM_SAVINGS')
+                                background_color: (0.25, 0.42, 0.6, 1)
+                                on_release: root.view_ledger('MDM_SAVINGS')
+
                             Button:
                                 text: "Export Ledger PDF"
                                 bold: True
@@ -528,11 +549,11 @@
 
                         Label:
                             id: mdm_cb_summary_lbl
-                            text: "Cash Book balance and entries summary will display here."
-                            size_hint_y: None
-                            height: '80dp'
-                            color: (0.1, 0.15, 0.25, 1)
+                            text: "Tap 'View Ledger' or 'Export' to reconcile balance."
+                            color: (0.2, 0.25, 0.35, 1)
                             font_size: '13sp'
+                            size_hint_y: None
+                            height: '60dp'
                             halign: 'center'
                             valign: 'middle'
                             text_size: (self.width, None)
@@ -571,7 +592,7 @@
                 bold: True
                 font_size: '14sp'
                 background_normal: ''
-                background_color: (0.2, 0.75, 0.55, 1)
+                background_color: (0.25, 0.75, 0.55, 1)
                 on_release: app.root.current = 'welcome'
 
             Label:
@@ -615,7 +636,7 @@
         ScreenManager:
             id: smc_sub_sm
 
-            # TAB 1: SMC NORMAL SAVINGS
+            # SMC SAVINGS
             Screen:
                 name: 'smc_savings_view'
                 ScrollView:
@@ -688,25 +709,27 @@
 
                         Button:
                             text: "Save To O/B Balances"
-                            size_hint_y: None
-                            height: '48dp'
                             bold: True
                             font_size: '14sp'
+                            size_hint_y: None
+                            height: '48dp'
                             background_normal: ''
-                            background_color: (0.2, 0.35, 0.5, 1)
+                            background_color: (0.2, 0.35, 0.55, 1)
                             on_release: root.save_opening_balances('SMC_SAVINGS')
 
                         BoxLayout:
                             size_hint_y: None
-                            height: '48dp'
+                            height: '50dp'
                             spacing: '10dp'
+
                             Button:
                                 text: "View Ledger"
                                 bold: True
                                 font_size: '14sp'
                                 background_normal: ''
                                 background_color: (0.15, 0.65, 0.45, 1)
-                                on_release: root.render_cashbook('SMC_SAVINGS')
+                                on_release: root.view_ledger('SMC_SAVINGS')
+
                             Button:
                                 text: "Export Ledger PDF"
                                 bold: True
@@ -717,16 +740,16 @@
 
                         Label:
                             id: smc_sav_summary_lbl
-                            text: "SMC Savings Ledger summary will display here."
-                            size_hint_y: None
-                            height: '80dp'
-                            color: (0.1, 0.15, 0.25, 1)
+                            text: "To O/B and balances will appear here."
+                            color: (0.2, 0.25, 0.35, 1)
                             font_size: '13sp'
+                            size_hint_y: None
+                            height: '60dp'
                             halign: 'center'
                             valign: 'middle'
                             text_size: (self.width, None)
 
-            # TAB 2: CANARA BANK SNA
+            # SMC CANARA SNA
             Screen:
                 name: 'smc_canara_view'
                 ScrollView:
@@ -742,7 +765,7 @@
                         GridLayout:
                             cols: 2
                             size_hint_y: None
-                            height: '140dp'
+                            height: '130dp'
                             row_default_height: '48dp'
                             row_force_default: True
                             spacing: '8dp'
@@ -785,40 +808,42 @@
 
                         Button:
                             text: "Save To O/B Allocation"
-                            size_hint_y: None
-                            height: '48dp'
                             bold: True
                             font_size: '14sp'
+                            size_hint_y: None
+                            height: '48dp'
                             background_normal: ''
-                            background_color: (0.2, 0.35, 0.5, 1)
-                            on_release: root.save_opening_balances('SMC_CANARA')
+                            background_color: (0.2, 0.35, 0.55, 1)
+                            on_release: root.save_opening_balances('SMC_CANARA_SNA')
 
                         BoxLayout:
                             size_hint_y: None
-                            height: '48dp'
+                            height: '50dp'
                             spacing: '10dp'
+
                             Button:
                                 text: "View SNA Ledger"
                                 bold: True
                                 font_size: '14sp'
                                 background_normal: ''
                                 background_color: (0.15, 0.65, 0.45, 1)
-                                on_release: root.render_cashbook('SMC_CANARA')
+                                on_release: root.view_ledger('SMC_CANARA_SNA')
+
                             Button:
                                 text: "Export SNA PDF"
                                 bold: True
                                 font_size: '14sp'
                                 background_normal: ''
                                 background_color: (0.0, 0.55, 0.45, 1)
-                                on_release: root.export_cashbook_pdf('SMC_CANARA')
+                                on_release: root.export_cashbook_pdf('SMC_CANARA_SNA')
 
                         Label:
                             id: smc_canara_summary_lbl
-                            text: "Canara Bank SNA drawing limit & expenditure balance will display here."
-                            size_hint_y: None
-                            height: '80dp'
-                            color: (0.1, 0.15, 0.25, 1)
+                            text: "To O/B Drawing Limit saved will appear here."
+                            color: (0.2, 0.25, 0.35, 1)
                             font_size: '13sp'
+                            size_hint_y: None
+                            height: '60dp'
                             halign: 'center'
                             valign: 'middle'
                             text_size: (self.width, None)

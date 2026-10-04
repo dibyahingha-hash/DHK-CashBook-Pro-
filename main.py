@@ -1,224 +1,182 @@
-import os
-import traceback
 from kivy.app import App
-from kivy.lang import Builder
-from kivy.uix.screenmanager import ScreenManager, Screen
+from kivy.core.window import Window
+from kivy.metrics import dp
 from kivy.uix.boxlayout import BoxLayout
+from kivy.uix.button import Button
 from kivy.uix.label import Label
+from kivy.uix.scrollview import ScrollView
 from kivy.uix.textinput import TextInput
 
-from core.db_manager import DatabaseManager
+# Optional: set a standard mobile preview window size for desktop testing
+Window.size = (400, 680)
 
 
-def get_safe_storage_dir():
-    try:
-        from jnius import autoclass
-        PythonActivity = autoclass('org.kivy.android.PythonActivity')
-        context = PythonActivity.mActivity
-        if context:
-            ext_dir = context.getExternalFilesDir(None)
-            if ext_dir:
-                return ext_dir.getAbsolutePath()
-    except Exception:
-        pass
-    return os.path.dirname(os.path.abspath(__file__))
+class PMPoshanApp(App):
 
+    def build(self):
+        self.title = "PM POSHAN Calculator"
 
-class RootScreenManager(ScreenManager):
-    pass
+        # Main scrollable container
+        root_scroll = ScrollView(size_hint=(1, 1), do_scroll_x=False)
 
+        # Form layout
+        self.layout = BoxLayout(
+            orientation="vertical",
+            padding=[dp(16), dp(16), dp(16), dp(16)],
+            spacing=dp(10),
+            size_hint_y=None,
+        )
+        self.layout.bind(minimum_height=self.layout.setter("height"))
 
-class MainScreen(Screen):
-    def on_account_changed(self, account_title):
-        if 'Stock' in account_title:
-            self.ids.stock_box.opacity = 1
-            self.ids.stock_box.disabled = False
-            self.ids.stock_box.height = self.ids.stock_box.minimum_height
+        # Title
+        title_label = Label(
+            text="[b]PM POSHAN Monthly Calculator[/b]",
+            markup=True,
+            font_size="20sp",
+            size_hint_y=None,
+            height=dp(36),
+            color=(0.15, 0.25, 0.45, 1),
+        )
+        subtitle_label = Label(
+            text="Enter meal counts and rates:",
+            font_size="13sp",
+            size_hint_y=None,
+            height=dp(24),
+            color=(0.4, 0.4, 0.4, 1),
+        )
+        self.layout.add_widget(title_label)
+        self.layout.add_widget(subtitle_label)
 
-            self.ids.cashbook_box.opacity = 0
-            self.ids.cashbook_box.disabled = True
-            self.ids.cashbook_box.height = 0
-            self.show_stock_summary()
-        else:
-            self.ids.stock_box.opacity = 0
-            self.ids.stock_box.disabled = True
-            self.ids.stock_box.height = 0
-
-            self.ids.cashbook_box.opacity = 1
-            self.ids.cashbook_box.disabled = False
-            self.ids.cashbook_box.height = self.ids.cashbook_box.minimum_height
-            
-            # Canara SNA has 0 Cash rule
-            if 'Canara' in account_title:
-                self.ids.cb_op_cash.text = "0.0"
-                self.ids.cb_op_cash.disabled = True
-            else:
-                self.ids.cb_op_cash.disabled = False
-
-            self.refresh_cashbook_summary()
-
-    def get_current_key(self):
-        title = self.ids.account_selector.text
-        if 'MDM Savings' in title:
-            return 'MDM_SAVINGS'
-        elif 'SMC Savings' in title:
-            return 'SMC_SAVINGS'
-        elif 'Canara' in title:
-            return 'SMC_CANARA_SNA'
-        return 'MDM_STOCK'
-
-    # --- STOCK CALCULATIONS ---
-    def save_stock(self):
-        try:
-            ym = self.ids.in_ym.text.strip()
-            wd = int(self.ids.stock_wd.text.strip() or 0)
-            lp_m = int(self.ids.stock_lp.text.strip() or 0)
-            up_m = int(self.ids.stock_up.text.strip() or 0)
-            tot_m = lp_m + up_m
-
-            # Rice: 100g LP, 150g UP
-            g_op = float(self.ids.stock_rice_op.text.strip() or 0.0)
-            g_rec = float(self.ids.stock_rice_rec.text.strip() or 0.0)
-            g_cons = round((lp_m * 0.100) + (up_m * 0.150), 3)
-            g_cl = round((g_op + g_rec) - g_cons, 3)
-
-            # Fund: LP @ 6.78, UP @ 10.15
-            c_op = float(self.ids.stock_cost_op.text.strip() or 0.0)
-            c_rec = float(self.ids.stock_cost_rec.text.strip() or 0.0)
-            c_exp = round((lp_m * 6.78) + (up_m * 10.15), 2)
-            c_cl = round((c_op + c_rec) - c_exp, 2)
-
-            app = App.get_running_app()
-            app.db.save_mdm_stock(ym, wd, lp_m, up_m, tot_m, 6.78, 10.15, g_op, g_rec, g_cons, g_cl, c_op, c_rec, c_exp, c_cl)
-            self.show_stock_summary(tot_m, g_cons, g_cl, c_exp, c_cl)
-        except Exception as e:
-            self.ids.out_results.text = f"Stock Error: {e}"
-
-    def show_stock_summary(self, tot_m=0, g_cons=0.0, g_cl=0.0, c_exp=0.0, c_cl=0.0):
-        ym = self.ids.in_ym.text.strip()
-        app = App.get_running_app()
-        rec = app.db.get_mdm_stock_record(ym) if hasattr(app, 'db') else None
-        if rec:
-            status = f"Surplus: Rs. {rec['cost_closing']:.2f}" if rec['cost_closing'] >= 0 else f"Deficit: -Rs. {abs(rec['cost_closing']):.2f}"
-            self.ids.out_results.text = (
-                f"STOCK SUMMARY ({ym}):\n"
-                f"Total Meals: {rec['total_meals']} (LP: {rec['lp_meals']}, UP: {rec['up_meals']})\n"
-                f"Rice Consumed: {rec['grain_consumed']:.2f} kg | Closing Stock: {rec['grain_closing']:.2f} kg\n"
-                f"Cooking Cost Exp: Rs. {rec['cost_expenditure']:.2f} | Status: {status}"
+        # Input Helper
+        def create_input_field(label_text, default_val):
+            lbl = Label(
+                text=label_text,
+                size_hint_y=None,
+                height=dp(24),
+                halign="left",
+                valign="middle",
+                color=(0.1, 0.1, 0.1, 1),
             )
-        else:
-            self.ids.out_results.text = f"No saved stock record for {ym}. Enter numbers and tap 'Calculate & Save Stock'."
+            lbl.bind(size=lbl.setter("text_size"))
 
-    def export_stock_pdf(self):
-        try:
-            ym = self.ids.in_ym.text.strip()
-            self.save_stock()
-            app = App.get_running_app()
-            rec = app.db.get_mdm_stock_record(ym)
-            out_dir = get_safe_storage_dir()
-            filename = os.path.join(out_dir, f"MDM_Stock_{ym}.pdf")
-            from pdf_generator import generate_stock_register
-            generate_stock_register(ym, dict(rec) if rec else {}, output_path=filename)
-            self.ids.out_results.text += f"\n\nPDF Saved:\n{filename}"
-        except Exception as e:
-            self.ids.out_results.text += f"\n\nStock PDF Error: {e}"
+            inp = TextInput(
+                text=default_val,
+                multiline=False,
+                size_hint_y=None,
+                height=dp(42),
+                input_filter="float",
+                padding=[dp(10), dp(10), dp(10), dp(10)],
+            )
+            self.layout.add_widget(lbl)
+            self.layout.add_widget(inp)
+            return inp
 
-    # --- 3 CASH BOOKS LOGIC ---
-    def save_cb_opening(self):
-        try:
-            key = self.get_current_key()
-            ym = self.ids.in_ym.text.strip()
-            cash = float(self.ids.cb_op_cash.text.strip() or 0.0)
-            bank = float(self.ids.cb_op_bank.text.strip() or 0.0)
-            app = App.get_running_app()
-            app.db.set_opening_balance(key, ym, cash, bank)
-            self.refresh_cashbook_summary()
-        except Exception as e:
-            self.ids.out_results.text = f"Opening Balance Error: {e}"
-
-    def add_cashbook_entry(self):
-        try:
-            key = self.get_current_key()
-            ym = self.ids.in_ym.text.strip()
-            date = self.ids.cb_entry_date.text.strip()
-            e_type = self.ids.cb_entry_type.text.strip()
-            particular = self.ids.cb_particulars.text.strip()
-            vno = self.ids.cb_vno.text.strip()
-            mode = self.ids.cb_mode.text.strip()
-            amt = float(self.ids.cb_amt.text.strip() or 0.0)
-
-            if amt <= 0:
-                self.ids.out_results.text = "Amount must be greater than zero."
-                return
-
-            c_amt = amt if mode == 'CASH' else 0.0
-            b_amt = amt if mode == 'BANK' else 0.0
-
-            # For CONTRA: Bank withdrawal means Cash increases, Bank decreases
-            if e_type == 'CONTRA':
-                c_amt = amt
-                b_amt = amt
-
-            app = App.get_running_app()
-            app.db.add_entry(key, ym, date, e_type, particular, vno, c_amt, b_amt)
-            self.ids.cb_amt.text = "0.00"
-            self.refresh_cashbook_summary()
-        except Exception as e:
-            self.ids.out_results.text = f"Entry Error: {e}"
-
-    def refresh_cashbook_summary(self):
-        key = self.get_current_key()
-        ym = self.ids.in_ym.text.strip()
-        app = App.get_running_app()
-        tot = app.db.calculate_totals(key, ym)
-
-        op_c, op_b = app.db.get_opening_balance(key, ym)
-        self.ids.cb_op_cash.text = str(op_c)
-        self.ids.cb_op_bank.text = str(op_b)
-
-        self.ids.out_results.text = (
-            f"{key} CASH BOOK ({ym}):\n"
-            f"Entries Recorded: {tot['entries_count']}\n"
-            f"Opening: Cash Rs.{tot['op_cash']:.2f} | Bank Rs.{tot['op_bank']:.2f}\n"
-            f"Total Dr: Cash Rs.{tot['dr_cash']:.2f} | Bank Rs.{tot['dr_bank']:.2f}\n"
-            f"Total Cr: Cash Rs.{tot['cr_cash']:.2f} | Bank Rs.{tot['cr_bank']:.2f}\n"
-            f"----------------------------------------\n"
-            f"CLOSING: Cash Rs.{tot['cl_cash']:.2f} | Bank Rs.{tot['cl_bank']:.2f}"
+        # Fields
+        self.bal_input = create_input_field("Bal Vatika Meals Served:", "0")
+        self.pri_input = create_input_field("Primary Meals Served:", "0")
+        self.rate_input = create_input_field(
+            "Cooking Cost / Meal (Rs.):", "5.45"
+        )
+        self.grain_input = create_input_field(
+            "Food Grain / Meal (kg):", "0.100"
         )
 
-    def export_cashbook_pdf(self):
-        try:
-            key = self.get_current_key()
-            ym = self.ids.in_ym.text.strip()
-            app = App.get_running_app()
-            tot = app.db.calculate_totals(key, ym)
-            entries = [dict(r) for r in app.db.get_entries(key, ym)]
+        # Calculate Button
+        btn_calc = Button(
+            text="CALCULATE",
+            size_hint_y=None,
+            height=dp(48),
+            background_normal="",
+            background_color=(0.18, 0.35, 0.60, 1),
+            color=(1, 1, 1, 1),
+            bold=True,
+            font_size="15sp",
+        )
+        btn_calc.bind(on_release=self.calculate)
+        self.layout.add_widget(btn_calc)
 
-            out_dir = get_safe_storage_dir()
-            filename = os.path.join(out_dir, f"{key}_{ym}_CashBook.pdf")
-            from pdf_generator import generate_cashbook_pdf
-            generate_cashbook_pdf(key, ym, {"summary": tot, "entries": entries}, output_path=filename)
-            self.ids.out_results.text += f"\n\nPDF Saved:\n{filename}"
+        # Output Card / Label
+        self.result_label = Label(
+            text="Press Calculate to see figures.",
+            markup=True,
+            font_size="13sp",
+            size_hint_y=None,
+            halign="left",
+            valign="top",
+            color=(0.1, 0.1, 0.1, 1),
+        )
+        self.result_label.bind(
+            texture_size=lambda instance, value: setattr(
+                instance, "height", value[1] + dp(20)
+            )
+        )
+        self.result_label.bind(
+            width=lambda instance, value: setattr(
+                instance, "text_size", (value - dp(10), None)
+            )
+        )
+
+        self.layout.add_widget(self.result_label)
+
+        root_scroll.add_widget(self.layout)
+        return root_scroll
+
+    def calculate(self, instance):
+        try:
+            # Safe parsing
+            bal_str = self.bal_input.text.strip()
+            pri_str = self.pri_input.text.strip()
+            cost_str = self.rate_input.text.strip()
+            grain_str = self.grain_input.text.strip()
+
+            bal_meals = int(float(bal_str)) if bal_str else 0
+            pri_meals = int(float(pri_str)) if pri_str else 0
+            cost_rate = float(cost_str) if cost_str else 5.45
+            grain_rate = float(grain_str) if grain_str else 0.100
+
+            if bal_meals < 0 or pri_meals < 0:
+                self.result_label.text = (
+                    "[color=ff3333][b]Error:[/b] Meal counts cannot be negative.[/color]"
+                )
+                return
+
+            total_meals = bal_meals + pri_meals
+
+            # Computations
+            bal_grain = bal_meals * grain_rate
+            pri_grain = pri_meals * grain_rate
+            total_grain = total_meals * grain_rate
+
+            bal_cost = bal_meals * cost_rate
+            pri_cost = pri_meals * cost_rate
+            total_cost = total_meals * cost_rate
+
+            # Output markup
+            summary_text = (
+                f"[color=203050][b]CALCULATION SUMMARY[/b][/color]\n"
+                f"---------------------------------------------------\n"
+                f"[b]Total Meals Served:[/b] {total_meals}\n\n"
+                f"[b]1. Food Grains Requirement (KG):[/b]\n"
+                f"   • Bal Vatika: {bal_grain:.3f} kg\n"
+                f"   • Primary: {pri_grain:.3f} kg\n"
+                f"   [b]-> Total Grains:[/b] [color=006600][b]{total_grain:.3f} kg[/b][/color]\n\n"
+                f"[b]2. Cooking Cost (Rs.):[/b]\n"
+                f"   • Bal Vatika: Rs. {bal_cost:.2f}\n"
+                f"   • Primary: Rs. {pri_cost:.2f}\n"
+                f"   [b]-> Total Cost:[/b] [color=006600][b]Rs. {total_cost:.2f}[/b][/color]\n"
+                f"---------------------------------------------------"
+            )
+            self.result_label.text = summary_text
+
+        except ValueError:
+            self.result_label.text = (
+                "[color=ff3333][b]Error:[/b] Please enter valid numbers.[/color]"
+            )
         except Exception as e:
-            self.ids.out_results.text += f"\n\nCash Book PDF Error: {e}"
+            self.result_label.text = (
+                f"[color=ff3333][b]Unexpected Error:[/b] {str(e)}[/color]"
+            )
 
 
-class CashBookApp(App):
-    def build(self):
-        try:
-            db_dir = self.user_data_dir
-            db_path = os.path.join(db_dir, "cashbook.db")
-            self.db = DatabaseManager(db_path)
-
-            Builder.load_file('ui.kv')
-            return RootScreenManager()
-        except Exception:
-            err_msg = traceback.format_exc()
-            box = BoxLayout(orientation='vertical', padding=15)
-            box.add_widget(Label(text="CRASH DETECTED ON STARTUP", color=(1, 0.2, 0.2, 1), size_hint_y=0.1))
-            box.add_widget(TextInput(text=err_msg, readonly=True))
-            return box
-
-
-if __name__ == '__main__':
-    CashBookApp().run()
+if __name__ == "__main__":
+    PMPoshanApp().run()

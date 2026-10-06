@@ -1,1 +1,443 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>School Accounts & Cash Book Portal</title>
+  <style>
+    :root {
+      --primary: #1e3a8a;
+      --secondary: #059669;
+      --bg: #f8fafc;
+      --card: #ffffff;
+      --border: #cbd5e1;
+      --text: #0f172a;
+    }
+    * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
+    body { background: var(--bg); color: var(--text); margin: 0; padding: 12px; }
+    .container { max-width: 900px; margin: 0 auto; }
+    h1 { font-size: 1.25rem; color: var(--primary); text-align: center; margin-bottom: 12px; }
+    
+    /* Tabs */
+    .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
+    .tab-btn {
+      flex: 1; padding: 10px 4px; font-size: 0.8rem; font-weight: bold;
+      border: 1px solid var(--border); background: #e2e8f0; border-radius: 6px 6px 0 0;
+      cursor: pointer; text-align: center;
+    }
+    .tab-btn.active { background: var(--card); border-bottom: 2px solid var(--primary); color: var(--primary); }
+
+    /* Panels */
+    .panel { display: none; background: var(--card); padding: 16px; border-radius: 0 0 8px 8px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
+    .panel.active { display: block; }
+
+    /* Forms */
+    .form-group { margin-bottom: 12px; }
+    label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #334155; }
+    input, select {
+      width: 100%; padding: 8px 10px; border: 1px solid var(--border);
+      border-radius: 6px; font-size: 0.9rem; background: #fff;
+    }
+    .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
+    .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
+
+    /* Buttons */
+    .btn-row { display: flex; gap: 8px; margin-top: 14px; }
+    button {
+      flex: 1; padding: 10px; font-size: 0.85rem; font-weight: bold; border: none;
+      border-radius: 6px; cursor: pointer; color: white;
+    }
+    .btn-calc { background: var(--secondary); }
+    .btn-print { background: var(--primary); }
+    .btn-del { background: #dc2626; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; }
+
+    /* Tables & Previews */
+    .summary-box { background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 0.85rem; line-height: 1.4; }
+    table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.75rem; }
+    th, td { border: 1px solid #94a3b8; padding: 5px; text-align: left; }
+    th { background: #e2e8f0; }
+    .num { text-align: right; }
+
+    /* Print Styles: Exact Physical Registers */
+    @media print {
+      body { background: #fff; padding: 0; }
+      .tabs, .btn-row, .entry-form, h1, .no-print { display: none !important; }
+      .container { max-width: 100%; }
+      .panel { display: none !important; border: none; box-shadow: none; padding: 0; }
+      .panel.active { display: block !important; }
+      .print-area { display: block !important; }
+      .page-break { page-break-after: always; }
+      table { font-size: 8pt; }
+      @page { size: landscape; margin: 10mm; }
+    }
+  </style>
+</head>
+<body>
+
+<div class="container">
+  <h1>Assam Primary School Accounts Portal</h1>
+
+  <div class="tabs">
+    <div class="tab-btn active" onclick="switchTab(0)">MDM Stock</div>
+    <div class="tab-btn" onclick="switchTab(1)">MDM Cash Book</div>
+    <div class="tab-btn" onclick="switchTab(2)">SMC Normal</div>
+    <div class="tab-btn" onclick="switchTab(3)">Canara SNA</div>
+  </div>
+
+  <!-- TAB 1: MDM STOCK REGISTER -->
+  <div class="panel active" id="panel-0">
+    <div class="no-print">
+      <div class="grid-2 form-group">
+        <div>
+          <label>Month (YYYY-MM)</label>
+          <input type="month" id="stock-ym" value="2026-09" onchange="loadStockData()">
+        </div>
+        <div>
+          <label>Working Days</label>
+          <input type="number" id="stock-wd" value="22">
+        </div>
+      </div>
+      <div class="grid-2 form-group">
+        <div>
+          <label>LP Meals Fed (1-5 @ 100g)</label>
+          <input type="number" id="stock-lp" value="0">
+        </div>
+        <div>
+          <label>UP Meals Fed (6-8 @ 150g)</label>
+          <input type="number" id="stock-up" value="0">
+        </div>
+      </div>
+      <div class="grid-2 form-group">
+        <div>
+          <label>Rice Opening (kg)</label>
+          <input type="number" step="0.001" id="stock-rice-op" value="0.000">
+        </div>
+        <div>
+          <label>Rice Received (kg)</label>
+          <input type="number" step="0.001" id="stock-rice-rec" value="0.000">
+        </div>
+      </div>
+      <div class="grid-2 form-group">
+        <div>
+          <label>Cooking Cost Opening (Rs.)</label>
+          <input type="number" step="0.01" id="stock-cost-op" value="0.00">
+        </div>
+        <div>
+          <label>Grant Received (Rs.)</label>
+          <input type="number" step="0.01" id="stock-cost-rec" value="0.00">
+        </div>
+      </div>
+      <div class="btn-row">
+        <button class="btn-calc" onclick="saveStock()">Save & Calculate</button>
+        <button class="btn-print" onclick="window.print()">Print Register (PDF)</button>
+      </div>
+    </div>
+
+    <!-- Print Layout for Stock -->
+    <div class="print-area" style="margin-top:15px;">
+      <h2 style="text-align:center; font-size:1.1rem; margin-bottom:4px;">PM POSHAN - MONTHLY STOCK & COST REGISTER</h2>
+      <p style="text-align:center; font-size:0.85rem; margin-top:0;">Month: <span id="lbl-stock-ym">2026-09</span></p>
+      <table>
+        <thead>
+          <tr><th>Particulars / Component</th><th class="num">Details / Values</th></tr>
+        </thead>
+        <tbody>
+          <tr><td>School Working Days</td><td class="num" id="p-wd">0</td></tr>
+          <tr><td>Lower Primary (LP) Meals Fed</td><td class="num" id="p-lp">0</td></tr>
+          <tr><td>Upper Primary (UP) Meals Fed</td><td class="num" id="p-up">0</td></tr>
+          <tr style="font-weight:bold; background:#f8fafc;"><td>Total Meals Served</td><td class="num" id="p-totm">0</td></tr>
+          <tr style="font-weight:bold; background:#e2e8f0;"><td colspan="2">FOOD GRAINS (RICE IN KG)</td></tr>
+          <tr><td>&nbsp;&nbsp;Opening Balance</td><td class="num" id="p-rop">0.00 kg</td></tr>
+          <tr><td>&nbsp;&nbsp;Received during the Month</td><td class="num" id="p-rrec">0.00 kg</td></tr>
+          <tr><td>&nbsp;&nbsp;Consumption (@100g LP / 150g UP)</td><td class="num" id="p-rcons">0.00 kg</td></tr>
+          <tr style="font-weight:bold;"><td>&nbsp;&nbsp;Closing Stock Balance</td><td class="num" id="p-rcl">0.00 kg</td></tr>
+          <tr style="font-weight:bold; background:#e2e8f0;"><td colspan="2">COOKING COST (RS.)</td></tr>
+          <tr><td>&nbsp;&nbsp;Opening Balance / Deficit</td><td class="num" id="p-cop">Rs. 0.00</td></tr>
+          <tr><td>&nbsp;&nbsp;Grant Received in Bank</td><td class="num" id="p-crec">Rs. 0.00</td></tr>
+          <tr><td>&nbsp;&nbsp;Cooking Cost Entitlement Utilized</td><td class="num" id="p-cexp">Rs. 0.00</td></tr>
+          <tr style="font-weight:bold;"><td>&nbsp;&nbsp;Closing Balance Status</td><td class="num" id="p-ccl">Rs. 0.00</td></tr>
+        </tbody>
+      </table>
+      <div style="display:flex; justify-content:space-between; margin-top:40px;">
+        <div>__________________________________<br><b>Signature of Teacher-in-Charge</b></div>
+        <div>__________________________________<br><b>Signature of Head Teacher / SMC</b></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- CASH BOOK TEMPLATE (SHARED LOGIC FOR TABS 1, 2, 3) -->
+  <div class="panel" id="panel-1"></div>
+  <div class="panel" id="panel-2"></div>
+  <div class="panel" id="panel-3"></div>
+</div>
+
+<script>
+  // Tab Management
+  let currentTab = 0;
+  const accounts = [
+    { key: 'STOCK', name: 'MDM Stock' },
+    { key: 'MDM_SAVINGS', name: 'MDM Savings Cash Book' },
+    { key: 'SMC_SAVINGS', name: 'SMC Normal Savings Cash Book' },
+    { key: 'SMC_CANARA_SNA', name: 'Canara Bank SNA Cash Book' }
+  ];
+
+  function switchTab(index) {
+    currentTab = index;
+    document.querySelectorAll('.tab-btn').forEach((b, i) => b.classList.toggle('active', i === index));
+    document.querySelectorAll('.panel').forEach((p, i) => p.classList.toggle('active', i === index));
+    if (index > 0) renderCashBookPanel(index);
+  }
+
+  // --- MDM STOCK LOGIC ---
+  function saveStock() {
+    const ym = document.getElementById('stock-ym').value;
+    const wd = parseInt(document.getElementById('stock-wd').value) || 0;
+    const lp = parseInt(document.getElementById('stock-lp').value) || 0;
+    const up = parseInt(document.getElementById('stock-up').value) || 0;
+    const r_op = parseFloat(document.getElementById('stock-rice-op').value) || 0;
+    const r_rec = parseFloat(document.getElementById('stock-rice-rec').value) || 0;
+    const c_op = parseFloat(document.getElementById('stock-cost-op').value) || 0;
+    const c_rec = parseFloat(document.getElementById('stock-cost-rec').value) || 0;
+
+    const r_cons = Number(((lp * 0.100) + (up * 0.150)).toFixed(3));
+    const r_cl = Number(((r_op + r_rec) - r_cons).toFixed(3));
+    const c_exp = Number(((lp * 6.78) + (up * 10.15)).toFixed(2));
+    const c_cl = Number(((c_op + c_rec) - c_exp).toFixed(2));
+
+    const stockData = { ym, wd, lp, up, tot: lp + up, r_op, r_rec, r_cons, r_cl, c_op, c_rec, c_exp, c_cl };
+    localStorage.setItem(`stock_${ym}`, JSON.stringify(stockData));
+    updateStockUI(stockData);
+  }
+
+  function loadStockData() {
+    const ym = document.getElementById('stock-ym').value;
+    const raw = localStorage.getItem(`stock_${ym}`);
+    if (raw) {
+      const data = JSON.parse(raw);
+      document.getElementById('stock-wd').value = data.wd;
+      document.getElementById('stock-lp').value = data.lp;
+      document.getElementById('stock-up').value = data.up;
+      document.getElementById('stock-rice-op').value = data.r_op;
+      document.getElementById('stock-rice-rec').value = data.r_rec;
+      document.getElementById('stock-cost-op').value = data.c_op;
+      document.getElementById('stock-cost-rec').value = data.c_rec;
+      updateStockUI(data);
+    } else {
+      saveStock();
+    }
+  }
+
+  function updateStockUI(d) {
+    document.getElementById('lbl-stock-ym').innerText = d.ym;
+    document.getElementById('p-wd').innerText = d.wd;
+    document.getElementById('p-lp').innerText = d.lp;
+    document.getElementById('p-up').innerText = d.up;
+    document.getElementById('p-totm').innerText = d.tot;
+    document.getElementById('p-rop').innerText = d.r_op.toFixed(2) + " kg";
+    document.getElementById('p-rrec').innerText = d.r_rec.toFixed(2) + " kg";
+    document.getElementById('p-rcons').innerText = d.r_cons.toFixed(2) + " kg";
+    document.getElementById('p-rcl').innerText = d.r_cl.toFixed(2) + " kg";
+    document.getElementById('p-cop').innerText = "Rs. " + d.c_op.toFixed(2);
+    document.getElementById('p-crec').innerText = "Rs. " + d.c_rec.toFixed(2);
+    document.getElementById('p-cexp').innerText = "Rs. " + d.c_exp.toFixed(2);
+    document.getElementById('p-ccl').innerText = "Rs. " + d.c_cl.toFixed(2);
+  }
+
+  // --- CASH BOOK RENDERER ---
+  function renderCashBookPanel(tabIdx) {
+    const acc = accounts[tabIdx];
+    const isSNA = acc.key === 'SMC_CANARA_SNA';
+    const panel = document.getElementById(`panel-${tabIdx}`);
+
+    panel.innerHTML = `
+      <div class="no-print">
+        <h3 style="margin-top:0; font-size:1rem; color:var(--primary);">${acc.name}</h3>
+        <div class="grid-3 form-group">
+          <div>
+            <label>Month (YYYY-MM)</label>
+            <input type="month" id="${acc.key}-ym" value="2026-09" onchange="renderCashBookPanel(${tabIdx})">
+          </div>
+          <div>
+            <label>Opening Cash (Rs.)</label>
+            <input type="number" step="0.01" id="${acc.key}-op-c" value="0.00" ${isSNA ? 'disabled' : ''}>
+          </div>
+          <div>
+            <label>Opening Bank (Rs.)</label>
+            <input type="number" step="0.01" id="${acc.key}-op-b" value="0.00">
+          </div>
+        </div>
+        <button class="btn-calc" style="width:100%; margin-bottom:12px;" onclick="saveOpeningBalance('${acc.key}', ${tabIdx})">Update Opening Balances</button>
+
+        <div style="background:#f8fafc; border:1px solid #e2e8f0; padding:10px; border-radius:6px;">
+          <label style="color:var(--secondary); font-weight:bold;">Record Voucher / Entry</label>
+          <div class="grid-3 form-group">
+            <div><label>Date</label><input type="date" id="${acc.key}-date" value="2026-09-15"></div>
+            <div>
+              <label>Type</label>
+              <select id="${acc.key}-type">
+                <option value="RECEIPT">RECEIPT (Dr)</option>
+                <option value="PAYMENT">PAYMENT (Cr)</option>
+                ${!isSNA ? '<option value="CONTRA">CONTRA (Bank Withdrawal)</option>' : ''}
+              </select>
+            </div>
+            <div><label>Voucher / LF</label><input type="text" id="${acc.key}-vno" value="1"></div>
+          </div>
+          <div class="grid-2 form-group">
+            <div><label>Particulars</label><input type="text" id="${acc.key}-part" placeholder="e.g. Vegetables / Grant"></div>
+            <div>
+              <label>Mode & Amount</label>
+              <div style="display:flex; gap:6px;">
+                <select id="${acc.key}-mode" style="width:90px;" ${isSNA ? 'disabled' : ''}>
+                  <option value="BANK">Bank</option>
+                  <option value="CASH">Cash</option>
+                </select>
+                <input type="number" step="0.01" id="${acc.key}-amt" placeholder="0.00">
+              </div>
+            </div>
+          </div>
+          <button class="btn-calc" onclick="addEntry('${acc.key}', ${tabIdx})">+ Add to Cash Book</button>
+        </div>
+        <div class="btn-row">
+          <button class="btn-print" onclick="window.print()">Print 2-Page Physical Spread</button>
+        </div>
+      </div>
+
+      <!-- PRINT SPREAD (RECEIPTS ON LEFT, PAYMENTS ON RIGHT) -->
+      <div class="print-area" style="margin-top:15px;" id="${acc.key}-print-container">
+        <!-- Rendered dynamically -->
+      </div>
+    `;
+
+    loadCashBookData(acc.key);
+  }
+
+  function saveOpeningBalance(key, tabIdx) {
+    const ym = document.getElementById(`${key}-ym`).value;
+    const c = parseFloat(document.getElementById(`${key}-op-c`).value) || 0;
+    const b = parseFloat(document.getElementById(`${key}-op-b`).value) || 0;
+    localStorage.setItem(`${key}_${ym}_op`, JSON.stringify({ c, b }));
+    loadCashBookData(key);
+  }
+
+  function addEntry(key, tabIdx) {
+    const ym = document.getElementById(`${key}-ym`).value;
+    const date = document.getElementById(`${key}-date`).value;
+    const type = document.getElementById(`${key}-type`).value;
+    const particulars = document.getElementById(`${key}-part`).value.trim();
+    const vno = document.getElementById(`${key}-vno`).value.trim();
+    const mode = document.getElementById(`${key}-mode`).value;
+    const amt = parseFloat(document.getElementById(`${key}-amt`).value) || 0;
+
+    if (amt <= 0 || !particulars) return alert("Enter valid details and amount.");
+
+    const entriesKey = `${key}_${ym}_entries`;
+    const entries = JSON.parse(localStorage.getItem(entriesKey) || '[]');
+    entries.push({ id: Date.now(), date, type, particulars, vno, mode, amt });
+    localStorage.setItem(entriesKey, JSON.stringify(entries));
+
+    document.getElementById(`${key}-amt`).value = "";
+    loadCashBookData(key);
+  }
+
+  function deleteEntry(key, id) {
+    const ym = document.getElementById(`${key}-ym`).value;
+    const entriesKey = `${key}_${ym}_entries`;
+    let entries = JSON.parse(localStorage.getItem(entriesKey) || '[]');
+    entries = entries.filter(e => e.id !== id);
+    localStorage.setItem(entriesKey, JSON.stringify(entries));
+    loadCashBookData(key);
+  }
+
+  function loadCashBookData(key) {
+    const ym = document.getElementById(`${key}-ym`).value;
+    const op = JSON.parse(localStorage.getItem(`${key}_${ym}_op`) || '{"c":0,"b":0}');
+    const entries = JSON.parse(localStorage.getItem(`${key}_${ym}_entries`) || '[]');
+
+    document.getElementById(`${key}-op-c`).value = op.c;
+    document.getElementById(`${key}-op-b`).value = op.b;
+
+    // Calculate Dr / Cr
+    let dr_c = op.c, dr_b = op.b, cr_c = 0, cr_b = 0;
+    let drRows = `<tr><td>${ym}-01</td><td><b>To Opening Balance b/f</b></td><td class="num">-</td><td class="num">${op.c.toFixed(2)}</td><td class="num">${op.b.toFixed(2)}</td><td class="num">${(op.c+op.b).toFixed(2)}</td><td class="no-print"></td></tr>`;
+    let crRows = "";
+
+    entries.forEach(e => {
+      let c_val = (e.mode === 'CASH') ? e.amt : 0;
+      let b_val = (e.mode === 'BANK') ? e.amt : 0;
+
+      if (e.type === 'RECEIPT') {
+        dr_c += c_val; dr_b += b_val;
+        drRows += `<tr><td>${e.date}</td><td>To ${e.particulars}</td><td class="num">${e.vno}</td><td class="num">${c_val > 0 ? c_val.toFixed(2) : '-'}</td><td class="num">${b_val > 0 ? b_val.toFixed(2) : '-'}</td><td class="num">${e.amt.toFixed(2)}</td><td class="no-print"><button class="btn-del" onclick="deleteEntry('${key}', ${e.id})">×</button></td></tr>`;
+      } else if (e.type === 'PAYMENT') {
+        cr_c += c_val; cr_b += b_val;
+        crRows += `<tr><td>${e.date}</td><td>By ${e.particulars} (V. ${e.vno})</td><td class="num">${e.vno}</td><td class="num">${c_val > 0 ? c_val.toFixed(2) : '-'}</td><td class="num">${b_val > 0 ? b_val.toFixed(2) : '-'}</td><td class="num">${e.amt.toFixed(2)}</td><td class="no-print"><button class="btn-del" onclick="deleteEntry('${key}', ${e.id})">×</button></td></tr>`;
+      } else if (e.type === 'CONTRA') {
+        dr_c += e.amt; cr_b += e.amt;
+        drRows += `<tr><td>${e.date}</td><td>To Bank (Cash Withdrawn Slip ${e.vno})</td><td class="num">C</td><td class="num">${e.amt.toFixed(2)}</td><td class="num">-</td><td class="num">${e.amt.toFixed(2)}</td><td class="no-print"><button class="btn-del" onclick="deleteEntry('${key}', ${e.id})">×</button></td></tr>`;
+        crRows += `<tr><td>${e.date}</td><td>By Cash (Self Withdrawal)</td><td class="num">C</td><td class="num">-</td><td class="num">${e.amt.toFixed(2)}</td><td class="num">${e.amt.toFixed(2)}</td><td class="no-print"><button class="btn-del" onclick="deleteEntry('${key}', ${e.id})">×</button></td></tr>`;
+      }
+    });
+
+    const cl_c = Number((dr_c - cr_c).toFixed(2));
+    const cl_b = Number((dr_b - cr_b).toFixed(2));
+
+    crRows += `<tr><td>${ym}-30</td><td><b>By Closing Balance c/d</b></td><td class="num">-</td><td class="num">${cl_c.toFixed(2)}</td><td class="num">${cl_b.toFixed(2)}</td><td class="num">${(cl_c+cl_b).toFixed(2)}</td><td class="no-print"></td></tr>`;
+
+    const printContainer = document.getElementById(`${key}-print-container`);
+    printContainer.innerHTML = `
+      <!-- PAGE 1: RECEIPTS (Dr) -->
+      <div>
+        <h3 style="text-align:center; font-size:1rem; margin-bottom:2px;">${key.replace('_',' ')} - CASH BOOK REGISTER (RECEIPTS / Dr.)</h3>
+        <p style="text-align:center; font-size:0.8rem; margin:0 0 6px 0;">Month: ${ym}</p>
+        <table>
+          <thead>
+            <tr><th style="width:75px;">Date</th><th>Particulars</th><th style="width:35px;" class="num">LF</th><th class="num" style="width:80px;">Cash (Rs.)</th><th class="num" style="width:80px;">Bank (Rs.)</th><th class="num" style="width:85px;">Total (Rs.)</th><th class="no-print" style="width:25px;"></th></tr>
+          </thead>
+          <tbody>${drRows}</tbody>
+          <tfoot>
+            <tr style="font-weight:bold; background:#e2e8f0;">
+              <td colspan="3">TOTAL RECEIPTS CARRIED OVER</td>
+              <td class="num">${dr_c.toFixed(2)}</td>
+              <td class="num">${dr_b.toFixed(2)}</td>
+              <td class="num">${(dr_c+dr_b).toFixed(2)}</td>
+              <td class="no-print"></td>
+            </tr>
+          </tfoot>
+        </table>
+      </div>
+
+      <div class="page-break" style="margin-top:25px;"></div>
+
+      <!-- PAGE 2: PAYMENTS (Cr) -->
+      <div>
+        <h3 style="text-align:center; font-size:1rem; margin-bottom:2px;">${key.replace('_',' ')} - CASH BOOK REGISTER (PAYMENTS / Cr.)</h3>
+        <p style="text-align:center; font-size:0.8rem; margin:0 0 6px 0;">Month: ${ym}</p>
+        <table>
+          <thead>
+            <tr><th style="width:75px;">Date</th><th>Particulars</th><th style="width:35px;" class="num">V.No</th><th class="num" style="width:80px;">Cash (Rs.)</th><th class="num" style="width:80px;">Bank (Rs.)</th><th class="num" style="width:85px;">Total (Rs.)</th><th class="no-print" style="width:25px;"></th></tr>
+          </thead>
+          <tbody>${crRows}</tbody>
+          <tfoot>
+            <tr style="font-weight:bold; background:#e2e8f0;">
+              <td colspan="3">GRAND TOTAL BALANCED</td>
+              <td class="num">${(cr_c + cl_c).toFixed(2)}</td>
+              <td class="num">${(cr_b + cl_b).toFixed(2)}</td>
+              <td class="num">${(cr_c + cl_c + cr_b + cl_b).toFixed(2)}</td>
+              <td class="no-print"></td>
+            </tr>
+          </tfoot>
+        </table>
+        <div style="display:flex; justify-content:space-between; margin-top:35px;">
+          <div>__________________________________<br><b>Signature of Teacher / Cook-in-charge</b></div>
+          <div>__________________________________<br><b>Signature of Head Teacher / SMC Secretary</b></div>
+        </div>
+      </div>
+    `;
+  }
+
+  // Initial Load
+  loadStockData();
+</script>
+</body>
+</html>
 

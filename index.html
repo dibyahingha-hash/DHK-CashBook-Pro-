@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>School Accounts & Cash Book Portal</title>
+  <title>Primary School Accounts Portal</title>
   <style>
     :root {
       --primary: #1e3a8a;
@@ -12,26 +12,24 @@
       --card: #ffffff;
       --border: #cbd5e1;
       --text: #0f172a;
+      --danger: #dc2626;
     }
     * { box-sizing: border-box; font-family: system-ui, -apple-system, sans-serif; }
     body { background: var(--bg); color: var(--text); margin: 0; padding: 12px; }
-    .container { max-width: 900px; margin: 0 auto; }
+    .container { max-width: 950px; margin: 0 auto; }
     h1 { font-size: 1.25rem; color: var(--primary); text-align: center; margin-bottom: 12px; }
     
-    /* Tabs */
     .tabs { display: flex; gap: 4px; margin-bottom: 12px; }
     .tab-btn {
       flex: 1; padding: 10px 4px; font-size: 0.8rem; font-weight: bold;
       border: 1px solid var(--border); background: #e2e8f0; border-radius: 6px 6px 0 0;
       cursor: pointer; text-align: center;
     }
-    .tab-btn.active { background: var(--card); border-bottom: 2px solid var(--primary); color: var(--primary); }
+    .tab-btn.active { background: var(--card); border-bottom: 3px solid var(--primary); color: var(--primary); }
 
-    /* Panels */
     .panel { display: none; background: var(--card); padding: 16px; border-radius: 0 0 8px 8px; border: 1px solid var(--border); box-shadow: 0 1px 3px rgba(0,0,0,0.05); }
     .panel.active { display: block; }
 
-    /* Forms */
     .form-group { margin-bottom: 12px; }
     label { display: block; font-size: 0.8rem; font-weight: 600; margin-bottom: 4px; color: #334155; }
     input, select {
@@ -41,7 +39,6 @@
     .grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     .grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 10px; }
 
-    /* Buttons */
     .btn-row { display: flex; gap: 8px; margin-top: 14px; }
     button {
       flex: 1; padding: 10px; font-size: 0.85rem; font-weight: bold; border: none;
@@ -49,16 +46,13 @@
     }
     .btn-calc { background: var(--secondary); }
     .btn-print { background: var(--primary); }
-    .btn-del { background: #dc2626; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; }
+    .btn-del { background: var(--danger); padding: 4px 8px; font-size: 0.75rem; border-radius: 4px; }
 
-    /* Tables & Previews */
-    .summary-box { background: #f1f5f9; padding: 10px; border-radius: 6px; margin-top: 12px; font-size: 0.85rem; line-height: 1.4; }
     table { width: 100%; border-collapse: collapse; margin-top: 10px; font-size: 0.75rem; }
     th, td { border: 1px solid #94a3b8; padding: 5px; text-align: left; }
     th { background: #e2e8f0; }
     .num { text-align: right; }
 
-    /* Print Styles: Exact Physical Registers */
     @media print {
       body { background: #fff; padding: 0; }
       .tabs, .btn-row, .entry-form, h1, .no-print { display: none !important; }
@@ -84,7 +78,7 @@
     <div class="tab-btn" onclick="switchTab(3)">Canara SNA</div>
   </div>
 
-  <!-- TAB 1: MDM STOCK REGISTER -->
+  <!-- TAB 0: MDM STOCK REGISTER -->
   <div class="panel active" id="panel-0">
     <div class="no-print">
       <div class="grid-2 form-group">
@@ -99,11 +93,11 @@
       </div>
       <div class="grid-2 form-group">
         <div>
-          <label>LP Meals Fed (1-5 @ 100g)</label>
+          <label>LP Meals Fed (Classes 1–5 @ 100g)</label>
           <input type="number" id="stock-lp" value="0">
         </div>
         <div>
-          <label>UP Meals Fed (6-8 @ 150g)</label>
+          <label>UP Meals Fed (Classes 6–8 @ 150g)</label>
           <input type="number" id="stock-up" value="0">
         </div>
       </div>
@@ -119,11 +113,11 @@
       </div>
       <div class="grid-2 form-group">
         <div>
-          <label>Cooking Cost Opening (Rs.)</label>
-          <input type="number" step="0.01" id="stock-cost-op" value="0.00">
+          <label>Cooking Cost Opening (Supports Negative/Deficit)</label>
+          <input type="text" inputmode="decimal" id="stock-cost-op" value="0.00" placeholder="-0.00 or 0.00">
         </div>
         <div>
-          <label>Grant Received (Rs.)</label>
+          <label>Cooking Cost Grant Received (Rs.)</label>
           <input type="number" step="0.01" id="stock-cost-rec" value="0.00">
         </div>
       </div>
@@ -133,7 +127,7 @@
       </div>
     </div>
 
-    <!-- Print Layout for Stock -->
+    <!-- Print Spread: Stock Register -->
     <div class="print-area" style="margin-top:15px;">
       <h2 style="text-align:center; font-size:1.1rem; margin-bottom:4px;">PM POSHAN - MONTHLY STOCK & COST REGISTER</h2>
       <p style="text-align:center; font-size:0.85rem; margin-top:0;">Month: <span id="lbl-stock-ym">2026-09</span></p>
@@ -152,9 +146,9 @@
           <tr><td>&nbsp;&nbsp;Consumption (@100g LP / 150g UP)</td><td class="num" id="p-rcons">0.00 kg</td></tr>
           <tr style="font-weight:bold;"><td>&nbsp;&nbsp;Closing Stock Balance</td><td class="num" id="p-rcl">0.00 kg</td></tr>
           <tr style="font-weight:bold; background:#e2e8f0;"><td colspan="2">COOKING COST (RS.)</td></tr>
-          <tr><td>&nbsp;&nbsp;Opening Balance / Deficit</td><td class="num" id="p-cop">Rs. 0.00</td></tr>
+          <tr><td>&nbsp;&nbsp;Opening Balance / Past Deficit</td><td class="num" id="p-cop">Rs. 0.00</td></tr>
           <tr><td>&nbsp;&nbsp;Grant Received in Bank</td><td class="num" id="p-crec">Rs. 0.00</td></tr>
-          <tr><td>&nbsp;&nbsp;Cooking Cost Entitlement Utilized</td><td class="num" id="p-cexp">Rs. 0.00</td></tr>
+          <tr><td>&nbsp;&nbsp;Cooking Cost Entitlement Utilized (@ 6.78 LP / 10.15 UP)</td><td class="num" id="p-cexp">Rs. 0.00</td></tr>
           <tr style="font-weight:bold;"><td>&nbsp;&nbsp;Closing Balance Status</td><td class="num" id="p-ccl">Rs. 0.00</td></tr>
         </tbody>
       </table>
@@ -165,14 +159,13 @@
     </div>
   </div>
 
-  <!-- CASH BOOK TEMPLATE (SHARED LOGIC FOR TABS 1, 2, 3) -->
+  <!-- PANELS 1, 2, 3: DYNAMIC PHYSICAL CASH BOOKS -->
   <div class="panel" id="panel-1"></div>
   <div class="panel" id="panel-2"></div>
   <div class="panel" id="panel-3"></div>
 </div>
 
 <script>
-  // Tab Management
   let currentTab = 0;
   const accounts = [
     { key: 'STOCK', name: 'MDM Stock' },
@@ -196,7 +189,10 @@
     const up = parseInt(document.getElementById('stock-up').value) || 0;
     const r_op = parseFloat(document.getElementById('stock-rice-op').value) || 0;
     const r_rec = parseFloat(document.getElementById('stock-rice-rec').value) || 0;
-    const c_op = parseFloat(document.getElementById('stock-cost-op').value) || 0;
+    
+    // Parses negative or positive numbers
+    const rawCostOp = document.getElementById('stock-cost-op').value.trim();
+    const c_op = (!isNaN(parseFloat(rawCostOp))) ? parseFloat(rawCostOp) : 0.0;
     const c_rec = parseFloat(document.getElementById('stock-cost-rec').value) || 0;
 
     const r_cons = Number(((lp * 0.100) + (up * 0.150)).toFixed(3));
@@ -237,10 +233,14 @@
     document.getElementById('p-rrec').innerText = d.r_rec.toFixed(2) + " kg";
     document.getElementById('p-rcons').innerText = d.r_cons.toFixed(2) + " kg";
     document.getElementById('p-rcl').innerText = d.r_cl.toFixed(2) + " kg";
-    document.getElementById('p-cop').innerText = "Rs. " + d.c_op.toFixed(2);
+
+    const opText = d.c_op < 0 ? `Deficit: -Rs. ${Math.abs(d.c_op).toFixed(2)}` : `Rs. ${d.c_op.toFixed(2)}`;
+    const clText = d.c_cl < 0 ? `Deficit: -Rs. ${Math.abs(d.c_cl).toFixed(2)}` : `Surplus: Rs. ${d.c_cl.toFixed(2)}`;
+
+    document.getElementById('p-cop').innerText = opText;
     document.getElementById('p-crec').innerText = "Rs. " + d.c_rec.toFixed(2);
     document.getElementById('p-cexp').innerText = "Rs. " + d.c_exp.toFixed(2);
-    document.getElementById('p-ccl').innerText = "Rs. " + d.c_cl.toFixed(2);
+    document.getElementById('p-ccl').innerText = clText;
   }
 
   // --- CASH BOOK RENDERER ---
@@ -302,10 +302,7 @@
         </div>
       </div>
 
-      <!-- PRINT SPREAD (RECEIPTS ON LEFT, PAYMENTS ON RIGHT) -->
-      <div class="print-area" style="margin-top:15px;" id="${acc.key}-print-container">
-        <!-- Rendered dynamically -->
-      </div>
+      <div class="print-area" style="margin-top:15px;" id="${acc.key}-print-container"></div>
     `;
 
     loadCashBookData(acc.key);
@@ -328,7 +325,7 @@
     const mode = document.getElementById(`${key}-mode`).value;
     const amt = parseFloat(document.getElementById(`${key}-amt`).value) || 0;
 
-    if (amt <= 0 || !particulars) return alert("Enter valid details and amount.");
+    if (amt <= 0 || !particulars) return alert("Enter valid particulars and amount.");
 
     const entriesKey = `${key}_${ym}_entries`;
     const entries = JSON.parse(localStorage.getItem(entriesKey) || '[]');
@@ -356,7 +353,6 @@
     document.getElementById(`${key}-op-c`).value = op.c;
     document.getElementById(`${key}-op-b`).value = op.b;
 
-    // Calculate Dr / Cr
     let dr_c = op.c, dr_b = op.b, cr_c = 0, cr_b = 0;
     let drRows = `<tr><td>${ym}-01</td><td><b>To Opening Balance b/f</b></td><td class="num">-</td><td class="num">${op.c.toFixed(2)}</td><td class="num">${op.b.toFixed(2)}</td><td class="num">${(op.c+op.b).toFixed(2)}</td><td class="no-print"></td></tr>`;
     let crRows = "";
@@ -385,7 +381,6 @@
 
     const printContainer = document.getElementById(`${key}-print-container`);
     printContainer.innerHTML = `
-      <!-- PAGE 1: RECEIPTS (Dr) -->
       <div>
         <h3 style="text-align:center; font-size:1rem; margin-bottom:2px;">${key.replace('_',' ')} - CASH BOOK REGISTER (RECEIPTS / Dr.)</h3>
         <p style="text-align:center; font-size:0.8rem; margin:0 0 6px 0;">Month: ${ym}</p>
@@ -408,7 +403,6 @@
 
       <div class="page-break" style="margin-top:25px;"></div>
 
-      <!-- PAGE 2: PAYMENTS (Cr) -->
       <div>
         <h3 style="text-align:center; font-size:1rem; margin-bottom:2px;">${key.replace('_',' ')} - CASH BOOK REGISTER (PAYMENTS / Cr.)</h3>
         <p style="text-align:center; font-size:0.8rem; margin:0 0 6px 0;">Month: ${ym}</p>
@@ -435,9 +429,7 @@
     `;
   }
 
-  // Initial Load
   loadStockData();
 </script>
 </body>
 </html>
-

@@ -1,1 +1,154 @@
 
+:root {
+  --primary: #1e3a8a;
+  --primary-light: #2563eb;
+  --secondary: #047857;
+  --amber: #b45309;
+  --danger: #b91c1c;
+  --bg: #f8fafc;
+  --card-bg: #ffffff;
+  --border: #94a3b8;
+  --border-light: #cbd5e1;
+  --text: #0f172a;
+}
+
+* { box-sizing: border-box; font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif; }
+body { background: var(--bg); color: var(--text); margin: 0; padding: 0; }
+
+/* Top App Header */
+.app-header {
+  background: var(--primary);
+  color: white;
+  padding: 10px 14px;
+}
+.school-badge { display: flex; flex-direction: column; }
+.school-badge span { font-weight: 700; font-size: 0.95rem; }
+.school-badge small { font-size: 0.75rem; opacity: 0.85; }
+
+/* Navigation Bar */
+.nav-bar {
+  display: flex;
+  background: #e2e8f0;
+  padding: 6px 6px 0 6px;
+  gap: 4px;
+  overflow-x: auto;
+  border-bottom: 2px solid var(--primary);
+}
+.nav-btn {
+  flex: 1;
+  min-width: 82px;
+  padding: 8px 4px;
+  font-size: 0.78rem;
+  font-weight: 700;
+  color: #475569;
+  background: #cbd5e1;
+  border: none;
+  border-radius: 6px 6px 0 0;
+  cursor: pointer;
+  white-space: nowrap;
+}
+.nav-btn.active {
+  background: var(--card-bg);
+  color: var(--primary);
+  border-bottom: 2px solid var(--primary);
+}
+
+/* Layout Containers */
+.main-container { max-width: 1020px; margin: 0 auto; padding: 12px; }
+.module-view { display: none; }
+.module-view.active { display: block; }
+
+/* Cards & Sections */
+.card {
+  background: var(--card-bg);
+  border-radius: 8px;
+  border: 1px solid var(--border-light);
+  padding: 14px;
+  margin-bottom: 12px;
+  box-shadow: 0 1px 2px rgba(0,0,0,0.03);
+}
+.card-title { font-size: 0.9rem; font-weight: 700; color: var(--primary); margin: 0 0 10px 0; }
+.section-subtitle { font-size: 0.8rem; font-weight: 700; color: #475569; margin: 12px 0 6px 0; }
+
+/* Distinct Box Accent Titles */
+.title-contra { color: var(--amber) !important; }
+.title-receipt { color: var(--secondary) !important; }
+.title-payment { color: var(--primary) !important; }
+
+/* Form Grids & Controls */
+.grid-2 { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+.grid-3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 8px; }
+.form-group { margin-bottom: 8px; }
+label { display: block; font-size: 0.72rem; font-weight: 600; color: #334155; margin-bottom: 2px; }
+input, select {
+  width: 100%;
+  padding: 8px;
+  font-size: 0.85rem;
+  border: 1px solid var(--border-light);
+  border-radius: 5px;
+  background: #ffffff;
+  outline: none;
+}
+input:focus, select:focus {
+  border-color: var(--primary);
+  box-shadow: 0 0 0 2px rgba(30,58,138,0.12);
+}
+
+/* Action Buttons */
+.btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 0.82rem;
+  font-weight: 700;
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  color: white;
+}
+.btn-primary { background: var(--primary); }
+.btn-secondary { background: var(--secondary); }
+.btn-contra { background: var(--amber); }
+.btn-print { background: #334155; margin-top: 6px; }
+.btn-del {
+  background: #fee2e2;
+  color: var(--danger);
+  border: 1px solid #fca5a5;
+  padding: 2px 6px;
+  font-size: 0.7rem;
+  border-radius: 4px;
+  cursor: pointer;
+}
+.btn:active, .btn-del:active { opacity: 0.85; }
+
+/* Data Tables & Previews */
+.table-container { overflow-x: auto; margin-top: 8px; }
+table { width: 100%; border-collapse: collapse; font-size: 0.75rem; }
+th, td { border: 1px solid var(--border); padding: 5px; text-align: left; }
+th { background: #e2e8f0; font-weight: 700; }
+.num { text-align: right; }
+
+/* Physical Ledger Sub-Columns (Matching Government Cash Book Spreads) */
+.split-p {
+  width: 28px !important;
+  text-align: center !important;
+  border-left: 1px dashed var(--border) !important;
+}
+.split-rs {
+  text-align: right !important;
+  border-right: none !important;
+}
+
+/* Print Engine: 2-Page Landscape Statutory Spread */
+@media print {
+  body { background: white; padding: 0; }
+  .no-print, .nav-bar, .app-header, button { display: none !important; }
+  .main-container { max-width: 100%; padding: 0; margin: 0; }
+  .module-view { display: none !important; }
+  .module-view.active { display: block !important; }
+  .card { border: none !important; padding: 0 !important; margin: 0 !important; box-shadow: none !important; }
+  .page-break { page-break-after: always; }
+  table { font-size: 7.2pt; border: 1px solid #000; width: 100%; }
+  th, td { border: 1px solid #000 !important; padding: 4px !important; }
+  .split-p { border-left: 1px dashed #000 !important; }
+  @page { size: landscape; margin: 8mm; }
+}

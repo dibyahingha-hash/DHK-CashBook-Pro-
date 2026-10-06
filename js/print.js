@@ -20,9 +20,13 @@ function prepareAndPrintRegister() {
   const rawOpCash = cb.opCash || 0;
   const rawOpBank = cb.opBank || 0;
 
+    // Parse numeric values strictly
+  const rawOpCash = parseFloat(cb.opCash) || 0;
+  const rawOpBank = parseFloat(cb.opBank) || 0;
+
   // Opening Balance Row
   if (rawOpCash < 0) {
-    // Deficit from past month appears on Payments side as Past Deficit
+    // 1. Left side (Receipts): Cash is 0.00
     receipts.push({
       date: `${ym}-01`,
       particulars: 'To Opening Balance b/f (Bank)',
@@ -31,6 +35,7 @@ function prepareAndPrintRegister() {
       bank: rawOpBank,
       total: rawOpBank
     });
+    // 2. Right side (Payments): Past deficit entered as positive liability
     payments.push({
       date: `${ym}-01`,
       particulars: 'By Opening Deficit / Past Due to HT b/f',
@@ -49,6 +54,7 @@ function prepareAndPrintRegister() {
       total: rawOpCash + rawOpBank
     });
   }
+
 
   // Populate transactions
   (cb.entries || []).forEach(e => {

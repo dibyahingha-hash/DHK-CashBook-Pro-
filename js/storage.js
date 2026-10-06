@@ -90,3 +90,22 @@ function splitRupeesPaise(amount) {
     p: parts[1]
   };
 }
+// Clear only transactions (Attendance, Cash Books, Stock, Ledgers) while KEEPING School Profile
+function resetTransactionDataOnly() {
+  if (!confirm("Delete all test transactions, cash books, stock, and attendance records?")) return;
+  if (!confirm("Confirm: Start fresh? (Your School Name and UDISE will be preserved)")) return;
+
+  const profileKey = StorageEngine.PREFIX + 'profile_data';
+  const keysToRemove = [];
+
+  for (let i = 0; i < localStorage.length; i++) {
+    const k = localStorage.key(i);
+    if (k && k.startsWith(StorageEngine.PREFIX) && k !== profileKey) {
+      keysToRemove.push(k);
+    }
+  }
+
+  keysToRemove.forEach(k => localStorage.removeItem(k));
+  alert("All test records cleared! Your school profile remains intact.");
+  location.reload();
+}

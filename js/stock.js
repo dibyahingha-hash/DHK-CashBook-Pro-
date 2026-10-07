@@ -1,22 +1,22 @@
 /**
  * js/stock.js
- * PM POSHAN Monthly Stock & Cost Register
- * Supports Negative Balances (Rice & Cost), Date of Receipts, and Historical Rates (2020-2026)
+ * PM POSHAN Monthly Stock Almirah
+ * Built-in Missing Days Scanner, Auto-Sunday Exclusion, Quick Holiday Resolver & Rollover
  */
 
 const StockModule = {
-  // Historical Rate Lookup Engine (April 2020 to Present)
+  // Statutory Rates Lookup (April 2020 onward)
   getStatutoryRates(ym) {
-    if (ym < '2020-04') ym = '2020-04'; // Strict boundary cap
+    if (ym < '2020-04') ym = '2020-04';
 
     if (ym >= '2025-05') {
-      return { lp: 6.78, up: 10.17, label: "May 2025 – Present Rate (LP: ₹6.78, UP: ₹10.17)" };
+      return { lp: 6.78, up: 10.17, label: "May 2025 – Present (LP: ₹6.78, UP: ₹10.17)" };
     } else if (ym >= '2024-12') {
-      return { lp: 6.19, up: 9.29, label: "Dec 2024 – Apr 2025 Rate (LP: ₹6.19, UP: ₹9.29)" };
+      return { lp: 6.19, up: 9.29, label: "Dec 2024 – Apr 2025 (LP: ₹6.19, UP: ₹9.29)" };
     } else if (ym >= '2022-10') {
-      return { lp: 5.45, up: 8.17, label: "Oct 2022 – Nov 2024 Rate (LP: ₹5.45, UP: ₹8.17)" };
+      return { lp: 5.45, up: 8.17, label: "Oct 2022 – Nov 2024 (LP: ₹5.45, UP: ₹8.17)" };
     } else {
-      return { lp: 4.97, up: 7.45, label: "Apr 2020 – Sep 2022 Rate (LP: ₹4.97, UP: ₹7.45)" };
+      return { lp: 4.97, up: 7.45, label: "Apr 2020 – Sep 2022 (LP: ₹4.97, UP: ₹7.45)" };
     }
   },
 
@@ -40,30 +40,69 @@ const StockModule = {
   }
 };
 
+let activeMissingDate = null;
+
 function renderStockView() {
   const container = document.getElementById('view-stock');
   if (!container) return;
 
-  const currentYm = new Date().toISOString().substring(0, 7);
+  const now = new Date();
+  const currentYear = now.getFullYear();
+  const currentMonthNum = String(now.getMonth() + 1).padStart(2, '0');
+
+  const months = [
+    { num: '04', name: 'April' },
+    { num: '05', name: 'May' },
+    { num: '06', name: 'June' },
+    { num: '07', name: 'July' },
+    { num: '08', name: 'August' },
+    { num: '09', name: 'September' },
+    { num: '10', name: 'October' },
+    { num: '11', name: 'November' },
+    { num: '12', name: 'December' },
+    { num: '01', name: 'January' },
+    { num: '02', name: 'February' },
+    { num: '03', name: 'March' }
+  ];
+
+  const years = [2020, 2021, 2022, 2023, 2024, 2025, 2026];
+
+  let monthOptions = months.map(m => 
+    `<option value="${m.num}" ${m.num === currentMonthNum ? 'selected' : ''}>${m.name}</option>`
+  ).join('');
+
+  let yearOptions = years.map(y => 
+    `<option value="${y}" ${y === currentYear ? 'selected' : ''}>${y}</option>`
+  ).join('');
 
   container.innerHTML = `
     <div class="card no-print">
-      <h2 class="card-title">PM POSHAN Monthly Stock & Cost Register</h2>
+      <h2 class="card-title">📦 PM POSHAN Stock Almirah</h2>
       
-      <div class="form-group" style="display:flex; justify-content:space-between; align-items:center; flex-wrap:wrap; gap:10px;">
-        <div style="flex:1; min-width:180px;">
-          <label><b>Select Month (From April 2020 onward)</b></label>
-          <input type="month" id="stk-ym" min="2020-04" value="${currentYm}" onchange="loadSelectedMonthStock()" style="font-size:1.05rem; font-weight:bold; padding:8px;">
-        </div>
-        <div>
-          <label style="display:flex; align-items:center; gap:6px; cursor:pointer; font-weight:600; margin-top:18px;">
-            <input type="checkbox" id="stk-auto-calc" checked onchange="toggleAutoCalcDaily()">
-            Auto-Calculate from Daily Log
-          </label>
+      <!-- Period Selector -->
+      <div class="form-group" style="background:#f8fafc; padding:12px; border-radius:8px; border:1px solid #cbd5e1;">
+        <label style="font-weight:bold; color:#1e293b; margin-bottom:6px; display:block;">Select Register Period</label>
+        <div style="display:flex; gap:10px;">
+          <select id="stk-sel-month" onchange="onPeriodChange()" style="flex:1; font-size:1rem; padding:8px; font-weight:bold;">
+            ${monthOptions}
+          </select>
+          <select id="stk-sel-year" onchange="onPeriodChange()" style="flex:1; font-size:1rem; padding:8px; font-weight:bold;">
+            ${yearOptions}
+          </select>
         </div>
       </div>
 
       <div id="rate-badge" style="background:#e0f2fe; color:#0369a1; padding:6px 12px; border-radius:6px; font-size:0.8rem; font-weight:600; margin-bottom:12px;"></div>
+
+      <!-- MISSING DAYS SCANNER & HOLIDAY RESOLVER -->
+      <div id="missing-days-panel" style="margin-bottom:16px;"></div>
+
+      <div style="margin-bottom:12px;">
+        <label style="display:flex; align-items:center; gap:8px; cursor:pointer; font-weight:600;">
+          <input type="checkbox" id="stk-auto-calc" checked onchange="toggleAutoCalcDaily()">
+          Auto-Calculate Meals from Daily Entries
+        </label>
+      </div>
 
       <div class="grid-2 form-group">
         <div>
@@ -87,11 +126,11 @@ function renderStockView() {
         </div>
       </div>
 
-      <!-- SECTION A: FOOD GRAIN -->
+      <!-- FOOD GRAIN -->
       <h3 class="section-subtitle">Food Grains (Rice in kg)</h3>
       <div class="grid-2 form-group">
         <div>
-          <label>Rice Opening Stock (kg) <span style="font-size:0.75rem; color:#64748b;">(Negative allowed if borrowed/deficit, e.g. -50)</span></label>
+          <label>Rice Opening Stock (kg) <span style="font-size:0.75rem; color:#64748b;">(Negative allowed if borrowed, e.g. -50)</span></label>
           <input type="number" step="0.001" id="stk-op-rice" value="0" oninput="calculateStockLive()">
           <small id="hint-op-rice" style="color:#0284c7; font-size:0.75rem; display:block;"></small>
         </div>
@@ -111,7 +150,7 @@ function renderStockView() {
         </div>
       </div>
 
-      <!-- SECTION B: COOKING COST -->
+      <!-- COOKING COST -->
       <h3 class="section-subtitle">Cooking Cost Account (₹)</h3>
       <div class="grid-2 form-group">
         <div>
@@ -142,13 +181,13 @@ function renderStockView() {
       <div id="save-status-msg" style="text-align:center; font-weight:bold; margin-top:6px; min-height:20px;"></div>
     </div>
 
-    <!-- STATUTORY PREVIEW CARD -->
+    <!-- STATUTORY PRINTABLE SHEET -->
     <div class="card" id="stock-printable-card">
       <div style="text-align:center; border-bottom: 2px solid #000; padding-bottom:6px; margin-bottom:12px;">
         <h2 style="margin:0; font-size:1.1rem; text-transform:uppercase;" id="stk-prt-school">ASSAM PRIMARY SCHOOL</h2>
         <div style="font-size:0.85rem;" id="stk-prt-udise">UDISE: 18150301501 | BLOCK: Khowang</div>
         <h3 style="margin:4px 0 0 0; font-size:0.95rem; color:var(--primary);">PM POSHAN (MID-DAY MEAL) MONTHLY STOCK & COST REGISTER</h3>
-        <p style="margin:2px 0 0 0; font-size:0.85rem;">Month: <b id="stk-prt-ym">${currentYm}</b></p>
+        <p style="margin:2px 0 0 0; font-size:0.85rem;">Month: <b id="stk-prt-ym"></b></p>
       </div>
 
       <div class="table-container">
@@ -204,20 +243,41 @@ function renderStockView() {
     </div>
   `;
 
-  loadSelectedMonthStock();
+  onPeriodChange();
 }
 
-function loadSelectedMonthStock() {
-  const ym = document.getElementById('stk-ym').value;
+function getSelectedYM() {
+  const m = document.getElementById('stk-sel-month').value;
+  const y = document.getElementById('stk-sel-year').value;
+  return `${y}-${m}`;
+}
+
+function onPeriodChange() {
+  let ym = getSelectedYM();
+
+  if (ym < '2020-04') {
+    alert("Records start from April 2020. Selecting April 2020.");
+    document.getElementById('stk-sel-year').value = '2020';
+    document.getElementById('stk-sel-month').value = '04';
+    ym = '2020-04';
+  }
+
+  activeMissingDate = null;
+  loadSelectedMonthStock(ym);
+}
+
+function loadSelectedMonthStock(ym) {
+  if (!ym) ym = getSelectedYM();
   const profile = ProfileModule.getProfile();
 
   document.getElementById('stk-prt-school').innerText = profile.schoolName || 'ASSAM PRIMARY SCHOOL';
   document.getElementById('stk-prt-udise').innerText = `UDISE: ${profile.udise || 'Not Configured'} | BLOCK: ${profile.block || '-'}`;
   document.getElementById('stk-prt-ym').innerText = ym;
 
-  // Auto-detect and display the statutory rate for the selected month
   const rateObj = StockModule.getStatutoryRates(ym);
-  document.getElementById('rate-badge').innerText = `Statutory Rates applied: ${rateObj.label}`;
+  document.getElementById('rate-badge').innerText = `Statutory Rates: ${rateObj.label}`;
+
+  scanMonthCalendar(ym);
 
   const currentRecord = StockModule.get(ym);
   const prevYm = StockModule.getPrevMonth(ym);
@@ -241,17 +301,16 @@ function loadSelectedMonthStock() {
     document.getElementById('hint-op-rice').innerText = prevRecord ? `(Rolled over from ${prevYm} closing)` : '';
     document.getElementById('hint-op-cost').innerText = prevRecord ? `(Rolled over from ${prevYm} closing)` : '';
   } else {
-    // Unbroken chain: automatically roll forward previous month's closing
     if (prevRecord) {
       document.getElementById('stk-op-rice').value = prevRecord.clRice ?? 0;
       document.getElementById('stk-op-cost').value = prevRecord.clCost ?? 0;
-      document.getElementById('hint-op-rice').innerText = `✓ Carried forward from ${prevYm} closing (${prevRecord.clRice} kg)`;
-      document.getElementById('hint-op-cost').innerText = `✓ Carried forward from ${prevYm} closing (₹ ${prevRecord.clCost})`;
+      document.getElementById('hint-op-rice').innerText = `✓ Carried forward from ${prevYm} (${prevRecord.clRice} kg)`;
+      document.getElementById('hint-op-cost').innerText = `✓ Carried forward from ${prevYm} (₹ ${prevRecord.clCost})`;
     } else {
       document.getElementById('stk-op-rice').value = 0;
       document.getElementById('stk-op-cost').value = 0;
-      document.getElementById('hint-op-rice').innerText = '(Starting fresh: enter manual opening/deficit if any)';
-      document.getElementById('hint-op-cost').innerText = '(Starting fresh: enter manual opening/deficit if any)';
+      document.getElementById('hint-op-rice').innerText = '(Starting fresh: enter opening/deficit if any)';
+      document.getElementById('hint-op-cost').innerText = '(Starting fresh: enter opening/deficit if any)';
     }
 
     document.getElementById('stk-days').value = 0;
@@ -270,6 +329,142 @@ function loadSelectedMonthStock() {
   calculateStockLive();
 }
 
+// SCANNER: Auto-excludes Sundays and identifies missing days
+function scanMonthCalendar(ym) {
+  const panel = document.getElementById('missing-days-panel');
+  if (!panel) return;
+
+  const [yearStr, monthStr] = ym.split('-');
+  const year = parseInt(yearStr, 10);
+  const month = parseInt(monthStr, 10);
+
+  const daysInMonth = new Date(year, month, 0).getDate();
+  const dailyData = DailyLogModule.getMonthData(ym);
+
+  const todayStr = new Date().toISOString().substring(0, 10);
+  const isCurrentMonth = todayStr.startsWith(ym);
+  const maxDayToScan = isCurrentMonth ? parseInt(todayStr.split('-')[2], 10) : daysInMonth;
+
+  let missingDays = [];
+  let openCount = 0;
+  let sundayCount = 0;
+  let holidayCount = 0;
+
+  for (let d = 1; d <= maxDayToScan; d++) {
+    const dayStr = String(d).padStart(2, '0');
+    const fullDate = `${ym}-${dayStr}`;
+    const dateObj = new Date(year, month - 1, d);
+    const dayOfWeek = dateObj.getDay();
+
+    if (dayOfWeek === 0) {
+      // Auto-Sunday exclusion
+      sundayCount++;
+      continue;
+    }
+
+    const log = dailyData[fullDate];
+    if (!log) {
+      missingDays.push({ date: fullDate, day: d });
+    } else if (log.status === 'OPEN') {
+      openCount++;
+    } else {
+      holidayCount++;
+    }
+  }
+
+  let html = `
+    <div style="background:#fff; border:1px solid #cbd5e1; border-radius:8px; padding:10px;">
+      <div style="display:flex; justify-content:space-between; flex-wrap:wrap; font-size:0.85rem; color:#475569; margin-bottom:6px;">
+        <span><b>📅 Calendar Status:</b> ${openCount} Days Open | ${sundayCount} Sundays (Closed) | ${holidayCount} Holidays</span>
+        <span style="font-weight:bold; color:${missingDays.length > 0 ? '#b91c1c' : '#15803d'};">
+          ${missingDays.length > 0 ? `⚠️ ${missingDays.length} Missing Days` : '✅ All Days Accounted For'}
+        </span>
+      </div>
+  `;
+
+  if (missingDays.length > 0) {
+    html += `
+      <div style="font-size:0.8rem; color:#64748b; margin-bottom:6px;">
+        Tap any missing day below to enter meals or mark as a holiday:
+      </div>
+      <div style="display:flex; gap:6px; flex-wrap:wrap;">
+        ${missingDays.map(item => `
+          <button type="button" onclick="openMissingDayEditor('${item.date}')" style="background:#fee2e2; border:1px solid #f87171; color:#991b1b; padding:4px 8px; border-radius:4px; font-size:0.75rem; cursor:pointer; font-weight:600;">
+            ${item.date.substring(8)} Missing
+          </button>
+        `).join('')}
+      </div>
+    `;
+  }
+
+  // Quick Editor Drawer
+  if (activeMissingDate) {
+    html += `
+      <div style="margin-top:10px; background:#f8fafc; border:1px solid #0284c7; padding:10px; border-radius:6px;">
+        <div style="font-weight:bold; color:#0369a1; font-size:0.9rem; margin-bottom:8px;">
+          Log Entry for: ${activeMissingDate}
+        </div>
+        <div class="grid-2 form-group" style="margin-bottom:8px;">
+          <div>
+            <label style="font-size:0.8rem;">LP Meals (Classes 1–5)</label>
+            <input type="number" id="quick-lp" min="0" value="0" style="padding:6px;">
+          </div>
+          <div>
+            <label style="font-size:0.8rem;">UP Meals (Classes 6–8)</label>
+            <input type="number" id="quick-up" min="0" value="0" style="padding:6px;">
+          </div>
+        </div>
+        <div style="display:flex; gap:8px;">
+          <button type="button" class="btn btn-secondary" onclick="resolveMissingDay('OPEN')" style="flex:1; padding:8px; font-size:0.85rem;">
+            ✓ Save Meals
+          </button>
+          <button type="button" class="btn" onclick="resolveMissingDay('CLOSED')" style="flex:1; background:#64748b; color:#fff; padding:8px; font-size:0.85rem;">
+            🏖️ Mark as Holiday
+          </button>
+          <button type="button" class="btn" onclick="cancelMissingDayEditor()" style="background:#e2e8f0; color:#334155; padding:8px; font-size:0.85rem;">
+            Cancel
+          </button>
+        </div>
+      </div>
+    `;
+  }
+
+  html += `</div>`;
+  panel.innerHTML = html;
+}
+
+function openMissingDayEditor(dateStr) {
+  activeMissingDate = dateStr;
+  scanMonthCalendar(getSelectedYM());
+}
+
+function cancelMissingDayEditor() {
+  activeMissingDate = null;
+  scanMonthCalendar(getSelectedYM());
+}
+
+function resolveMissingDay(status) {
+  if (!activeMissingDate) return;
+
+  const lp = status === 'OPEN' ? (parseFloat(document.getElementById('quick-lp').value) || 0) : 0;
+  const up = status === 'OPEN' ? (parseFloat(document.getElementById('quick-up').value) || 0) : 0;
+
+  const entry = {
+    date: activeMissingDate,
+    status: status,
+    lp: lp,
+    up: up,
+    reason: status === 'CLOSED' ? 'Holiday / Vacation' : ''
+  };
+
+  DailyLogModule.saveEntry(activeMissingDate, entry);
+
+  activeMissingDate = null;
+  const ym = getSelectedYM();
+  scanMonthCalendar(ym);
+  toggleAutoCalcDaily(true);
+}
+
 function toggleAutoCalcDaily(recalculate = true) {
   const isAuto = document.getElementById('stk-auto-calc').checked;
   const daysInput = document.getElementById('stk-days');
@@ -284,7 +479,7 @@ function toggleAutoCalcDaily(recalculate = true) {
     lpInput.style.background = '#f1f5f9';
     upInput.style.background = '#f1f5f9';
 
-    const ym = document.getElementById('stk-ym').value;
+    const ym = getSelectedYM();
     const dailyData = DailyLogModule.getMonthData(ym);
     let openDays = 0, totLp = 0, totUp = 0;
 
@@ -312,7 +507,7 @@ function toggleAutoCalcDaily(recalculate = true) {
 }
 
 function calculateStockLive() {
-  const ym = document.getElementById('stk-ym').value;
+  const ym = getSelectedYM();
   const rates = StockModule.getStatutoryRates(ym);
 
   const days = parseFloat(document.getElementById('stk-days').value) || 0;
@@ -338,7 +533,7 @@ function calculateStockLive() {
 
   document.getElementById('prt-op-rice').innerText = `${opRice.toFixed(3)} kg`;
   document.getElementById('prt-rcvd-rice').innerText = `${rcvdRice.toFixed(3)} kg`;
-  
+
   let riceMetaText = '';
   if (rcvdRiceDate) riceMetaText += `Date: ${rcvdRiceDate} `;
   if (rcvdRiceMemo) riceMetaText += `(${rcvdRiceMemo})`;
@@ -397,7 +592,7 @@ function calculateStockLive() {
 }
 
 function saveCurrentMonthStock() {
-  const ym = document.getElementById('stk-ym').value;
+  const ym = getSelectedYM();
   const calc = calculateStockLive();
   const autoCalc = document.getElementById('stk-auto-calc').checked;
 
@@ -427,6 +622,6 @@ function saveCurrentMonthStock() {
 
   const status = document.getElementById('save-status-msg');
   status.style.color = '#15803d';
-  status.innerText = `✅ ${ym} Saved! Closing balances will automatically roll into next month.`;
+  status.innerText = `✅ ${ym} Saved! Rollover prepared for the next month.`;
   setTimeout(() => { status.innerText = ''; }, 4500);
 }

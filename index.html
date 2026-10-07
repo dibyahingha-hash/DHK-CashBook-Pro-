@@ -10,7 +10,7 @@
 </head>
 <body>
 
-  <!-- App Header -->
+  <!-- Top App Header -->
   <header class="app-header no-print">
     <div class="header-content">
       <div>
@@ -25,12 +25,12 @@
     </div>
   </header>
 
-  <!-- 1. INITIAL SETUP GATEKEEPER (Shows ONLY when profile is not set) -->
+  <!-- 1. INITIAL SETUP GATEKEEPER (Visible ONLY on very first run until profile is registered) -->
   <section id="profile-gatekeeper" style="display:none; padding: 15px; max-width:650px; margin: 20px auto;">
     <div class="card" style="border-top: 5px solid #0284c7; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
-      <h2 style="margin-top:0; color:#0369a1; font-size:1.25rem;">🏫 Welcome! Register School Profile</h2>
+      <h2 style="margin-top:0; color:#0369a1; font-size:1.25rem;">🏫 Register School Profile</h2>
       <p style="font-size:0.9rem; color:#475569; margin-bottom:15px;">
-        Before accessing the Daily Desk and Almirahs, please provide your school details once. These will be stamped onto all official statutory registers and cash books.
+        Please set your permanent school credentials. Once locked, this profile remains secure and will stamp all statutory stock sheets and cash books.
       </p>
 
       <div class="form-group">
@@ -65,12 +65,12 @@
       </div>
 
       <button type="button" class="btn btn-secondary" onclick="ProfileModule.saveProfile()" style="width:100%; padding:12px; font-size:1.05rem; font-weight:bold; margin-top:10px;">
-        🚀 Save School Profile & Unlock App
+        🚀 Save School Profile & Unlock Workspace
       </button>
     </div>
   </section>
 
-  <!-- 2. ROOM NAVIGATION: Desk + 2 Almirahs + Setup (Hidden until profile configured) -->
+  <!-- 2. MAIN NAVIGATION (Desk + 2 Dedicated Almirahs + Setup) -->
   <nav class="tabs-nav no-print" id="app-navigation" style="display:flex;">
     <button class="tab-btn active" id="tab-daily" onclick="switchTab('daily')">⚡ Daily Desk</button>
     <button class="tab-btn" id="tab-stock" onclick="switchTab('stock')">📦 MDM Stock Almirah</button>
@@ -78,15 +78,15 @@
     <button class="tab-btn" id="tab-setup" onclick="switchTab('setup')">⚙️ Setup</button>
   </nav>
 
-  <!-- 3. WORKSPACE CONTAINER (Hidden until profile configured) -->
+  <!-- 3. MAIN WORKSPACE PANELS -->
   <main class="main-content" id="workspace-container">
     
-    <!-- ROOM 1: THE QUICK DAILY DESK -->
+    <!-- ROOM 1: THE QUICK DAILY DESK (Immediate 10-Second Attendance) -->
     <section id="view-daily" class="view-panel active">
       <div class="card no-print">
         <h2 class="card-title">⚡ Quick Daily Attendance Desk</h2>
         <p style="font-size:0.85rem; color:#64748b; margin-top:-6px;">
-          Log today's meal count in 10 seconds. Feeds automatically into the MDM Stock Almirah.
+          Log today's meal count in 10 seconds. Feeds directly into the MDM Stock Almirah.
         </p>
 
         <div class="form-group">
@@ -117,7 +117,7 @@
 
         <div id="daily-holiday-field" style="display:none;" class="form-group">
           <label>Reason / Holiday Name</label>
-          <input type="text" id="daily-reason" placeholder="e.g. Sunday, Puja Vacation, Local Holiday" style="width:100%;">
+          <input type="text" id="daily-reason" placeholder="e.g. Sunday, Local Holiday, Puja Vacation" style="width:100%;">
         </div>
 
         <button class="btn btn-secondary" onclick="DailyLogModule.saveCurrentEntry()" style="padding:12px; font-size:1rem; font-weight:bold; width:100%; margin-top:8px;">
@@ -129,18 +129,18 @@
 
     <!-- ROOM 2: ALMIRAH 1 (MDM STOCK & COST REGISTER) -->
     <section id="view-stock" class="view-panel" style="display:none;">
-      <!-- Dynamic content from js/stock.js -->
+      <!-- Populated dynamically by js/stock.js -->
     </section>
 
     <!-- ROOM 3: ALMIRAH 2 (STATUTORY CASH BOOKS) -->
     <section id="view-cashbook" class="view-panel" style="display:none;">
-      <!-- Dynamic content from js/cashbook.js -->
+      <!-- Populated dynamically by js/cashbook.js -->
     </section>
 
-    <!-- ROOM 4: SETUP & BACKUP -->
+    <!-- ROOM 4: SETUP, EDIT PROFILE & SAFE DATA RESET -->
     <section id="view-setup" class="view-panel" style="display:none;">
       <div class="card no-print">
-        <h2 class="card-title">⚙️ Edit School Profile</h2>
+        <h2 class="card-title">⚙️ School Profile Details</h2>
         <div class="form-group">
           <label>School Name</label>
           <input type="text" id="edit-school-name" style="width:100%;">
@@ -174,11 +174,13 @@
         </button>
       </div>
 
+      <!-- Backup, Restore, and Protected Data Wiping -->
       <div class="card no-print">
-        <h3 class="card-title">Data Storage & Safety</h3>
+        <h3 class="card-title">Data Management & Reset</h3>
         <p style="font-size:0.85rem; color:#475569;">
-          All register records are preserved locally on this device. You can download an offline backup at any time.
+          You can experiment with test calculations safely. The clear button wipes test entries while keeping your school identity permanently protected.
         </p>
+
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <button class="btn" onclick="exportFullBackup()" style="background:#0284c7; color:#fff; padding:10px; flex:1;">
             📥 Download Backup (JSON)
@@ -187,6 +189,16 @@
             📤 Restore Backup
             <input type="file" id="file-restore" style="display:none;" onchange="importFullBackup(event)">
           </label>
+        </div>
+
+        <!-- PROTECTED CLEAR BUTTON: Clears test transactions, NEVER deletes School Profile -->
+        <div style="margin-top: 18px; border-top: 1px dashed #cbd5e1; padding-top: 14px;">
+          <button type="button" class="btn" onclick="clearTestDataPreserveProfile()" style="background:#dc2626; color:#fff; width:100%; padding:12px; font-weight:bold; font-size:0.95rem;">
+            🗑️ Clear All Test Entries (Keep School Profile Safe)
+          </button>
+          <small style="display:block; text-align:center; color:#64748b; margin-top:6px; font-size:0.75rem;">
+            🔒 Wipes test attendance, stock records, and cash books. Your school name and UDISE remain untouched.
+          </small>
         </div>
       </div>
     </section>
@@ -201,7 +213,7 @@
   <script src="js/cashbook.js"></script>
   <script src="js/print.js"></script>
 
-  <!-- Controller Script -->
+  <!-- Main Controller & Protected Reset Logic -->
   <script>
     function switchTab(tabId) {
       document.querySelectorAll('.view-panel').forEach(p => {
@@ -256,6 +268,35 @@
       alert("✅ School profile updated successfully!");
     }
 
+    // PROTECTED CLEAR FUNCTION: Deletes attendance, stock, and vouchers, but KEEPS School Profile
+    function clearTestDataPreserveProfile() {
+      const confirmed = confirm(
+        "Are you sure you want to clear all test records?\n\n" +
+        "• All daily logs will be cleared.\n" +
+        "• All MDM stock registers will be cleared.\n" +
+        "• All cash book vouchers will be cleared.\n\n" +
+        "✓ Your School Profile & UDISE code will remain completely safe."
+      );
+
+      if (!confirmed) return;
+
+      const profileKey = ProfileModule.KEY;
+      const keysToRemove = [];
+
+      for (let i = 0; i < localStorage.length; i++) {
+        const k = localStorage.key(i);
+        // Delete everything starting with the app prefix EXCEPT the school profile
+        if (k.startsWith(StorageEngine.PREFIX) && k !== profileKey) {
+          keysToRemove.push(k);
+        }
+      }
+
+      keysToRemove.forEach(k => localStorage.removeItem(k));
+      alert("✅ All test entries wiped clean! Your school profile remains intact.");
+      location.reload();
+    }
+
+    // Backup & Restore
     function exportFullBackup() {
       const backup = {};
       for (let i = 0; i < localStorage.length; i++) {
@@ -290,6 +331,7 @@
       reader.readAsText(file);
     }
 
+    // App Initialization
     window.addEventListener('DOMContentLoaded', () => {
       ProfileModule.init();
       if (ProfileModule.isConfigured()) {

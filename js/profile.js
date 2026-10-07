@@ -1,117 +1,98 @@
-
 /**
  * js/profile.js
- * School Profile, UDISE Registration & Statutory Rate Configuration
+ * Master School Profile & Gatekeeper Logic
  */
 
 const ProfileModule = {
-  KEY: 'profile_data',
+  KEY: StorageEngine.PREFIX + 'school_profile',
 
-  // Default statutory rates for Assam Primary & Upper Primary
-  defaultRates: {
-    rate_lp: 6.78,    // LP Cooking cost per student (Rs.)
-    rate_up: 10.15,   // UP Cooking cost per student (Rs.)
-    rice_lp: 0.100,   // LP Rice allocation per student (kg)
-    rice_up: 0.150    // UP Rice allocation per student (kg)
-  },
-
-  // Load saved profile or provide defaults
   getProfile() {
-    const saved = StorageEngine.get(this.KEY, {});
-    return {
-      udise: saved.udise || '',
-      schoolName: saved.schoolName || '',
-      block: saved.block || '',
-      district: saved.district || '',
-      htName: saved.htName || '',
-      mobile: saved.mobile || '',
-      rate_lp: parseFloat(saved.rate_lp) || this.defaultRates.rate_lp,
-      rate_up: parseFloat(saved.rate_up) || this.defaultRates.rate_up,
-      rice_lp: parseFloat(saved.rice_lp) || this.defaultRates.rice_lp,
-      rice_up: parseFloat(saved.rice_up) || this.defaultRates.rice_up
+    const raw = localStorage.getItem(this.KEY);
+    return raw ? JSON.parse(raw) : null;
+  },
+
+  isConfigured() {
+    const p = this.getProfile();
+    return !!(p && p.schoolName && p.schoolName.trim() !== '' && p.udise && p.udise.trim() !== '');
+  },
+
+  saveProfile() {
+    const name = document.getElementById('cfg-school-name').value.trim();
+    const udise = document.getElementById('cfg-udise').value.trim();
+    const block = document.getElementById('cfg-block').value.trim();
+    const htName = document.getElementById('cfg-ht-name').value.trim();
+    const cat = document.getElementById('cfg-cat') ? document.getElementById('cfg-cat').value : 'LP';
+
+    if (!name || !udise) {
+      alert("Please enter at least School Name and UDISE Code to activate the school portal.");
+      return;
+    }
+
+    const data = {
+      schoolName: name,
+      udise: udise,
+      block: block,
+      htName: htName,
+      category: cat,
+      configuredAt: new Date().toISOString()
     };
+
+    localStorage.setItem(this.KEY, JSON.stringify(data));
+    this.applyHeader();
+
+    // Unlock workspace
+    document.getElementById('profile-gatekeeper').style.display = 'none';
+    document.getElementById('app-navigation').style.display = 'flex';
+    document.getElementById('workspace-container').style.display = 'block';
+
+    // Show success message and navigate to Daily Desk
+    switchTab('daily');
+    alert("✅ School profile registered successfully! Workspace unlocked.");
   },
 
-  // Save profile to storage and refresh UI
-  saveProfile(data) {
-    StorageEngine.set(this.KEY, data);
-    this.updateHeaderBadge(data);
-  },
+  applyHeader() {
+    const p = this.getProfile();
+    const nameEl = document.getElementById('header-school-name');
+    const udiseEl = document.getElementById('header-udise');
 
-  // Update header badge dynamically
-  updateHeaderBadge(data) {
-    const dispName = document.getElementById('disp-school-name');
-    const dispUdise = document.getElementById('disp-udise-code');
-    if (dispName && dispUdise) {
-      dispName.innerText = data.schoolName ? data.schoolName : 'School Setup Required';
-      dispUdise.innerText = data.udise ? `UDISE: ${data.udise}` : 'UDISE: Not Configured';
+    if (p && p.schoolName) {
+      if (nameEl) nameEl.innerText = p.schoolName.toUpperCase();
+      if (udiseEl) udiseEl.innerText = `UDISE: ${p.udise} | BLOCK: ${p.block || '-'}`;
+    } else {
+      if (nameEl) nameEl.innerText = 'ASSAM PRIMARY SCHOOL';
+      if (udiseEl) udiseEl.innerText = 'UDISE: Not Set | District/Block: -';
     }
   },
 
-  // Populate UI inputs with saved data
-  populateUI() {
+  loadProfileUI() {
     const p = this.getProfile();
-    const setVal = (id, val) => {
-      const el = document.getElementById(id);
-      if (el) el.value = val;
-    };
+    if (p) {
+      if (document.getElementById('cfg-school-name')) document.getElementById('cfg-school-name').value = p.schoolName || '';
+      if (document.getElementById('cfg-udise')) document.getElementById('cfg-udise').value = p.udise || '';
+      if (document.getElementById('cfg-block')) document.getElementById('cfg-block').value = p.block || '';
+      if (document.getElementById('cfg-ht-name')) document.getElementById('cfg-ht-name').value = p.htName || '';
+      if (document.getElementById('cfg-cat') && p.category) document.getElementById('cfg-cat').value = p.category;
+    }
+  },
 
-    setVal('cfg-udise', p.udise);
-    setVal('cfg-name', p.schoolName);
-    setVal('cfg-block', p.block);
-    setVal('cfg-district', p.district);
-    setVal('cfg-ht-name', p.htName);
-    setVal('cfg-mobile', p.mobile);
-    setVal('cfg-rate-lp', p.rate_lp);
-    setVal('cfg-rate-up', p.rate_up);
-    setVal('cfg-rice-lp', p.rice_lp);
-    setVal('cfg-rice-up', p.rice_up);
+  init() {
+    this.applyHeader();
+    this.loadProfileUI();
 
-    this.updateHeaderBadge(p);
+    const gate = document.getElementById('profile-gatekeeper');
+    const nav = document.getElementById('app-navigation');
+    const work = document.getElementById('workspace-container');
+
+    if (!this.isConfigured()) {
+      // First time: Hide all workspaces, lock on Setup Gatekeeper
+      if (gate) gate.style.display = 'block';
+      if (nav) nav.style.display = 'none';
+      if (work) work.style.display = 'none';
+    } else {
+      // Already configured: Show normal workspace
+      if (gate) gate.style.display = 'none';
+      if (nav) nav.style.display = 'flex';
+      if (work) work.style.display = 'block';
+    }
   }
 };
-
-// Form submission handler
-function saveSchoolProfile() {
-  const udise = document.getElementById('cfg-udise').value.trim();
-  const schoolName = document.getElementById('cfg-name').value.trim();
-  const block = document.getElementById('cfg-block').value.trim();
-  const district = document.getElementById('cfg-district').value.trim();
-  const htName = document.getElementById('cfg-ht-name').value.trim();
-  const mobile = document.getElementById('cfg-mobile').value.trim();
-
-  const rate_lp = parseFloat(document.getElementById('cfg-rate-lp').value) || 6.78;
-  const rate_up = parseFloat(document.getElementById('cfg-rate-up').value) || 10.15;
-  const rice_lp = parseFloat(document.getElementById('cfg-rice-lp').value) || 0.100;
-  const rice_up = parseFloat(document.getElementById('cfg-rice-up').value) || 0.150;
-
-  if (udise.length !== 11 || isNaN(udise)) {
-    alert('Please enter a valid 11-digit UDISE+ code.');
-    return;
-  }
-  if (!schoolName) {
-    alert('Please enter the School Name.');
-    return;
-  }
-
-  const profileData = {
-    udise,
-    schoolName,
-    block,
-    district,
-    htName,
-    mobile,
-    rate_lp,
-    rate_up,
-    rice_lp,
-    rice_up
-  };
-
-  ProfileModule.saveProfile(profileData);
-  alert('School profile successfully saved!');
-}
-
-// Auto-populate on app startup
-document.addEventListener('DOMContentLoaded', () => {
-  ProfileModule.populateUI();
-});

@@ -763,31 +763,72 @@ function recalculateCashbook() {
   const totRcptTotal = totRcptCash + totRcptBank;
   const totPmtTotal = totPmtCash + totPmtBank;
 
-  const clCash = totRcptCash - totPmtCash;
-  const clBank = totRcptBank - totPmtBank;
-  const clTotal = clCash + clBank;
+    // --- STATUTORY DEFICIT BALANCING LOGIC ---
+  const netCash = totRcptCash - totPmtCash;
+  const netBank = totRcptBank - totPmtBank;
 
-  const grandCash = totPmtCash + clCash;
-  const grandBank = totPmtBank + clBank;
-  const grandTotal = grandCash + grandBank;
+  let clCashPayment = 0;
+  let clBankPayment = 0;
+  let deficitCashReceipt = 0;
+  let deficitBankReceipt = 0;
+
+  if (netCash >= 0) {
+    clCashPayment = netCash;
+  } else {
+    deficitCashReceipt = Math.abs(netCash);
+  }
+
+  if (netBank >= 0) {
+    clBankPayment = netBank;
+  } else {
+    deficitBankReceipt = Math.abs(netBank);
+  }
+
+  // If cash or bank has a deficit, post it on Left Page (Receipts) to balance the register
+  if (deficitCashReceipt > 0 || deficitBankReceipt > 0) {
+    rcptHtml += `
+      <tr style="background:#fff7ed; color:#c2410c; font-weight:bold;">
+        <td>End</td>
+        <td>To Closing Deficit (c/f - Due to In-charge)</td>
+        <td style="text-align:center;">-</td>
+        <td class="num">${deficitCashReceipt ? deficitCashReceipt.toFixed(2) : '-'}</td>
+        <td class="num">${deficitBankReceipt ? deficitBankReceipt.toFixed(2) : '-'}</td>
+        <td class="num">${(deficitCashReceipt + deficitBankReceipt).toFixed(2)}</td>
+      </tr>
+    `;
+  }
+
+  const finalRcptCash = totRcptCash + deficitCashReceipt;
+  const finalRcptBank = totRcptBank + deficitBankReceipt;
+  const finalRcptTotal = finalRcptCash + finalRcptBank;
+
+  const finalPmtCash = totPmtCash + clCashPayment;
+  const finalPmtBank = totPmtBank + clBankPayment;
+  const finalPmtTotal = finalPmtCash + finalPmtBank;
 
   tbodyRcpt.innerHTML = rcptHtml;
   tbodyPmt.innerHTML = pmtHtml;
 
-  document.getElementById('tot-rcpt-cash').innerText = totRcptCash.toFixed(2);
-  document.getElementById('tot-rcpt-bank').innerText = totRcptBank.toFixed(2);
-  document.getElementById('tot-rcpt-total').innerText = totRcptTotal.toFixed(2);
+  // Receipts Totals (Balanced)
+  document.getElementById('tot-rcpt-cash').innerText = finalRcptCash.toFixed(2);
+  document.getElementById('tot-rcpt-bank').innerText = finalRcptBank.toFixed(2);
+  document.getElementById('tot-rcpt-total').innerText = finalRcptTotal.toFixed(2);
 
+  // Payments Totals (Expenditure)
   document.getElementById('tot-pmt-cash').innerText = totPmtCash.toFixed(2);
   document.getElementById('tot-pmt-bank').innerText = totPmtBank.toFixed(2);
   document.getElementById('tot-pmt-total').innerText = totPmtTotal.toFixed(2);
 
-  document.getElementById('tot-cl-cash').innerText = clCash.toFixed(2);
-  document.getElementById('tot-cl-bank').innerText = clBank.toFixed(2);
-  document.getElementById('tot-cl-total').innerText = clTotal.toFixed(2);
+  // Closing Balances (Asset c/f)
+  document.getElementById('tot-cl-cash').innerText = clCashPayment.toFixed(2);
+  document.getElementById('tot-cl-bank').innerText = clBankPayment.toFixed(2);
+  document.getElementById('tot-cl-total').innerText = (clCashPayment + clBankPayment).toFixed(2);
 
-  document.getElementById('tot-grand-cash').innerText = grandCash.toFixed(2);
-  document.getElementById('tot-grand-bank').innerText = grandBank.toFixed(2);
+  // Grand Totals on Payments Side (Balanced)
+  document.getElementById('tot-grand-cash').innerText = finalPmtCash.toFixed(2);
+  document.getElementById('tot-grand-bank').innerText = finalPmtBank.toFixed(2);
+  document.getElementById('tot-grand-total').innerText = finalPmtTotal.toFixed(2);
+
   document.getElementById('tot-grand-total').innerText = grandTotal.toFixed(2);
 
   // If viewing ledger, refresh ledger immediately

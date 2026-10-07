@@ -672,7 +672,17 @@ function recalculateCashbook() {
       rcptHtml += `
         <tr>
           <td><b>${v.date}</b></td>
-          <td>${fullParticulars} <span class="no-print" style="cursor:pointer; color:#dc2626; font-weight:bold;" onclick="deleteTransaction(${v.id})">✖</span></td>
+                  <tr>
+          <td><b>${v.date}</b></td>
+          <td>
+            ${fullParticulars}
+            <div class="no-print" style="margin-top:4px;">
+              <button type="button" onclick="deleteTransaction(${v.id})" style="background:#fee2e2; color:#dc2626; border:1px solid #f87171; border-radius:3px; padding:2px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
+                🗑️ Delete
+              </button>
+            </div>
+          </td>
+
           <td style="text-align:center;">${v.lf}</td>
           <td class="num">${cAmt ? cAmt.toFixed(2) : '-'}</td>
           <td class="num">${bAmt ? bAmt.toFixed(2) : '-'}</td>
@@ -699,7 +709,17 @@ function recalculateCashbook() {
       pmtHtml += `
         <tr style="background:#fef2f2;">
           <td><b>${v.date}</b></td>
-          <td>By Cash (Self withdrawal for expenses) <span class="no-print" style="cursor:pointer; color:#dc2626; font-weight:bold;" onclick="deleteTransaction(${v.id})">✖</span><br><small style="color:#64748b;">(Chq: ${v.ref})</small></td>
+                  <tr style="background:#fef2f2;">
+          <td><b>${v.date}</b></td>
+          <td>
+            By Cash (Self withdrawal for expenses)<br><small style="color:#64748b;">(Chq: ${v.ref})</small>
+            <div class="no-print" style="margin-top:4px;">
+              <button type="button" onclick="deleteTransaction(${v.id})" style="background:#fee2e2; color:#dc2626; border:1px solid #f87171; border-radius:3px; padding:2px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
+                🗑️ Delete
+              </button>
+            </div>
+          </td>
+
           <td style="text-align:center; font-weight:bold;">C</td>
           <td class="num">-</td>
           <td class="num">${v.amount.toFixed(2)}</td>
@@ -720,7 +740,17 @@ function recalculateCashbook() {
       pmtHtml += `
         <tr>
           <td><b>${v.date}</b></td>
-          <td>${fullParticulars} <span class="no-print" style="cursor:pointer; color:#dc2626; font-weight:bold;" onclick="deleteTransaction(${v.id})">✖</span></td>
+                  <tr>
+          <td><b>${v.date}</b></td>
+          <td>
+            ${fullParticulars}
+            <div class="no-print" style="margin-top:4px;">
+              <button type="button" onclick="deleteTransaction(${v.id})" style="background:#fee2e2; color:#dc2626; border:1px solid #f87171; border-radius:3px; padding:2px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
+                🗑️ Delete
+              </button>
+            </div>
+          </td>
+          
           <td style="text-align:center;">${v.lf}</td>
           <td class="num">${cAmt ? cAmt.toFixed(2) : '-'}</td>
           <td class="num">${bAmt ? bAmt.toFixed(2) : '-'}</td>

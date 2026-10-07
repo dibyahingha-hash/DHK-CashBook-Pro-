@@ -1,20 +1,16 @@
 /* ==========================================================================
    css/style.css
-   DHK PM POSHAN & School CashBook Pro - Master Stylesheet
-   Mobile-First, Tab-Isolated, Clean Physical Almirah Architecture
+   Mobile Data-Entry Desk + Statutory 2-Page Landscape Print Cash Book
    ========================================================================== */
 
 :root {
-  --primary: #1e3a8a;       /* Deep Navy */
-  --primary-light: #0284c7; /* Sky Blue */
-  --accent: #15803d;        /* Emerald Green */
-  --danger: #dc2626;        /* Statutory Deficit Red */
-  --bg-main: #f8fafc;       /* Light neutral desk background */
+  --primary: #1e3a8a;
+  --primary-light: #0284c7;
+  --accent: #15803d;
+  --danger: #dc2626;
+  --bg-main: #f8fafc;
   --card-bg: #ffffff;
-  --text-main: #0f172a;
-  --text-muted: #64748b;
   --border-color: #cbd5e1;
-  --font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
 }
 
 * {
@@ -24,26 +20,18 @@
 }
 
 body {
-  font-family: var(--font-family);
+  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
   background-color: var(--bg-main);
-  color: var(--text-main);
-  line-height: 1.5;
-  -webkit-font-smoothing: antialiased;
+  color: #0f172a;
+  line-height: 1.4;
 }
 
-/* ---------------------------------------------------------
-   APP HEADER
-   --------------------------------------------------------- */
+/* Header & Tabs */
 .app-header {
-  background-color: var(--primary);
-  color: #ffffff;
+  background: var(--primary);
+  color: #fff;
   padding: 12px 16px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  position: sticky;
-  top: 0;
-  z-index: 100;
 }
-
 .header-content {
   display: flex;
   justify-content: space-between;
@@ -52,59 +40,38 @@ body {
   margin: 0 auto;
 }
 
-/* ---------------------------------------------------------
-   TAB NAVIGATION (Desk + 2 Almirahs + Setup)
-   --------------------------------------------------------- */
 .tabs-nav {
   display: flex;
-  background: #ffffff;
+  background: #fff;
   border-bottom: 2px solid var(--border-color);
-  overflow-x: auto;
-  -webkit-overflow-scrolling: touch;
   max-width: 900px;
   margin: 0 auto;
 }
-
 .tab-btn {
   flex: 1;
-  min-width: 110px;
-  padding: 12px 8px;
+  padding: 12px 6px;
   border: none;
   background: transparent;
   font-weight: 700;
   font-size: 0.85rem;
-  color: var(--text-muted);
+  color: #64748b;
   cursor: pointer;
-  white-space: nowrap;
   text-align: center;
-  transition: all 0.2s ease;
   border-bottom: 3px solid transparent;
 }
-
-.tab-btn:hover {
-  background-color: #f1f5f9;
-}
-
 .tab-btn.active {
   color: var(--primary-light);
   border-bottom: 3px solid var(--primary-light);
-  background-color: #ffffff;
+  background: #fff;
 }
 
-/* ---------------------------------------------------------
-   TAB ISOLATION (Crucial fix: hides inactive panels)
-   --------------------------------------------------------- */
 .view-panel {
   display: none !important;
 }
-
 .view-panel.active {
   display: block !important;
 }
 
-/* ---------------------------------------------------------
-   MAIN CONTENT & CARDS
-   --------------------------------------------------------- */
 .main-content {
   max-width: 900px;
   margin: 0 auto;
@@ -115,67 +82,8 @@ body {
   background: var(--card-bg);
   border-radius: 8px;
   border: 1px solid var(--border-color);
-  padding: 16px;
-  margin-bottom: 16px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.05);
-}
-
-.card-title {
-  font-size: 1.15rem;
-  font-weight: 700;
-  color: var(--primary);
-  margin-bottom: 8px;
-}
-
-.section-subtitle {
-  font-size: 0.95rem;
-  font-weight: 700;
-  color: #334155;
-  margin: 16px 0 8px 0;
-  padding-bottom: 4px;
-  border-bottom: 1px dashed var(--border-color);
-  text-transform: uppercase;
-}
-
-/* ---------------------------------------------------------
-   FORM CONTROLS & INPUTS
-   --------------------------------------------------------- */
-.form-group {
-  margin-bottom: 12px;
-}
-
-.form-group label {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #334155;
-  margin-bottom: 4px;
-}
-
-input[type="text"],
-input[type="number"],
-input[type="date"],
-input[type="month"],
-select {
-  width: 100%;
-  padding: 10px;
-  font-size: 0.95rem;
-  font-family: inherit;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  background-color: #ffffff;
-  color: var(--text-main);
-  outline: none;
-  transition: border-color 0.2s;
-}
-
-input[type="text"]:focus,
-input[type="number"]:focus,
-input[type="date"]:focus,
-input[type="month"]:focus,
-select:focus {
-  border-color: var(--primary-light);
-  box-shadow: 0 0 0 2px rgba(2, 132, 199, 0.15);
+  padding: 14px;
+  margin-bottom: 14px;
 }
 
 .grid-2 {
@@ -183,93 +91,74 @@ select:focus {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
-
-@media (max-width: 480px) {
+@media (max-width: 500px) {
   .grid-2 {
     grid-template-columns: 1fr;
   }
 }
 
-/* ---------------------------------------------------------
-   BUTTONS
-   --------------------------------------------------------- */
-.btn {
-  display: inline-block;
-  padding: 10px 16px;
-  font-size: 0.9rem;
+.form-group {
+  margin-bottom: 10px;
+}
+.form-group label {
+  display: block;
+  font-size: 0.85rem;
   font-weight: 600;
-  font-family: inherit;
-  text-align: center;
+  margin-bottom: 4px;
+}
+input, select {
+  width: 100%;
+  padding: 9px;
+  border: 1px solid var(--border-color);
+  border-radius: 6px;
+  font-size: 0.95rem;
+}
+
+.btn {
+  padding: 10px 14px;
   border-radius: 6px;
   border: none;
   cursor: pointer;
-  transition: background-color 0.2s, transform 0.1s;
+  font-weight: 600;
 }
-
-.btn:active {
-  transform: scale(0.98);
-}
-
 .btn-secondary {
-  background-color: var(--accent);
-  color: #ffffff;
+  background: var(--accent);
+  color: #fff;
 }
 
-.btn-secondary:hover {
-  background-color: #166534;
-}
-
-.btn-sm {
-  padding: 4px 8px;
-  font-size: 0.75rem;
-}
-
-/* ---------------------------------------------------------
-   STATUTORY TABLES (Stock & Two-Page Cash Books)
-   --------------------------------------------------------- */
-.table-container {
-  overflow-x: auto;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  margin-top: 8px;
-}
-
-table {
-  width: 100%;
-  border-collapse: collapse;
-  font-size: 0.85rem;
-  background-color: #ffffff;
-}
-
-th, td {
-  padding: 8px 10px;
+/* Voucher feed cards on mobile */
+.voucher-feed-item {
+  background: #f8fafc;
   border: 1px solid #e2e8f0;
-  text-align: left;
+  border-left: 4px solid #0284c7;
+  padding: 8px 10px;
+  margin-bottom: 6px;
+  border-radius: 4px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
 }
 
-th {
-  background-color: #f1f5f9;
-  font-weight: 700;
-  color: #334155;
+/* ==========================================================================
+   PRINT ENGINE: EXACT 2-PAGE STATUTORY CASH BOOK
+   ========================================================================== */
+@media screen {
+  /* On mobile/desktop screen, hide the giant printable book to save screen space */
+  .statutory-print-area {
+    display: none;
+  }
 }
 
-td.num, th.num {
-  text-align: right;
-  font-variant-numeric: tabular-nums;
-}
-
-tfoot tr td {
-  font-size: 0.85rem;
-}
-
-/* ---------------------------------------------------------
-   PRINT RULES (Clean official white sheets for audit)
-   --------------------------------------------------------- */
 @media print {
+  @page {
+    size: A4 landscape;
+    margin: 10mm 12mm 10mm 12mm;
+  }
+
   body {
-    background: #ffffff !important;
-    color: #000000 !important;
-    font-size: 10pt;
+    background: #fff !important;
+    color: #000 !important;
+    font-size: 9pt;
   }
 
   .no-print,
@@ -279,33 +168,65 @@ tfoot tr td {
     display: none !important;
   }
 
-  .view-panel {
-    display: none !important;
-  }
-
-  .view-panel.active {
+  .statutory-print-area {
     display: block !important;
   }
 
-  .card {
-    border: none !important;
-    box-shadow: none !important;
-    padding: 0 !important;
-    margin: 0 !important;
+  /* Force exact Page 1 and Page 2 break */
+  .print-page-1 {
+    page-break-after: always;
+    break-after: page;
+    min-height: 98vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
-  .table-container {
-    border: none !important;
-    overflow: visible !important;
+  .print-page-2 {
+    page-break-after: avoid;
+    break-after: avoid;
+    min-height: 98vh;
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
   }
 
-  table {
-    width: 100% !important;
-    border: 1px solid #000000 !important;
+  .print-header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+    border-bottom: 2px solid #000;
+    padding-bottom: 4px;
+    margin-bottom: 6px;
   }
 
-  th, td {
-    border: 1px solid #000000 !important;
-    color: #000000 !important;
+  .print-table {
+    width: 100%;
+    border-collapse: collapse;
+    border: 1px solid #000;
+  }
+
+  .print-table th, .print-table td {
+    border: 1px solid #000;
+    padding: 3px 4px;
+    font-size: 8.5pt;
+  }
+
+  .print-table th {
+    background: #f0f0f0 !important;
+    text-align: center;
+    font-weight: bold;
+  }
+
+  .num-c {
+    text-align: right;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .footer-signatures {
+    display: flex;
+    justify-content: space-between;
+    margin-top: 15px;
+    font-size: 8.5pt;
   }
 }

@@ -14,7 +14,7 @@
   <header class="app-header no-print">
     <div class="header-content">
       <div>
-        <h1 id="header-school-name" style="margin:0; font-size:1.15rem; font-weight:700;">ASSAM PRIMARY SCHOOL</h1>
+        <h1 id="header-school-name" style="margin:0; font-size:1.1rem; font-weight:700;">ASSAM PRIMARY SCHOOL</h1>
         <div id="header-udise" style="font-size:0.8rem; opacity:0.85;">UDISE: Not Set | District/Block: -</div>
       </div>
       <div>
@@ -25,18 +25,63 @@
     </div>
   </header>
 
-  <!-- Clean Room Navigation: Desk + 2 Almirahs + Setup -->
-  <nav class="tabs-nav no-print">
+  <!-- 1. INITIAL SETUP GATEKEEPER (Shows ONLY when profile is not set) -->
+  <section id="profile-gatekeeper" style="display:none; padding: 15px; max-width:650px; margin: 20px auto;">
+    <div class="card" style="border-top: 5px solid #0284c7; box-shadow: 0 4px 12px rgba(0,0,0,0.1);">
+      <h2 style="margin-top:0; color:#0369a1; font-size:1.25rem;">🏫 Welcome! Register School Profile</h2>
+      <p style="font-size:0.9rem; color:#475569; margin-bottom:15px;">
+        Before accessing the Daily Desk and Almirahs, please provide your school details once. These will be stamped onto all official statutory registers and cash books.
+      </p>
+
+      <div class="form-group">
+        <label><b>School Name *</b></label>
+        <input type="text" id="cfg-school-name" placeholder="e.g. 79 No. Betoni LP School" style="font-size:1rem; padding:8px; width:100%;">
+      </div>
+
+      <div class="grid-2 form-group">
+        <div>
+          <label><b>UDISE Code *</b></label>
+          <input type="text" id="cfg-udise" placeholder="e.g. 18150301501" style="font-size:1rem; padding:8px; width:100%;">
+        </div>
+        <div>
+          <label><b>Education Block / District</b></label>
+          <input type="text" id="cfg-block" placeholder="e.g. Khowang, Dibrugarh" style="font-size:1rem; padding:8px; width:100%;">
+        </div>
+      </div>
+
+      <div class="grid-2 form-group">
+        <div>
+          <label><b>Head Teacher / In-charge Name</b></label>
+          <input type="text" id="cfg-ht-name" placeholder="e.g. Head Teacher" style="font-size:1rem; padding:8px; width:100%;">
+        </div>
+        <div>
+          <label><b>School Category</b></label>
+          <select id="cfg-cat" style="font-size:1rem; padding:8px; width:100%;">
+            <option value="LP">Lower Primary (LP: Classes 1 to 5)</option>
+            <option value="UP">Upper Primary (UP: Classes 6 to 8)</option>
+            <option value="COMPOSITE">Composite Elementary (Classes 1 to 8)</option>
+          </select>
+        </div>
+      </div>
+
+      <button type="button" class="btn btn-secondary" onclick="ProfileModule.saveProfile()" style="width:100%; padding:12px; font-size:1.05rem; font-weight:bold; margin-top:10px;">
+        🚀 Save School Profile & Unlock App
+      </button>
+    </div>
+  </section>
+
+  <!-- 2. ROOM NAVIGATION: Desk + 2 Almirahs + Setup (Hidden until profile configured) -->
+  <nav class="tabs-nav no-print" id="app-navigation" style="display:flex;">
     <button class="tab-btn active" id="tab-daily" onclick="switchTab('daily')">⚡ Daily Desk</button>
     <button class="tab-btn" id="tab-stock" onclick="switchTab('stock')">📦 MDM Stock Almirah</button>
     <button class="tab-btn" id="tab-cashbook" onclick="switchTab('cashbook')">📖 Cash Book Almirah</button>
     <button class="tab-btn" id="tab-setup" onclick="switchTab('setup')">⚙️ Setup</button>
   </nav>
 
-  <!-- Main Views Container -->
-  <main class="main-content">
+  <!-- 3. WORKSPACE CONTAINER (Hidden until profile configured) -->
+  <main class="main-content" id="workspace-container">
     
-    <!-- ROOM 1: THE QUICK DAILY DESK (Lands directly here on open) -->
+    <!-- ROOM 1: THE QUICK DAILY DESK -->
     <section id="view-daily" class="view-panel active">
       <div class="card no-print">
         <h2 class="card-title">⚡ Quick Daily Attendance Desk</h2>
@@ -46,12 +91,12 @@
 
         <div class="form-group">
           <label><b>Select Date</b></label>
-          <input type="date" id="daily-date" onchange="DailyLogModule.loadDate()" style="font-size:1.05rem; font-weight:bold; padding:8px;">
+          <input type="date" id="daily-date" onchange="DailyLogModule.loadDate()" style="font-size:1.05rem; font-weight:bold; padding:8px; width:100%;">
         </div>
 
         <div class="form-group">
           <label><b>School Status</b></label>
-          <select id="daily-status" onchange="DailyLogModule.toggleStatus()" style="font-size:1rem; padding:8px; font-weight:600;">
+          <select id="daily-status" onchange="DailyLogModule.toggleStatus()" style="font-size:1rem; padding:8px; font-weight:600; width:100%;">
             <option value="OPEN">🟢 School Open (MDM Served)</option>
             <option value="CLOSED">🏖️ Closed / Holiday / Vacation</option>
           </select>
@@ -61,18 +106,18 @@
           <div class="grid-2 form-group">
             <div>
               <label>LP Meals Fed (Classes 1–5)</label>
-              <input type="number" id="daily-lp" min="0" value="0" style="font-size:1.1rem; font-weight:bold;">
+              <input type="number" id="daily-lp" min="0" value="0" style="font-size:1.1rem; font-weight:bold; width:100%;">
             </div>
             <div>
               <label>UP Meals Fed (Classes 6–8)</label>
-              <input type="number" id="daily-up" min="0" value="0" style="font-size:1.1rem; font-weight:bold;">
+              <input type="number" id="daily-up" min="0" value="0" style="font-size:1.1rem; font-weight:bold; width:100%;">
             </div>
           </div>
         </div>
 
         <div id="daily-holiday-field" style="display:none;" class="form-group">
           <label>Reason / Holiday Name</label>
-          <input type="text" id="daily-reason" placeholder="e.g. Sunday, Puja Vacation, Local Holiday">
+          <input type="text" id="daily-reason" placeholder="e.g. Sunday, Puja Vacation, Local Holiday" style="width:100%;">
         </div>
 
         <button class="btn btn-secondary" onclick="DailyLogModule.saveCurrentEntry()" style="padding:12px; font-size:1rem; font-weight:bold; width:100%; margin-top:8px;">
@@ -83,47 +128,56 @@
     </section>
 
     <!-- ROOM 2: ALMIRAH 1 (MDM STOCK & COST REGISTER) -->
-    <section id="view-stock" class="view-panel">
-      <!-- Populated dynamically by js/stock.js -->
+    <section id="view-stock" class="view-panel" style="display:none;">
+      <!-- Dynamic content from js/stock.js -->
     </section>
 
     <!-- ROOM 3: ALMIRAH 2 (STATUTORY CASH BOOKS) -->
-    <section id="view-cashbook" class="view-panel">
-      <!-- Populated dynamically by js/cashbook.js -->
+    <section id="view-cashbook" class="view-panel" style="display:none;">
+      <!-- Dynamic content from js/cashbook.js -->
     </section>
 
-    <!-- ROOM 4: SETUP & SCHOOL PROFILE -->
-    <section id="view-setup" class="view-panel">
+    <!-- ROOM 4: SETUP & BACKUP -->
+    <section id="view-setup" class="view-panel" style="display:none;">
       <div class="card no-print">
-        <h2 class="card-title">⚙️ School Configuration</h2>
+        <h2 class="card-title">⚙️ Edit School Profile</h2>
         <div class="form-group">
           <label>School Name</label>
-          <input type="text" id="cfg-school-name" placeholder="e.g. 79 No. Betoni LP School">
+          <input type="text" id="edit-school-name" style="width:100%;">
         </div>
         <div class="grid-2 form-group">
           <div>
             <label>UDISE Code</label>
-            <input type="text" id="cfg-udise" placeholder="e.g. 18150301501">
+            <input type="text" id="edit-udise" style="width:100%;">
           </div>
           <div>
             <label>Block / District</label>
-            <input type="text" id="cfg-block" placeholder="e.g. Khowang, Dibrugarh">
+            <input type="text" id="edit-block" style="width:100%;">
           </div>
         </div>
-        <div class="form-group">
-          <label>Head Teacher Name</label>
-          <input type="text" id="cfg-ht-name" placeholder="Head Teacher">
+        <div class="grid-2 form-group">
+          <div>
+            <label>Head Teacher Name</label>
+            <input type="text" id="edit-ht-name" style="width:100%;">
+          </div>
+          <div>
+            <label>Category</label>
+            <select id="edit-cat" style="width:100%;">
+              <option value="LP">LP (Classes 1-5)</option>
+              <option value="UP">UP (Classes 6-8)</option>
+              <option value="COMPOSITE">Composite (Classes 1-8)</option>
+            </select>
+          </div>
         </div>
-        <button class="btn btn-secondary" onclick="ProfileModule.saveProfile()" style="padding:10px; font-weight:bold;">
-          Save School Details
+        <button class="btn btn-secondary" onclick="updateExistingProfile()" style="padding:10px; font-weight:bold;">
+          Update School Profile
         </button>
-        <div id="cfg-save-msg" style="color:#15803d; font-weight:bold; margin-top:6px;"></div>
       </div>
 
       <div class="card no-print">
         <h3 class="card-title">Data Storage & Safety</h3>
         <p style="font-size:0.85rem; color:#475569;">
-          All register records are preserved securely on this device. You can download an offline backup file at any time.
+          All register records are preserved locally on this device. You can download an offline backup at any time.
         </p>
         <div style="display:flex; gap:10px; flex-wrap:wrap;">
           <button class="btn" onclick="exportFullBackup()" style="background:#0284c7; color:#fff; padding:10px; flex:1;">
@@ -147,16 +201,22 @@
   <script src="js/cashbook.js"></script>
   <script src="js/print.js"></script>
 
-  <!-- App Controller -->
+  <!-- Controller Script -->
   <script>
     function switchTab(tabId) {
-      document.querySelectorAll('.view-panel').forEach(p => p.classList.remove('active'));
+      document.querySelectorAll('.view-panel').forEach(p => {
+        p.style.display = 'none';
+        p.classList.remove('active');
+      });
       document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
 
       const activeView = document.getElementById('view-' + tabId);
       const activeBtn = document.getElementById('tab-' + tabId);
 
-      if (activeView) activeView.classList.add('active');
+      if (activeView) {
+        activeView.style.display = 'block';
+        activeView.classList.add('active');
+      }
       if (activeBtn) activeBtn.classList.add('active');
 
       if (tabId === 'stock') {
@@ -164,11 +224,38 @@
       } else if (tabId === 'cashbook') {
         renderCashbookView();
       } else if (tabId === 'setup') {
-        ProfileModule.loadProfileUI();
+        loadSetupEditor();
       }
     }
 
-    // Backup & Restore
+    function loadSetupEditor() {
+      const p = ProfileModule.getProfile();
+      if (!p) return;
+      document.getElementById('edit-school-name').value = p.schoolName || '';
+      document.getElementById('edit-udise').value = p.udise || '';
+      document.getElementById('edit-block').value = p.block || '';
+      document.getElementById('edit-ht-name').value = p.htName || '';
+      if (p.category) document.getElementById('edit-cat').value = p.category;
+    }
+
+    function updateExistingProfile() {
+      const p = {
+        schoolName: document.getElementById('edit-school-name').value.trim(),
+        udise: document.getElementById('edit-udise').value.trim(),
+        block: document.getElementById('edit-block').value.trim(),
+        htName: document.getElementById('edit-ht-name').value.trim(),
+        category: document.getElementById('edit-cat').value,
+        configuredAt: new Date().toISOString()
+      };
+      if (!p.schoolName || !p.udise) {
+        alert("School name and UDISE cannot be blank.");
+        return;
+      }
+      localStorage.setItem(ProfileModule.KEY, JSON.stringify(p));
+      ProfileModule.applyHeader();
+      alert("✅ School profile updated successfully!");
+    }
+
     function exportFullBackup() {
       const backup = {};
       for (let i = 0; i < localStorage.length; i++) {
@@ -203,10 +290,11 @@
       reader.readAsText(file);
     }
 
-    // App Initialization
     window.addEventListener('DOMContentLoaded', () => {
       ProfileModule.init();
-      DailyLogModule.init();
+      if (ProfileModule.isConfigured()) {
+        DailyLogModule.init();
+      }
     });
   </script>
 </body>

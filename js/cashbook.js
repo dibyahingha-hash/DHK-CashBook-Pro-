@@ -641,23 +641,48 @@ function recalculateCashbook() {
 
   currentVouchers.sort((a, b) => a.date.localeCompare(b.date));
 
+  // Handle Negative Cash (Out-of-pocket Teacher Advance) Automatically
+  let displayOpCash = opCash;
+  let teacherAdvance = 0;
+
+  if (opCash < 0) {
+    teacherAdvance = Math.abs(opCash);
+    displayOpCash = 0; // Cash in hand cannot be physically negative
+  }
+
   // Left Page: Opening Balance (To Opening Balance b/f)
   let rcptHtml = `
     <tr style="background:#f8fafc; font-weight:600;">
       <td>1st of month</td>
       <td>To Opening Balance (b/f)</td>
       <td style="text-align:center;">-</td>
-      <td class="num">${opCash.toFixed(2)}</td>
+      <td class="num">${displayOpCash.toFixed(2)}</td>
       <td class="num">${opBank.toFixed(2)}</td>
-      <td class="num">${opTotal.toFixed(2)}</td>
+      <td class="num">${(displayOpCash + opBank).toFixed(2)}</td>
     </tr>
   `;
 
-  let pmtHtml = '';
-  let totRcptCash = opCash;
+  let totRcptCash = displayOpCash;
   let totRcptBank = opBank;
   let totPmtCash = 0;
   let totPmtBank = 0;
+
+  // Auto-post the Advance so the cash box is funded with positive balance
+  if (teacherAdvance > 0) {
+    totRcptCash += teacherAdvance;
+    rcptHtml += `
+      <tr style="background:#fef3c7;">
+        <td>1st of month</td>
+        <td><b>To Advance from In-charge/Teacher</b><br><small style="color:#64748b;">(Temporary personal advance for urgent cooking cost)</small></td>
+        <td style="text-align:center;">-</td>
+        <td class="num">${teacherAdvance.toFixed(2)}</td>
+        <td class="num">-</td>
+        <td class="num">${teacherAdvance.toFixed(2)}</td>
+      </tr>
+    `;
+  }
+
+  let pmtHtml = '';
 
   currentVouchers.forEach(v => {
     // 1. RECEIPT

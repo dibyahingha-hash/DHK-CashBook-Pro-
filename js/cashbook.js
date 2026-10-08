@@ -833,14 +833,15 @@ function recalculateCashbook() {
     renderLedgerSheet();
   }
 
-  const clCash = clCashPayment;
-const clBank = clBankPayment;
-return { opCash, opBank, totRcptCash, totRcptBank, totPmtCash, totPmtBank, clCash, clBank };
-
+    const clCash = clCashPayment;
+  const clBank = clBankPayment;
+  return { opCash, opBank, totRcptCash, totRcptBank, totPmtCash, totPmtBank, clCash, clBank };
 }
+
 
 // GENERAL LEDGER SHEET GENERATOR (খতিয়ান বহি)
 function renderLedgerSheet() {
+
   const d = CashBookModule.activeDrawer;
   const selHead = document.getElementById('sel-filter-ledger') ? document.getElementById('sel-filter-ledger').value : 'ALL';
   const tbody = document.getElementById('led-tbody');

@@ -17,7 +17,7 @@ const CashBookModule = {
       { id: 'MDM_COOK', name: 'Cook-cum-Helper (CCH) Honorarium Account' },
       { id: 'MDM_TRANS', name: 'Food Grain Transportation & Handling Account' },
       { id: 'MDM_GRANT', name: 'Cooking Cost Grant Receipt Account' },
-      { id: 'MDM_MISC', name: 'Miscellaneous MDM Contingency Account' }
+      { id: 'MDM_MISC', name: 'Miscellaneous MDM Contingency Account' },
       { id: 'MDM_INT', name: 'Bank Interest Received Account' }
     ],
     smc: [

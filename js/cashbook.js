@@ -819,7 +819,7 @@ function recalculateCashbook() {
   document.getElementById('tot-pmt-bank').innerText = totPmtBank.toFixed(2);
   document.getElementById('tot-pmt-total').innerText = totPmtTotal.toFixed(2);
 
-  // Closing Balances (Asset c/f)
+    // Closing Balances (Asset c/f)
   document.getElementById('tot-cl-cash').innerText = clCashPayment.toFixed(2);
   document.getElementById('tot-cl-bank').innerText = clBankPayment.toFixed(2);
   document.getElementById('tot-cl-total').innerText = (clCashPayment + clBankPayment).toFixed(2);
@@ -828,9 +828,6 @@ function recalculateCashbook() {
   document.getElementById('tot-grand-cash').innerText = finalPmtCash.toFixed(2);
   document.getElementById('tot-grand-bank').innerText = finalPmtBank.toFixed(2);
   document.getElementById('tot-grand-total').innerText = finalPmtTotal.toFixed(2);
-
-
-  document.getElementById('tot-grand-total').innerText = grandTotal.toFixed(2);
 
   // If viewing ledger, refresh ledger immediately
   if (CashBookModule.activeSubView === 'ledger') {

@@ -18,6 +18,7 @@ const CashBookModule = {
       { id: 'MDM_TRANS', name: 'Food Grain Transportation & Handling Account' },
       { id: 'MDM_GRANT', name: 'Cooking Cost Grant Receipt Account' },
       { id: 'MDM_MISC', name: 'Miscellaneous MDM Contingency Account' }
+      { id: 'MDM_INT', name: 'Bank Interest Received Account' }
     ],
     smc: [
       { id: 'SMC_DEV', name: 'School Development & Infrastructure Account' },

@@ -673,8 +673,7 @@ function recalculateCashbook() {
       rcptHtml += `
         <tr>
           <td><b>${v.date}</b></td>
-                  <tr>
-          <td><b>${v.date}</b></td>
+          
           <td>
             ${fullParticulars}
             <div class="no-print" style="margin-top:4px;">

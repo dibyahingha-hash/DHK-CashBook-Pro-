@@ -763,8 +763,7 @@ function recalculateCashbook() {
 
   const totRcptTotal = totRcptCash + totRcptBank;
   const totPmtTotal = totPmtCash + totPmtBank;
-
-    // --- STATUTORY DEFICIT BALANCING LOGIC ---
+  // --- STATUTORY DEFICIT BALANCING LOGIC ---
   const netCash = totRcptCash - totPmtCash;
   const netBank = totRcptBank - totPmtBank;
 
@@ -829,6 +828,7 @@ function recalculateCashbook() {
   document.getElementById('tot-grand-cash').innerText = finalPmtCash.toFixed(2);
   document.getElementById('tot-grand-bank').innerText = finalPmtBank.toFixed(2);
   document.getElementById('tot-grand-total').innerText = finalPmtTotal.toFixed(2);
+
 
   document.getElementById('tot-grand-total').innerText = grandTotal.toFixed(2);
 

@@ -833,7 +833,10 @@ function recalculateCashbook() {
     renderLedgerSheet();
   }
 
-  return { opCash, opBank, totRcptCash, totRcptBank, totPmtCash, totPmtBank, clCash, clBank };
+  const clCash = clCashPayment;
+const clBank = clBankPayment;
+return { opCash, opBank, totRcptCash, totRcptBank, totPmtCash, totPmtBank, clCash, clBank };
+
 }
 
 // GENERAL LEDGER SHEET GENERATOR (খতিয়ান বহি)
@@ -926,6 +929,7 @@ function saveCurrentMonthCashbook() {
 
   const status = document.getElementById('cb-save-msg');
   status.style.color = '#15803d';
-  status.innerText = `✅ Both Cash Book & General Ledger for ${ym} Saved! Closing balances rolled into next month.`;
+  status.innerText = `✅ Both Cash Book & General Ledger for ${ym} Saved! Closing Balances rolled into next month.`;
+
   setTimeout(() => { status.innerText = ''; }, 4500);
 }

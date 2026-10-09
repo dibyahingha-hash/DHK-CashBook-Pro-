@@ -234,28 +234,9 @@ input, select {
    STRICT AUDIT REGISTER PRINT & PDF PURGE RULES
    ========================================================= */
 @media print {
-  /* 1. Purge all delete icons, buttons, action tools, and debuggers */
-  .no-print,
-  .del-btn,
-  button,
-  .btn,
-  input,
-  select,
-  form,
-  nav,
-  header,
-  #eruda,
-  .eruda-container,
-  div[style*="no-print"],
-  span[class*="no-print"] {
-    display: none !important;
-    visibility: hidden !important;
-    opacity: 0 !important;
-  }
-
-  /* 2. Page & Print Reset for Standard Stationery */
+  /* 1. Reset standard A4 Landscape / Portrait folio */
   @page {
-    size: A4 landscape;
+    size: A4 portrait;
     margin: 8mm 10mm;
   }
 
@@ -263,46 +244,102 @@ input, select {
     background: #ffffff !important;
     color: #000000 !important;
     font-family: 'Times New Roman', Times, serif !important;
-    font-size: 10pt !important;
+    font-size: 9.5pt !important;
     -webkit-print-color-adjust: exact;
     print-color-adjust: exact;
   }
 
-  /* 3. Hide non-register cards/containers on print */
-  .card:not(#cashbook-printable-card),
-  .tab-buttons,
-  .floating-action-btn {
+  /* 2. Hide all app chrome, tabs, action buttons, inputs */
+  .almirah-nav,
+  .top-bar,
+  .entry-form-card,
+  .voucher-entry-section,
+  #voucher-entry-form,
+  .actions-container,
+  .save-bar,
+  .no-print,
+  button,
+  .btn,
+  input,
+  select,
+  .card:not(#cashbook-printable-area) {
     display: none !important;
   }
 
-  /* 4. Ruled Ledger Borders (Strict Physical Book Style) */
-  table {
+  /* 3. Folio Page Enclosure (Page 1 = Receipts, Page 2 = Payments) */
+  .cashbook-folio-page {
+    display: block !important;
+    width: 100% !important;
+    min-height: 96vh !important;
+    box-sizing: border-box !important;
+    border: 2px solid #000000 !important;
+    border-radius: 12px !important;
+    padding: 6px 10px 10px 10px !important;
+    position: relative !important;
+  }
+
+  /* Page break to separate Receipts and Payments onto two distinct sheets */
+  .page-receipts {
+    page-break-after: always !important;
+    break-after: page !important;
+  }
+
+  .page-payments {
+    page-break-before: always !important;
+    break-before: page !important;
+  }
+
+  /* 4. Ledger Table Styles (Strict Stationery Ruling) */
+  table.ledger-table {
     width: 100% !important;
     border-collapse: collapse !important;
     border: 1.5px solid #000000 !important;
-    margin-top: 6px !important;
-    page-break-inside: avoid;
+    margin-top: 4px !important;
   }
 
-  th, td {
+  table.ledger-table th, 
+  table.ledger-table td {
     border: 1px solid #000000 !important;
-    padding: 4px 6px !important;
+    padding: 3px 4px !important;
     color: #000000 !important;
+    height: 22px !important; /* Uniform ruled line height */
   }
 
-  th {
-    background-color: #f1f5f9 !important;
+  /* Double-line divider between major financial columns */
+  .col-divide-left {
+    border-left: 2px double #000000 !important;
+  }
+
+  /* Header styling */
+  table.ledger-table th {
+    background-color: #f3f4f6 !important;
     font-weight: bold !important;
     text-align: center !important;
+    font-size: 8.5pt !important;
   }
 
-  td.num {
+  /* Split Paise column */
+  .col-p {
+    width: 26px !important;
     text-align: right !important;
-    font-variant-numeric: tabular-nums;
+    padding-right: 2px !important;
+  }
+
+  .col-rs {
+    text-align: right !important;
+    padding-right: 4px !important;
   }
 
   .text-center {
     text-align: center !important;
   }
-}
 
+  /* Bottom Signatures */
+  .ledger-signatures {
+    display: flex !important;
+    justify-content: space-between !important;
+    margin-top: 18px !important;
+    font-weight: bold !important;
+    font-size: 9pt !important;
+  }
+}

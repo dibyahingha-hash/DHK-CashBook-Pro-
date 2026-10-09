@@ -410,7 +410,8 @@ function switchSubView(view) {
 
 function populateLedgerDropdowns() {
   const d = CashBookModule.activeDrawer;
-  const heads = CashBookModule.LEDGER_HEADS[d] || [];
+  const heads = (CashBookModule.LEDGER_HEADS || LEDGER_HEADS)[d] || [];
+  
 
   const entrySelect = document.getElementById('tx-ledger-head');
   if (entrySelect) {

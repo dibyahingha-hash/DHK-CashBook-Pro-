@@ -445,6 +445,7 @@ function onLedgerHeadSelected() {
 function setTransactionType(type) {
   currentEntryType = type;
     if (typeof refreshNarrationDropdown === 'function') refreshNarrationDropdown(type);
+      populateLedgerDropdowns();
   
   const btnRcpt = document.getElementById('btn-type-rcpt');
   const btnWith = document.getElementById('btn-type-with');

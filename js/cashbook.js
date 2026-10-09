@@ -627,9 +627,13 @@ function addCompleteTransaction() {
 }
 
 function deleteTransaction(id) {
-  currentVouchers = currentVouchers.filter(v => v.id !== id);
+  currentVouchers = currentVouchers.filter(v => String(v.id) !== String(id));
   recalculateCashbook();
+  if (typeof saveVouchersToStorage === 'function') {
+    saveVouchersToStorage();
+  }
 }
+
 
 function recalculateCashbook() {
   const opCash = parseFloat(document.getElementById('cb-op-cash').value) || 0;

@@ -739,15 +739,6 @@ window.refreshNarrationDropdown = function(entryType = 'PAYMENT') {
 };
 
 
-  if (selectEl.value === 'CUSTOM') {
-    customInput.style.display = 'block';
-    customInput.value = '';
-    customInput.focus();
-  } else {
-    customInput.style.display = 'none';
-    customInput.value = selectEl.value;
-  }
-};
 
 // Helper: Split Rupee & Paise into distinct stationery sub-columns
 function splitAmount(val) {

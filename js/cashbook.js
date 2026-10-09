@@ -454,6 +454,8 @@ function onLedgerHeadSelected() {
 
 function setTransactionType(type) {
   currentEntryType = type;
+    if (typeof refreshNarrationDropdown === 'function') refreshNarrationDropdown(type);
+  
   const btnRcpt = document.getElementById('btn-type-rcpt');
   const btnWith = document.getElementById('btn-type-with');
   const btnPmt = document.getElementById('btn-type-pmt');
@@ -649,9 +651,104 @@ window.deleteTransaction = function(id) {
     saveCurrentMonthCashbook();
   }
 };
+// --- DUAL-SCHEME STATUTORY NARRATION REGISTRY ---
+const AUDIT_SCHEMAS = {
+  // 1. MDM / PM POSHAN REGISTER
+  mdm: {
+    RECEIPT: [
+      { text: "To Cooking Cost Grant received via PFMS/SNA into Bank Account", lf: "5" },
+      { text: "To Bank Interest credited in MDM Savings Bank Account as per passbook", lf: "7" },
+      { text: "To Bank (Contra - Self Cheque drawn for MDM daily marketing)", lf: "C" },
+      { text: "To Temporary Advance from In-charge/Teacher (MDM out-of-pocket funding)", lf: "8" }
+    ],
+    WITHDRAWAL: [
+      { text: "To Bank (Contra - Self Cheque drawn for MDM daily marketing)", lf: "C" }
+    ],
+    PAYMENT: [
+      { text: "By Cooking Cost (Purchased fresh green vegetables, mustard oil, salt, spices & fuel)", lf: "1" },
+      { text: "By LPG Cylinder / Firewood supply refilling charges for MDM kitchen", lf: "2" },
+      { text: "By Cook-cum-Helper monthly engagement honorarium payment", lf: "3" },
+      { text: "By Kitchen Devices & Utensils purchased under MDM Grant", lf: "4" },
+      { text: "By Carrying & transportation charges for lifting FCI food grains", lf: "5" },
+      { text: "By Kitchen Garden seeds, manure & minor repair expenses", lf: "6" },
+      { text: "By Statutory Bank Charges / SMS alert charges in SNA Account", lf: "7" },
+      { text: "By Reimbursement of In-charge out-of-pocket advance (Ledger Folio 8)", lf: "8" }
+    ]
+  },
+
+  // 2. SMC / COMPOSITE GRANT / CANARA BANK REGISTER
+  smc: {
+    RECEIPT: [
+      { text: "To Composite School Grant received under Samagra Shiksha via PFMS/SNA", lf: "1" },
+      { text: "To Sports & Physical Education Grant received via PFMS/SNA", lf: "2" },
+      { text: "To Library Books & Learning Materials Grant received", lf: "3" },
+      { text: "To Bank Interest credited in SMC Savings / SNA Account as per passbook", lf: "4" },
+      { text: "To Community Contribution / Public Donation for School Development", lf: "5" }
+    ],
+    WITHDRAWAL: [
+      { text: "To Bank (Contra - Self Cheque drawn for school maintenance)", lf: "C" }
+    ],
+    PAYMENT: [
+      { text: "By Composite Grant: Minor civil repairs, white-washing & painting of school", lf: "1" },
+      { text: "By Swachhta Action Plan: Disinfectants, brooms, toilet cleaning materials", lf: "2" },
+      { text: "By Drinking Water & Electricity: Filter servicing, bulbs & wiring maintenance", lf: "3" },
+      { text: "By Teaching Learning Materials (TLM): Chart papers, markers & learning aids", lf: "4" },
+      { text: "By Sports Equipment & Physical Education materials for students", lf: "5" },
+      { text: "By Library Books, Children's Story Books & Newspaper subscription", lf: "6" },
+      { text: "By SMC Community Mobilization, Meeting Refreshments & Register Stationery", lf: "7" },
+      { text: "By First Aid Box Medicines, Student Health & Hygiene replenishment", lf: "8" },
+      { text: "By Statutory Bank Charges / SMS charges deducted by bank", lf: "9" }
+    ]
+  }
+};
+
 window.handleNarrationSelect = function(selectEl) {
   const customInput = document.getElementById('tx-desc');
-  if (!customInput) return;
+  const lfInput = document.getElementById('tx-lf');
+  const selectedOption = selectEl.options[selectEl.selectedIndex];
+
+  if (selectEl.value === 'CUSTOM') {
+    if (customInput) {
+      customInput.style.display = 'block';
+      customInput.value = '';
+      customInput.focus();
+    }
+  } else {
+    if (customInput) {
+      customInput.style.display = 'none';
+      customInput.value = selectEl.value;
+    }
+    if (lfInput && selectedOption && selectedOption.dataset.lf) {
+      lfInput.value = selectedOption.dataset.lf;
+    }
+  }
+};
+
+window.refreshNarrationDropdown = function(entryType = 'PAYMENT') {
+  const selectEl = document.getElementById('tx-desc-select');
+  const customInput = document.getElementById('tx-desc');
+  const lfInput = document.getElementById('tx-lf');
+  if (!selectEl) return;
+
+  const isSmc = (typeof CashBookModule !== 'undefined' && CashBookModule.activeDrawer === 'smc');
+  const activeDrawerKey = isSmc ? 'smc' : 'mdm';
+  const schema = AUDIT_SCHEMAS[activeDrawerKey][entryType] || AUDIT_SCHEMAS[activeDrawerKey]['PAYMENT'];
+
+  let html = `<option value="">-- Select Audit Narration (${isSmc ? 'SMC / Grant' : 'PM POSHAN MDM'}) --</option>`;
+  schema.forEach(item => {
+    html += `<option value="${item.text}" data-lf="${item.lf}">${item.text}</option>`;
+  });
+  html += `<option value="CUSTOM">✏️ Type Custom Narration...</option>`;
+
+  selectEl.innerHTML = html;
+
+  if (schema.length > 0) {
+    selectEl.selectedIndex = 1;
+    if (customInput) customInput.value = schema[0].text;
+    if (lfInput) lfInput.value = schema[0].lf;
+  }
+};
+
 
   if (selectEl.value === 'CUSTOM') {
     customInput.style.display = 'block';

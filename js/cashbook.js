@@ -707,11 +707,12 @@ window.handleNarrationSelect = function(selectEl) {
       customInput.style.display = 'none';
       customInput.value = selectEl.value;
     }
-    if (lfInput && selectedOption && selectedOption.dataset.lf) {
+        if (lfInput && selectedOption && selectedOption.dataset.lf) {
       lfInput.value = selectedOption.dataset.lf;
     }
   }
 };
+
 
 window.refreshNarrationDropdown = function(entryType = 'PAYMENT') {
   const selectEl = document.getElementById('tx-desc-select');

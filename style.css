@@ -230,3 +230,79 @@ input, select {
     font-size: 8.5pt;
   }
 }
+/* =========================================================
+   STRICT AUDIT REGISTER PRINT & PDF PURGE RULES
+   ========================================================= */
+@media print {
+  /* 1. Purge all delete icons, buttons, action tools, and debuggers */
+  .no-print,
+  .del-btn,
+  button,
+  .btn,
+  input,
+  select,
+  form,
+  nav,
+  header,
+  #eruda,
+  .eruda-container,
+  div[style*="no-print"],
+  span[class*="no-print"] {
+    display: none !important;
+    visibility: hidden !important;
+    opacity: 0 !important;
+  }
+
+  /* 2. Page & Print Reset for Standard Stationery */
+  @page {
+    size: A4 landscape;
+    margin: 8mm 10mm;
+  }
+
+  body {
+    background: #ffffff !important;
+    color: #000000 !important;
+    font-family: 'Times New Roman', Times, serif !important;
+    font-size: 10pt !important;
+    -webkit-print-color-adjust: exact;
+    print-color-adjust: exact;
+  }
+
+  /* 3. Hide non-register cards/containers on print */
+  .card:not(#cashbook-printable-card),
+  .tab-buttons,
+  .floating-action-btn {
+    display: none !important;
+  }
+
+  /* 4. Ruled Ledger Borders (Strict Physical Book Style) */
+  table {
+    width: 100% !important;
+    border-collapse: collapse !important;
+    border: 1.5px solid #000000 !important;
+    margin-top: 6px !important;
+    page-break-inside: avoid;
+  }
+
+  th, td {
+    border: 1px solid #000000 !important;
+    padding: 4px 6px !important;
+    color: #000000 !important;
+  }
+
+  th {
+    background-color: #f1f5f9 !important;
+    font-weight: bold !important;
+    text-align: center !important;
+  }
+
+  td.num {
+    text-align: right !important;
+    font-variant-numeric: tabular-nums;
+  }
+
+  .text-center {
+    text-align: center !important;
+  }
+}
+

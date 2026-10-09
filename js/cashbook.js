@@ -213,19 +213,8 @@ function renderCashbookView() {
 
           <div class="form-group">
                 <label><b>Particulars / Narration (Audit Description) *</b></label>
-    <select id="tx-desc-select" onchange="handleNarrationSelect(this)" style="font-weight:600; padding:8px; width:100%; font-size:0.95rem; border:1px solid #cbd5e1; border-radius:4px; margin-bottom:4px;">
-      <option value="">-- Select Audit Narration --</option>
-      <option value="To Cooking Cost Grant received via PFMS/SNA into Bank Account">To Cooking Cost Grant received via PFMS/SNA into Bank Account</option>
-      <option value="To Bank Interest credited in Savings Bank / SNA Account as per passbook">To Bank Interest credited in Savings Bank / SNA Account as per passbook</option>
-      <option value="To Bank (Contra - Self Cheque drawn for MDM daily marketing)">To Bank (Contra - Self Cheque drawn for MDM daily marketing)</option>
-      <option value="By Cooking Cost (Purchased fresh green vegetables, mustard oil, salt, spices & fuel)">By Cooking Cost (Purchased fresh green vegetables, mustard oil, salt, spices & fuel)</option>
-      <option value="By LPG Cylinder / Firewood supply refilling charges for MDM kitchen">By LPG Cylinder / Firewood supply refilling charges for MDM kitchen</option>
-      <option value="By Cook-cum-Helper monthly engagement honorarium payment">By Cook-cum-Helper monthly engagement honorarium payment</option>
-      <option value="By Kitchen Devices & Utensils purchased under MDM Grant">By Kitchen Devices & Utensils purchased under MDM Grant</option>
-      <option value="By Carrying & transportation charges for lifting FCI food grains">By Carrying & transportation charges for lifting FCI food grains</option>
-      <option value="By Reimbursement of In-charge out-of-pocket advance (Ledger Folio 8)">By Reimbursement of In-charge out-of-pocket advance (Ledger Folio 8)</option>
-      <option value="CUSTOM">✏️ Type Custom Narration...</option>
-    </select>
+    <select id="tx-desc-select" onchange="handleNarrationSelect(this)" style="font-weight:600; padding:8px; width:100%; font-size:0.95rem; border:1px solid #cbd5e1; border-radius:4px; margin-bottom:4px;"><option value="">-- Select Audit Narration --</option></select>
+
     <input type="text" id="tx-desc" style="display:none; width:100%; padding:8px; font-size:0.9rem;" placeholder="Type custom narration here...">
     
           </div>

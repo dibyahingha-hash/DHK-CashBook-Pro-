@@ -641,14 +641,10 @@ function recalculateCashbook() {
 
   currentVouchers.sort((a, b) => a.date.localeCompare(b.date));
 
-  // Handle Negative Cash (Out-of-pocket Teacher Advance) Automatically
-  let displayOpCash = opCash;
-  let teacherAdvance = 0;
-
-  if (opCash < 0) {
-    teacherAdvance = Math.abs(opCash);
-    displayOpCash = 0; // Cash in hand cannot be physically negative
-  }
+    // Handle Negative Cash (Out-of-pocket Teacher Advance) Automatically
+  const historicalDebt = opCash < 0 ? Math.abs(opCash) : 0;
+  const physicalOpCash = opCash > 0 ? opCash : 0;
+  const physicalOpBank = Math.max(0, opBank);
 
   // Left Page: Opening Balance (To Opening Balance b/f)
   let rcptHtml = `
@@ -656,212 +652,182 @@ function recalculateCashbook() {
       <td>1st of month</td>
       <td>To Opening Balance (b/f)</td>
       <td style="text-align:center;">-</td>
-      <td class="num">${displayOpCash.toFixed(2)}</td>
-      <td class="num">${opBank.toFixed(2)}</td>
-      <td class="num">${(displayOpCash + opBank).toFixed(2)}</td>
+      <td class="num">${physicalOpCash.toFixed(2)}</td>
+      <td class="num">${physicalOpBank.toFixed(2)}</td>
+      <td class="num">${(physicalOpCash + physicalOpBank).toFixed(2)}</td>
     </tr>
   `;
 
-  let totRcptCash = displayOpCash;
-  let totRcptBank = opBank;
+  let totRcptCash = physicalOpCash;
+  let totRcptBank = physicalOpBank;
   let totPmtCash = 0;
   let totPmtBank = 0;
-
-  // Auto-post the Advance so the cash box is funded with positive balance
-  if (teacherAdvance > 0) {
-    totRcptCash += teacherAdvance;
-    rcptHtml += `
-      <tr style="background:#fef3c7;">
-        <td>1st of month</td>
-        <td><b>To Advance from In-charge/Teacher</b><br><small style="color:#64748b;">(Temporary personal advance for urgent cooking cost)</small></td>
-        <td style="text-align:center;">-</td>
-        <td class="num">${teacherAdvance.toFixed(2)}</td>
-        <td class="num">-</td>
-        <td class="num">${teacherAdvance.toFixed(2)}</td>
-      </tr>
-    `;
-  }
-
   let pmtHtml = '';
 
+  let userCashSpent = 0;
+  let cashDrawnFromBank = 0;
+
+  // Process Vouchers
   currentVouchers.forEach(v => {
-    // 1. RECEIPT
+    const amt = parseFloat(v.amount) || 0;
+    const isBank = (v.channel === 'BANK' || v.paidFrom === 'BANK');
+
     if (v.type === 'RECEIPT') {
-      const isBank = v.channel === 'BANK';
-      const cAmt = !isBank ? v.amount : 0;
-      const bAmt = isBank ? v.amount : 0;
+      const cAmt = isBank ? 0 : amt;
+      const bAmt = isBank ? amt : 0;
       totRcptCash += cAmt;
       totRcptBank += bAmt;
 
-      const fullParticulars = v.ref !== '-' ? `To ${v.desc} <br><small style="color:#64748b;">(Ref: ${v.ref})</small>` : `To ${v.desc}`;
+      rcptHtml += `
+        <tr>
+          <td>${v.date}</td>
+          <td>${v.desc || v.narration || ''} <span class="no-print" style="margin-left:6px;"><button type="button" class="btn no-print" onclick="deleteTransaction('${v.id}')" style="background:#fee2e2; color:#dc2626; border:1px solid #f87171; font-size:0.75rem; padding:1px 5px; border-radius:3px; cursor:pointer;">🗑️</button></span></td>
+          <td style="text-align:center;">${v.lf || v.folio || '-'}</td>
+          <td class="num">${cAmt > 0 ? cAmt.toFixed(2) : '-'}</td>
+          <td class="num">${bAmt > 0 ? bAmt.toFixed(2) : '-'}</td>
+          <td class="num">${amt.toFixed(2)}</td>
+        </tr>
+      `;
+    } else if (v.type === 'WITHDRAWAL') {
+      cashDrawnFromBank += amt;
+      totRcptCash += amt;
+      totPmtBank += amt;
 
       rcptHtml += `
         <tr>
-          <td><b>${v.date}</b></td>
-          
-          <td>
-            ${fullParticulars}
-            <div class="no-print" style="margin-top:4px;">
-              <button type="button" onclick="deleteTransaction(${v.id})" style="background:#fee2e2; color:#dc2626; border:1px solid #f87171; border-radius:3px; padding:2px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
-                🗑️ Delete
-              </button>
-            </div>
-          </td>
-
-          <td style="text-align:center;">${v.lf}</td>
-          <td class="num">${cAmt ? cAmt.toFixed(2) : '-'}</td>
-          <td class="num">${bAmt ? bAmt.toFixed(2) : '-'}</td>
-          <td class="num">${v.amount.toFixed(2)}</td>
-        </tr>
-      `;
-    } 
-    // 2. CONTRA (Bank Withdrawal to Cash)
-    else if (v.type === 'WITHDRAWAL') {
-      totPmtBank += v.amount;
-      totRcptCash += v.amount;
-
-      rcptHtml += `
-        <tr style="background:#f0fdf4;">
-          <td><b>${v.date}</b></td>
-          <td>To Bank (Cash drawn for expenses) <br><small style="color:#64748b;">(Chq: ${v.ref})</small></td>
+          <td>${v.date}</td>
+          <td>To Bank (Cash drawn for expenses) ${v.ref ? '(Chq: ' + v.ref + ')' : ''} <span class="no-print" style="margin-left:6px;"><button type="button" class="btn no-print" onclick="deleteTransaction('${v.id}')" style="background:#fee2e2; color:#dc2626; border:1px solid #f87171; font-size:0.75rem; padding:1px 5px; border-radius:3px; cursor:pointer;">🗑️</button></span></td>
           <td style="text-align:center; font-weight:bold;">C</td>
-          <td class="num">${v.amount.toFixed(2)}</td>
+          <td class="num">${amt.toFixed(2)}</td>
           <td class="num">-</td>
-          <td class="num">${v.amount.toFixed(2)}</td>
+          <td class="num">${amt.toFixed(2)}</td>
         </tr>
       `;
 
       pmtHtml += `
-        <tr style="background:#fef2f2;">
-          <td><b>${v.date}</b></td>
-                  <tr style="background:#fef2f2;">
-          <td><b>${v.date}</b></td>
-          <td>
-            By Cash (Self withdrawal for expenses)<br><small style="color:#64748b;">(Chq: ${v.ref})</small>
-            <div class="no-print" style="margin-top:4px;">
-              <button type="button" onclick="deleteTransaction(${v.id})" style="background:#fee2e2; color:#dc2626; border:1px solid #f87171; border-radius:3px; padding:2px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
-                🗑️ Delete
-              </button>
-            </div>
-          </td>
-
+        <tr>
+          <td>${v.date}</td>
+          <td>By Cash (Self withdrawal for expenses) ${v.ref ? '(Chq: ' + v.ref + ')' : ''} <span class="no-print" style="margin-left:6px;"><button type="button" class="btn no-print" onclick="deleteTransaction('${v.id}')" style="background:#fee2e2; color:#dc2626; border:1px solid #f87171; font-size:0.75rem; padding:1px 5px; border-radius:3px; cursor:pointer;">🗑️</button></span></td>
           <td style="text-align:center; font-weight:bold;">C</td>
           <td class="num">-</td>
-          <td class="num">${v.amount.toFixed(2)}</td>
-          <td class="num">${v.amount.toFixed(2)}</td>
+          <td class="num">${amt.toFixed(2)}</td>
+          <td class="num">${amt.toFixed(2)}</td>
         </tr>
       `;
-    } 
-    // 3. EXPENDITURE / PAYMENT
-    else if (v.type === 'PAYMENT') {
-      const isCash = v.channel === 'CASH';
-      const cAmt = isCash ? v.amount : 0;
-      const bAmt = !isCash ? v.amount : 0;
+    } else if (v.type === 'PAYMENT') {
+      const cAmt = isBank ? 0 : amt;
+      const bAmt = isBank ? amt : 0;
       totPmtCash += cAmt;
       totPmtBank += bAmt;
-
-      const fullParticulars = v.ref !== '-' ? `By ${v.desc} <br><small style="color:#64748b;">(Voucher: ${v.ref})</small>` : `By ${v.desc}`;
+      if (!isBank) userCashSpent += amt;
 
       pmtHtml += `
         <tr>
-          <td><b>${v.date}</b></td>
-                  <tr>
-          <td><b>${v.date}</b></td>
-          <td>
-            ${fullParticulars}
-            <div class="no-print" style="margin-top:4px;">
-              <button type="button" onclick="deleteTransaction(${v.id})" style="background:#fee2e2; color:#dc2626; border:1px solid #f87171; border-radius:3px; padding:2px 6px; font-size:11px; font-weight:bold; cursor:pointer;">
-                🗑️ Delete
-              </button>
-            </div>
-          </td>
-          
-          <td style="text-align:center;">${v.lf}</td>
-          <td class="num">${cAmt ? cAmt.toFixed(2) : '-'}</td>
-          <td class="num">${bAmt ? bAmt.toFixed(2) : '-'}</td>
-          <td class="num">${v.amount.toFixed(2)}</td>
+          <td>${v.date}</td>
+          <td>${v.desc || v.narration || ''} <span class="no-print" style="margin-left:6px;"><button type="button" class="btn no-print" onclick="deleteTransaction('${v.id}')" style="background:#fee2e2; color:#dc2626; border:1px solid #f87171; font-size:0.75rem; padding:1px 5px; border-radius:3px; cursor:pointer;">🗑️</button></span></td>
+          <td style="text-align:center;">${v.lf || v.folio || '-'}</td>
+          <td class="num">${cAmt > 0 ? cAmt.toFixed(2) : '-'}</td>
+          <td class="num">${bAmt > 0 ? bAmt.toFixed(2) : '-'}</td>
+          <td class="num">${amt.toFixed(2)}</td>
         </tr>
       `;
     }
   });
 
-  const totRcptTotal = totRcptCash + totRcptBank;
-  const totPmtTotal = totPmtCash + totPmtBank;
-  // --- STATUTORY DEFICIT BALANCING LOGIC ---
-  const netCash = totRcptCash - totPmtCash;
-  const netBank = totRcptBank - totPmtBank;
-
-  let clCashPayment = 0;
-  let clBankPayment = 0;
-  let deficitCashReceipt = 0;
-  let deficitBankReceipt = 0;
-
-  if (netCash >= 0) {
-    clCashPayment = netCash;
-  } else {
-    deficitCashReceipt = Math.abs(netCash);
+  // Calculate Advance Needed for Out-of-Pocket Expenditure
+  const physicalCashInBox = physicalOpCash + cashDrawnFromBank;
+  let currentMonthAdvanceNeeded = 0;
+  if (userCashSpent > physicalCashInBox) {
+    currentMonthAdvanceNeeded = userCashSpent - physicalCashInBox;
   }
 
-  if (netBank >= 0) {
-    clBankPayment = netBank;
-  } else {
-    deficitBankReceipt = Math.abs(netBank);
-  }
-
-  // If cash or bank has a deficit, post it on Left Page (Receipts) to balance the register
-  if (deficitCashReceipt > 0 || deficitBankReceipt > 0) {
+  if (currentMonthAdvanceNeeded > 0) {
+    totRcptCash += currentMonthAdvanceNeeded;
     rcptHtml += `
-      <tr style="background:#fff7ed; color:#c2410c; font-weight:bold;">
+      <tr style="background:#fefce8;">
         <td>End</td>
-        <td>To Closing Deficit (c/f - Due to In-charge)</td>
+        <td><b>To Advance from In-charge/Teacher</b><br><small style="color:#64748b;">(Out-of-pocket funding for urgent MDM expenditure)</small></td>
         <td style="text-align:center;">-</td>
-        <td class="num">${deficitCashReceipt ? deficitCashReceipt.toFixed(2) : '-'}</td>
-        <td class="num">${deficitBankReceipt ? deficitBankReceipt.toFixed(2) : '-'}</td>
-        <td class="num">${(deficitCashReceipt + deficitBankReceipt).toFixed(2)}</td>
+        <td class="num">${currentMonthAdvanceNeeded.toFixed(2)}</td>
+        <td class="num">-</td>
+        <td class="num">${currentMonthAdvanceNeeded.toFixed(2)}</td>
       </tr>
     `;
   }
 
-  const finalRcptCash = totRcptCash + deficitCashReceipt;
-  const finalRcptBank = totRcptBank + deficitBankReceipt;
-  const finalRcptTotal = finalRcptCash + finalRcptBank;
+  let totalAdvanceDue = historicalDebt + currentMonthAdvanceNeeded;
 
-  const finalPmtCash = totPmtCash + clCashPayment;
-  const finalPmtBank = totPmtBank + clBankPayment;
+  // Auto-Reimbursement: If bank cash was drawn and surplus physical cash exists
+  const physicalSurplus = Math.max(0, physicalCashInBox - userCashSpent);
+  let reimbursementPaid = 0;
+  if (totalAdvanceDue > 0 && physicalSurplus > 0) {
+    reimbursementPaid = Math.min(totalAdvanceDue, physicalSurplus);
+    totalAdvanceDue -= reimbursementPaid;
+    totPmtCash += reimbursementPaid;
+
+    pmtHtml += `
+      <tr style="background:#f0fdf4;">
+        <td>End</td>
+        <td><b>By Refund of Advance to In-charge</b><br><small style="color:#64748b;">(Settlement of personal advance via drawn funds)</small></td>
+        <td style="text-align:center;">5</td>
+        <td class="num">${reimbursementPaid.toFixed(2)}</td>
+        <td class="num">-</td>
+        <td class="num">${reimbursementPaid.toFixed(2)}</td>
+      </tr>
+    `;
+  }
+
+  // Exact Closing Balances
+  const clCash = Math.max(0, totRcptCash - totPmtCash);
+  const clBank = Math.max(0, totRcptBank - totPmtBank);
+
+  pmtHtml += `
+    <tr style="font-weight:600;">
+      <td>End</td>
+      <td><strong>CLOSING BALANCE (c/f to next month)</strong></td>
+      <td style="text-align:center;">-</td>
+      <td class="num">${clCash.toFixed(2)}</td>
+      <td class="num">${clBank.toFixed(2)}</td>
+      <td class="num">${(clCash + clBank).toFixed(2)}</td>
+    </tr>
+  `;
+
+  const finalRcptCash = totRcptCash;
+  const finalRcptBank = totRcptBank;
+  const finalRcptTotal = totRcptCash + totRcptBank;
+
+  const finalPmtCash = totPmtCash + clCash;
+  const finalPmtBank = totPmtBank + clBank;
   const finalPmtTotal = finalPmtCash + finalPmtBank;
 
   tbodyRcpt.innerHTML = rcptHtml;
   tbodyPmt.innerHTML = pmtHtml;
 
-  // Receipts Totals (Balanced)
+  // Update Balanced Screen Totals
   document.getElementById('tot-rcpt-cash').innerText = finalRcptCash.toFixed(2);
   document.getElementById('tot-rcpt-bank').innerText = finalRcptBank.toFixed(2);
   document.getElementById('tot-rcpt-total').innerText = finalRcptTotal.toFixed(2);
 
-  // Payments Totals (Expenditure)
   document.getElementById('tot-pmt-cash').innerText = totPmtCash.toFixed(2);
   document.getElementById('tot-pmt-bank').innerText = totPmtBank.toFixed(2);
-  document.getElementById('tot-pmt-total').innerText = totPmtTotal.toFixed(2);
+  document.getElementById('tot-pmt-total').innerText = (totPmtCash + totPmtBank).toFixed(2);
 
-    // Closing Balances (Asset c/f)
-  document.getElementById('tot-cl-cash').innerText = clCashPayment.toFixed(2);
-  document.getElementById('tot-cl-bank').innerText = clBankPayment.toFixed(2);
-  document.getElementById('tot-cl-total').innerText = (clCashPayment + clBankPayment).toFixed(2);
+  document.getElementById('tot-cl-cash').innerText = clCash.toFixed(2);
+  document.getElementById('tot-cl-bank').innerText = clBank.toFixed(2);
+  document.getElementById('tot-cl-total').innerText = (clCash + clBank).toFixed(2);
 
-  // Grand Totals on Payments Side (Balanced)
   document.getElementById('tot-grand-cash').innerText = finalPmtCash.toFixed(2);
   document.getElementById('tot-grand-bank').innerText = finalPmtBank.toFixed(2);
   document.getElementById('tot-grand-total').innerText = finalPmtTotal.toFixed(2);
 
-  // If viewing ledger, refresh ledger immediately
   if (CashBookModule.activeSubView === 'ledger') {
     renderLedgerSheet();
   }
 
-    const clCash = clCashPayment;
-  const clBank = clBankPayment;
-  return { opCash, opBank, totRcptCash, totRcptBank, totPmtCash, totPmtBank, clCash, clBank };
+  
+      return { opCash, opBank, totRcptCash: finalRcptCash, totRcptBank: finalRcptBank, totPmtCash, totPmtBank, clCash, clBank };
 }
+
 
 
 // GENERAL LEDGER SHEET GENERATOR (খতিয়ান বহি)

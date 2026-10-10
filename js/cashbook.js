@@ -405,96 +405,29 @@ function renderCashbookView() {
       </div>
 
       <!-- PRINTABLE 3-COLUMN CASH BOOK (MATCHES PHYSICAL REGISTER) -->
-      <div class="card" id="cashbook-printable-card">
-        <div style="text-align:center; margin-bottom:12px;">
-          <h2 style="margin:0; font-size:1.25rem; font-weight:bold; text-transform:uppercase;">Cash Book</h2>
-          <div style="font-size:0.95rem;">
-            <b id="cb-header-title">PM POSHAN (MDM COOKING COST)</b> — for the month of <b id="cb-prt-month-name"></b>
-          </div>
+            <!-- PRINT & DOWNLOAD TOOLBAR -->
+      <div class="no-print" style="display:flex; justify-content:space-between; align-items:center; margin-bottom:12px; gap:10px;">
+        <div style="font-size:0.9rem; font-weight:bold; color:#334155;">
+          📄 Two-Page Audit Register Preview
         </div>
+        <button type="button" class="btn" onclick="window.print()" style="background:#0f172a; color:#fff; font-weight:bold; padding:10px 18px; font-size:0.9rem; display:flex; align-items:center; gap:6px; cursor:pointer; border-radius:6px;">
+          🖨️ Print / Download PDF (Two-Page Folio)
+        </button>
+      </div>
 
-        <!-- LEFT PAGE: RECEIPTS -->
-        <div style="margin-bottom:18px;">
-          <div style="font-weight:bold; font-size:0.9rem; border-bottom:2px solid #000; padding:2px 0;">
-            RECEIPTS (জমা শিতান)
-          </div>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr style="background:#f8fafc; font-size:0.78rem;">
-                  <th style="width:14%;">Month & Date</th>
-                  <th style="width:38%;">PARTICULARS</th>
-                  <th style="width:8%; text-align:center;">Ledger Folio</th>
-                  <th class="num" style="width:13%;">Amount (Rs. P.)<br><small>Cash</small></th>
-                  <th class="num" style="width:13%;">Bank Amount<br><small>(Rs. P.)</small></th>
-                  <th class="num" style="width:14%;">Total Amount<br><small>(Rs. P.)</small></th>
-                </tr>
-              </thead>
-              <tbody id="cb-tbody-receipts" style="font-size:0.82rem;"></tbody>
-              <tfoot>
-                <tr style="font-weight:bold; background:#f1f5f9; font-size:0.82rem;">
-                  <td colspan="3">TOTAL RECEIPTS (including Opening)</td>
-                  <td class="num" id="tot-rcpt-cash">0.00</td>
-                  <td class="num" id="tot-rcpt-bank">0.00</td>
-                  <td class="num" id="tot-rcpt-total">0.00</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
+                <!-- SAVE ACTIONS (Outside printable card so it never gets erased) -->
+      <div class="no-print" style="margin-bottom:16px;">
+        <button type="button" class="btn btn-secondary" onclick="saveCurrentMonthCashbook()" style="width:100%; padding:12px; font-weight:bold; font-size:1rem; cursor:pointer;">
+          💾 Save Cash Book & Ledger Records
+        </button>
+        <div id="cb-save-msg" style="text-align:center; font-weight:bold; margin-top:6px; min-height:20px;"></div>
+      </div>
 
-        <!-- RIGHT PAGE: PAYMENTS -->
-        <div>
-          <div style="font-weight:bold; font-size:0.9rem; border-bottom:2px solid #000; padding:2px 0;">
-            PAYMENTS (খৰচ শিতান)
-          </div>
-          <div class="table-container">
-            <table>
-              <thead>
-                <tr style="background:#f8fafc; font-size:0.78rem;">
-                  <th style="width:14%;">Month & Date</th>
-                  <th style="width:38%;">PARTICULARS</th>
-                  <th style="width:8%; text-align:center;">Ledger Folio</th>
-                  <th class="num" style="width:13%;">Amount (Rs. P.)<br><small>Cash</small></th>
-                  <th class="num" style="width:13%;">Bank Amount<br><small>(Rs. P.)</small></th>
-                  <th class="num" style="width:14%;">Total Amount<br><small>(Rs. P.)</small></th>
-                </tr>
-              </thead>
-              <tbody id="cb-tbody-payments" style="font-size:0.82rem;"></tbody>
-              <tfoot>
-                <tr style="font-weight:bold; background:#f1f5f9; font-size:0.82rem;">
-                  <td colspan="3">TOTAL EXPENDITURE</td>
-                  <td class="num" id="tot-pmt-cash">0.00</td>
-                  <td class="num" id="tot-pmt-bank">0.00</td>
-                  <td class="num" id="tot-pmt-total">0.00</td>
-                </tr>
-                <tr style="font-weight:bold; background:#e0f2fe; color:#0369a1; font-size:0.82rem;">
-                  <td colspan="3">CLOSING BALANCE (c/f to next month)</td>
-                  <td class="num" id="tot-cl-cash">0.00</td>
-                  <td class="num" id="tot-cl-bank">0.00</td>
-                  <td class="num" id="tot-cl-total">0.00</td>
-                </tr>
-                <tr style="font-weight:bold; background:#f8fafc; border-top:2px solid #000; font-size:0.82rem;">
-                  <td colspan="3">GRAND TOTAL (Expenditure + Closing Balance)</td>
-                  <td class="num" id="tot-grand-cash">0.00</td>
-                  <td class="num" id="tot-grand-bank">0.00</td>
-                  <td class="num" id="tot-grand-total">0.00</td>
-                </tr>
-              </tfoot>
-            </table>
-          </div>
-        </div>
-
-        <div class="no-print" style="margin-top:16px;">
-          <button class="btn btn-secondary" onclick="saveCurrentMonthCashbook()" style="padding:12px; font-weight:bold; font-size:1rem; width:100%;">
-            💾 Save Cash Book & Ledger Records
-          </button>
-          <div id="cb-save-msg" style="text-align:center; font-weight:bold; margin-top:6px; min-height:20px;"></div>
-        </div>
-
-        <div style="display:flex; justify-content:space-between; margin-top:35px; font-size:0.8rem;">
-          <div>_________________________________<br><b>Signature of Head Teacher</b></div>
-          <div style="text-align:right;">_________________________________<br><b>President / Secretary, SMC</b></div>
+      <!-- PRINTABLE TWO-PAGE FOLIO REGISTER -->
+      <div class="card" id="cashbook-printable-card" style="padding:10px; background:#fff; overflow-x:auto;">
+        <div id="cashbook-printable-area"></div>
+      </div>
+      
         </div>
       </div>
     </div>

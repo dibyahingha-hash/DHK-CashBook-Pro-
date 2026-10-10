@@ -131,45 +131,7 @@ function onMandateTargetChanged(trigger) {
   }
 
   // Auto-generate the complete statutory narration
-  const selMonth = document.getElementById('cb-sel-month');
-  const monthName = (selMonth && selMonth.options && selMonth.selectedIndex >= 0)
-    ? selMonth.options[selMonth.selectedIndex].text
-    : '';
-  const selYear = document.getElementById('cb-sel-year')?.value || '';
-
-  const mandateNarration = `Cooking Cost for ${meals} meals @ ₹${rate.toFixed(2)} for ${monthName} ${selYear} (Vegetables, Oil, Spices & Fuel)`;
-
-  // Update narration input and pre-fill amount
-  const descInput = document.getElementById('tx-desc');
-  const descSelect = document.getElementById('tx-desc-select');
-  const amtInput = document.getElementById('tx-amount');
-
-  if (descInput) {
-    descInput.value = mandateNarration;
-    descInput.style.display = 'block';
-  }
-
-  if (descSelect) {
-    // Check if an option for the mandate narration already exists; if not, prepend it
-    let opt = Array.from(descSelect.options).find(o => o.value === 'MANDATE_AUTO');
-    if (!opt) {
-      opt = document.createElement('option');
-      opt.value = 'MANDATE_AUTO';
-      descSelect.insertBefore(opt, descSelect.options[1] || null);
-    }
-    opt.text = mandateNarration;
-    opt.value = mandateNarration;
-    descSelect.value = mandateNarration;
-  }
-
-  // Do NOT auto-fill the amount if user is doing a Bank Withdrawal (Contra)
-const isWithdrawal = typeof currentTransactionType !== 'undefined' 
-  ? (currentTransactionType === 'WITHDRAWAL') 
-  : document.getElementById('btn-type-with')?.classList.contains('active');
-
-if (!isWithdrawal && amtInput && exp > 0 && (!amtInput.value || amtInput.value === '0' || parseFloat(amtInput.value) === 0)) {
-  amtInput.value = exp.toFixed(2);
-}
+  
   
 
   updateMandateTallyStatus();

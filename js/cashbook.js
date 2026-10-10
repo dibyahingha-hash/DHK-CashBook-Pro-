@@ -162,9 +162,15 @@ function onMandateTargetChanged(trigger) {
     descSelect.value = mandateNarration;
   }
 
-  if (amtInput && exp > 0 && (!amtInput.value || amtInput.value === '0' || parseFloat(amtInput.value) === 0)) {
-    amtInput.value = exp.toFixed(2);
-  }
+  // Do NOT auto-fill the amount if user is doing a Bank Withdrawal (Contra)
+const isWithdrawal = typeof currentTransactionType !== 'undefined' 
+  ? (currentTransactionType === 'WITHDRAWAL') 
+  : document.getElementById('btn-type-with')?.classList.contains('active');
+
+if (!isWithdrawal && amtInput && exp > 0 && (!amtInput.value || amtInput.value === '0' || parseFloat(amtInput.value) === 0)) {
+  amtInput.value = exp.toFixed(2);
+}
+  
 
   updateMandateTallyStatus();
 }

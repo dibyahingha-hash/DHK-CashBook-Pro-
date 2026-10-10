@@ -70,6 +70,99 @@ const CashBookModule = {
 
 let currentVouchers = [];
 let currentEntryType = 'RECEIPT'; // 'RECEIPT' | 'WITHDRAWAL' | 'PAYMENT'
+// STATUTORY MATERIAL (COOKING) COST RATE TIMELINE (2020 - PRESENT)
+const STATUTORY_MDM_RATES = [
+  { from: '2020-04-01', to: '2022-09-30', primary: 4.97, upper_primary: 7.45 },
+  { from: '2022-10-01', to: '2024-11-30', primary: 5.45, upper_primary: 8.17 },
+  { from: '2024-12-01', to: '2025-04-30', primary: 6.19, upper_primary: 9.29 },
+  { from: '2025-05-01', to: '2099-12-31', primary: 6.78, upper_primary: 10.17 }
+];
+
+function getStatutoryRate(year, monthNumStr, category = 'PRIMARY') {
+  const checkDate = `${year}-${String(monthNumStr).padStart(2, '0')}-15`;
+  const matched = STATUTORY_MDM_RATES.find(r => checkDate >= r.from && checkDate <= r.to)
+                  || STATUTORY_MDM_RATES[STATUTORY_MDM_RATES.length - 1];
+  return category === 'UPPER_PRIMARY' ? matched.upper_primary : matched.primary;
+}
+
+function syncStatutoryRateToUI() {
+  const year = document.getElementById('cb-sel-year')?.value || new Date().getFullYear();
+  const month = document.getElementById('cb-sel-month')?.value || '04';
+  const cat = document.getElementById('cb-mandate-cat')?.value || 'PRIMARY';
+
+  const defaultRate = getStatutoryRate(year, month, cat);
+  const rateInput = document.getElementById('cb-cooking-rate');
+  if (rateInput) {
+    rateInput.value = defaultRate.toFixed(2);
+  }
+  onMandateTargetChanged('RATE');
+}
+
+function resetStatutoryRateToDefault() {
+  syncStatutoryRateToUI();
+}
+
+function onMandateCategoryChange() {
+  syncStatutoryRateToUI();
+}
+
+function onMandateTargetChanged(trigger) {
+  const rateInput = document.getElementById('cb-cooking-rate');
+  const expInput = document.getElementById('cb-mandate-target');
+  const mealsInput = document.getElementById('cb-mandate-meals');
+
+  const rate = parseFloat(rateInput?.value) || 0;
+  let exp = parseFloat(expInput?.value) || 0;
+  let meals = parseInt(mealsInput?.value) || 0;
+
+  if (rate <= 0) return;
+
+  if (trigger === 'AMOUNT' || trigger === 'RATE') {
+    if (exp > 0) {
+      meals = Math.round(exp / rate);
+      if (mealsInput) mealsInput.value = meals;
+    }
+  } else if (trigger === 'MEALS') {
+    if (meals > 0) {
+      exp = parseFloat((meals * rate).toFixed(2));
+      if (expInput) expInput.value = exp.toFixed(2);
+    }
+  }
+
+  updateMandateTallyStatus();
+}
+
+function updateMandateTallyStatus() {
+  const targetExp = parseFloat(document.getElementById('cb-mandate-target')?.value) || 0;
+  const enteredExp = (currentVouchers || [])
+    .filter(v => v.type === 'PAYMENT')
+    .reduce((sum, v) => sum + (parseFloat(v.amount) || 0), 0);
+
+  const diff = targetExp - enteredExp;
+
+  const lblTarget = document.getElementById('lbl-target-exp');
+  const lblEntered = document.getElementById('lbl-entered-exp');
+  const lblDiff = document.getElementById('lbl-tally-diff');
+
+  if (lblTarget) lblTarget.innerText = `₹${targetExp.toFixed(2)}`;
+  if (lblEntered) lblEntered.innerText = `₹${enteredExp.toFixed(2)}`;
+
+  if (lblDiff) {
+    if (targetExp === 0) {
+      lblDiff.style.color = '#64748b';
+      lblDiff.innerText = 'Pending Setup';
+    } else if (Math.abs(diff) < 0.01) {
+      lblDiff.style.color = '#15803d';
+      lblDiff.innerHTML = '✓ Exact Mandate Match (₹0.00 difference)';
+    } else if (diff > 0) {
+      lblDiff.style.color = '#b91c1c';
+      lblDiff.innerText = `Vouchers Short by ₹${diff.toFixed(2)}`;
+    } else {
+      lblDiff.style.color = '#b91c1c';
+      lblDiff.innerText = `Vouchers Exceed Mandate by ₹${Math.abs(diff).toFixed(2)}`;
+    }
+  }
+}
 
 function renderCashbookView() {
   const container = document.getElementById('view-cashbook');
@@ -144,23 +237,67 @@ function renderCashbookView() {
           </div>
         </div>
 
+              <!-- STATUTORY MANDATE & RATE CONTROLLER (PM POSHAN) -->
+        <div id="box-mdm-mandate-wrap" style="background:#f0fdf4; border:1px solid #86efac; border-radius:6px; padding:10px; margin-bottom:14px;">
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:6px;">
+            <span style="font-size:0.85rem; font-weight:bold; color:#166534;">🎯 Statutory Monthly Cooking Mandate</span>
+            <span style="font-size:0.75rem; color:#0284c7; cursor:pointer; font-weight:600;" onclick="resetStatutoryRateToDefault()">[↺ Reset to Govt Notified Rate]</span>
+          </div>
+
+          <div class="grid-2 form-group" style="margin-bottom:8px;">
+            <div>
+              <label style="font-size:0.75rem;"><b>School Category</b></label>
+              <select id="cb-mandate-cat" onchange="onMandateCategoryChange()" style="font-size:0.85rem; font-weight:bold; padding:6px; width:100%;">
+                <option value="PRIMARY">Bal Vatika & Primary (LP: Class I - V)</option>
+                <option value="UPPER_PRIMARY">Upper Primary (ME / UP: Class VI - VIII)</option>
+              </select>
+            </div>
+            <div>
+              <label style="font-size:0.75rem;"><b>Cooking Cost Rate per Meal (₹) *</b></label>
+              <input type="number" step="0.01" id="cb-cooking-rate" style="font-size:0.9rem; font-weight:bold; padding:6px; width:100%;" oninput="onMandateTargetChanged('RATE')">
+            </div>
+          </div>
+
+          <div class="grid-2 form-group" style="margin-bottom:6px;">
+            <div>
+              <label style="font-size:0.75rem;"><b>Mandated Monthly Cooking Expenditure (₹) *</b></label>
+              <input type="number" step="0.01" id="cb-mandate-target" placeholder="e.g. 3051.00" style="font-size:1rem; font-weight:bold; padding:6px; width:100%;" oninput="onMandateTargetChanged('AMOUNT')">
+            </div>
+            <div>
+              <label style="font-size:0.75rem;"><b>Total Mandated Meals (Auto-Derived)</b></label>
+              <input type="number" step="1" id="cb-mandate-meals" placeholder="0" style="font-size:1rem; font-weight:bold; padding:6px; width:100%;" oninput="onMandateTargetChanged('MEALS')">
+            </div>
+          </div>
+
+          <!-- Live Balance Match Indicator -->
+          <div id="cb-mandate-status" style="font-size:0.8rem; padding:6px 8px; border-radius:4px; background:#fff; border:1px solid #cbd5e1; margin-top:6px;">
+            Mandate Target: <b id="lbl-target-exp">₹0.00</b> | Vouchers Total: <b id="lbl-entered-exp">₹0.00</b> | <span id="lbl-tally-diff" style="font-weight:bold; color:#b91c1c;">Pending Setup</span>
+          </div>
+        </div>
+
         <!-- OPENING BALANCE (B/F on 1st of month) -->
         <div style="background:#f8fafc; border:1px solid #cbd5e1; border-radius:6px; padding:10px; margin-bottom:14px;">
-          <div style="font-size:0.85rem; font-weight:bold; color:#1e293b; margin-bottom:4px;">
-            Opening Balance on 1st of Month (To Opening Balance b/f)
+          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:4px;">
+            <span style="font-size:0.85rem; font-weight:bold; color:#1e293b;">Opening Balance on 1st of Month (To Opening Balance b/f)</span>
+            <span id="cb-op-status-badge" style="font-size:0.75rem; color:#0369a1; font-weight:600;"></span>
           </div>
-          <div class="grid-2 form-group" style="margin-bottom:0;">
+          <div style="display:grid; grid-template-columns: 1fr 1fr 1.2fr; gap:8px;">
             <div>
-              <label style="font-size:0.75rem;">Cash in Hand (₹)</label>
-              <input type="number" step="0.01" id="cb-op-cash" value="0" oninput="recalculateCashbook()">
+              <label style="font-size:0.75rem;"><b>Cash in Hand (₹)</b></label>
+              <input type="number" step="0.01" min="0" id="cb-op-cash" value="0.00" oninput="recalculateCashbook()" style="width:100%;">
             </div>
             <div>
-              <label style="font-size:0.75rem;">Bank Balance / SNA Limit (₹)</label>
-              <input type="number" step="0.01" id="cb-op-bank" value="0" oninput="recalculateCashbook()">
+              <label style="font-size:0.75rem;"><b>Bank Balance (₹)</b></label>
+              <input type="number" step="0.01" min="0" id="cb-op-bank" value="0.00" oninput="recalculateCashbook()" style="width:100%;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem;"><b>Teacher Advance b/f (₹)</b></label>
+              <input type="number" step="0.01" min="0" id="cb-op-advance" value="0.00" oninput="recalculateCashbook()" style="width:100%;">
             </div>
           </div>
-          <small id="cb-op-hint" style="color:#0284c7; font-size:0.75rem; display:block; margin-top:2px;"></small>
+          <small id="cb-op-hint" style="color:#0284c7; font-size:0.75rem; display:block; margin-top:4px;"></small>
         </div>
+
 
         <!-- THREE ACTION ENTRY BUTTONS -->
         <div style="display:flex; gap:8px; flex-wrap:wrap; margin-bottom:12px;">
@@ -557,9 +694,9 @@ function initDrawerUI() {
 
 
 function onCashbookPeriodChange() {
-  let ym = getSelectedCBYM();
+  let ym = getSelectedCRYM();
   if (ym < '2020-04') {
-    alert("Records start from April 2020. Selecting April 2020.");
+    alert("Statutory records start from April 2020. Resetting to April 2020.");
     document.getElementById('cb-sel-year').value = '2020';
     document.getElementById('cb-sel-month').value = '04';
     ym = '2020-04';
@@ -567,34 +704,83 @@ function onCashbookPeriodChange() {
 
   const [y, m] = ym.split('-');
   const monthNames = ["", "January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"];
-  document.getElementById('cb-prt-month-name').innerText = `${monthNames[parseInt(m, 10)]} ${y}`;
+  const prtMonthEl = document.getElementById('cb-prt-month-name');
+  if (prtMonthEl) {
+    prtMonthEl.innerText = `${monthNames[parseInt(m, 10)]} ${y}`;
+  }
+
+  // 1. Automatically fetch & display the correct Statutory Rate for this selected date
+  syncStatutoryRateToUI();
 
   const drawer = CashBookModule.activeDrawer;
   const currentRecord = CashBookModule.getMonthRecord(drawer, ym);
   const prevYm = CashBookModule.getPrevMonth(ym);
   const prevRecord = CashBookModule.getMonthRecord(drawer, prevYm);
 
+  const opCashEl = document.getElementById('cb-op-cash');
+  const opBankEl = document.getElementById('cb-op-bank');
+  const opAdvEl = document.getElementById('cb-op-advance');
+  const opHintEl = document.getElementById('cb-op-hint');
+  const opBadgeEl = document.getElementById('cb-op-status-badge');
+  const mandateTargetEl = document.getElementById('cb-mandate-target');
+  const mandateMealsEl = document.getElementById('cb-mandate-meals');
+  const rateInputEl = document.getElementById('cb-cooking-rate');
+
   if (currentRecord) {
-    document.getElementById('cb-op-cash').value = currentRecord.opCash ?? 0;
-    document.getElementById('cb-op-bank').value = currentRecord.opBank ?? 0;
-    currentVouchers = currentRecord.vouchers || [];
-    document.getElementById('cb-op-hint').innerText = prevRecord ? `(Rolled over from ${prevYm} closing)` : '';
-  } else {
-    if (prevRecord) {
-      document.getElementById('cb-op-cash').value = prevRecord.clCash ?? 0;
-      document.getElementById('cb-op-bank').value = prevRecord.clBank ?? 0;
-      document.getElementById('cb-op-hint').innerText = `✓ Carried forward from ${prevYm} closing`;
-    } else {
-      document.getElementById('cb-op-cash').value = 0;
-      document.getElementById('cb-op-bank').value = 0;
-      document.getElementById('cb-op-hint').innerText = '(Starting fresh: enter opening balances)';
+    // A. Month was already saved -> Load exact saved state & lock opening balances
+    if (opCashEl) opCashEl.value = (currentRecord.opCash ?? 0).toFixed(2);
+    if (opBankEl) opBankEl.value = (currentRecord.opBank ?? 0).toFixed(2);
+    if (opAdvEl) opAdvEl.value = (currentRecord.opAdvance ?? 0).toFixed(2);
+
+    if (rateInputEl && currentRecord.rateUsed) {
+      rateInputEl.value = Number(currentRecord.rateUsed).toFixed(2);
     }
+    if (mandateTargetEl && currentRecord.targetExp) {
+      mandateTargetEl.value = Number(currentRecord.targetExp).toFixed(2);
+    }
+    if (mandateMealsEl && currentRecord.mealsCount) {
+      mandateMealsEl.value = currentRecord.mealsCount;
+    }
+
+    currentVouchers = currentRecord.vouchers ? [...currentRecord.vouchers] : [];
+    
+    if (opHintEl) opHintEl.innerText = `🔒 Sealed record loaded for ${ym}.`;
+    if (opBadgeEl) opBadgeEl.innerText = "[Saved Month]";
+  } else {
+    // B. Month is not yet saved
+    if (prevRecord) {
+      // Prior continuous month exists -> carry forward seamlessly
+      if (opCashEl) opCashEl.value = (prevRecord.clCash ?? 0).toFixed(2);
+      if (opBankEl) opBankEl.value = (prevRecord.clBank ?? 0).toFixed(2);
+      if (opAdvEl) opAdvEl.value = (prevRecord.clAdvance ?? 0).toFixed(2);
+
+      if (opHintEl) opHintEl.innerText = `✓ Carried forward from ${prevYm} closing.`;
+      if (opBadgeEl) opBadgeEl.innerText = "[Auto-Carried Forward]";
+    } else {
+      // Retrospective / starting month -> Allow fresh opening balance entry
+      if (opCashEl) opCashEl.value = "0.00";
+      if (opBankEl) opBankEl.value = "0.00";
+      if (opAdvEl) opAdvEl.value = "0.00";
+
+      if (opHintEl) opHintEl.innerText = `(Starting fresh / retrospective: enter opening figures)`;
+      if (opBadgeEl) opBadgeEl.innerText = "[Manual / Retrospective]";
+    }
+
+    if (mandateTargetEl) mandateTargetEl.value = '';
+    if (mandateMealsEl) mandateMealsEl.value = '';
     currentVouchers = [];
   }
 
-  document.getElementById('tx-date').value = `${ym}-01`;
+  // Pre-fill default transaction date to 1st of selected month
+  const txDateEl = document.getElementById('tx-date');
+  if (txDateEl) {
+    txDateEl.value = `${ym}-01`;
+  }
+
+  onMandateTargetChanged('RATE');
   recalculateCashbook();
 }
+
 
 function addCompleteTransaction() {
   const date = document.getElementById('tx-date').value;
@@ -756,24 +942,24 @@ function splitAmount(val) {
 
 // --- 2. AUDIT-GRADE RECALCULATE ENGINE (TWO-PAGE FOLIO) ---
 
-    // --- 2. AUDIT-GRADE RECALCULATE ENGINE (TWO-PAGE FOLIO) ---
-function recalculateCashbook() {
+    function recalculateCashbook() {
   const cbRawCash = parseFloat(document.getElementById('cb-op-cash')?.value) || 0;
   const cbRawBank = parseFloat(document.getElementById('cb-op-bank')?.value) || 0;
+  const cbRawAdv = parseFloat(document.getElementById('cb-op-advance')?.value) || 0;
 
   // Resolve dynamic month and year
   const selMonth = document.getElementById('cb-sel-month') || document.getElementById('cb-month-select');
   const selYear = document.getElementById('cb-sel-year') || document.getElementById('cb-year-select');
   const monthName = (selMonth && selMonth.options && selMonth.selectedIndex >= 0)
     ? selMonth.options[selMonth.selectedIndex].text
-    : 'October';
+    : 'Selected Month';
   const yearName = selYear ? selYear.value : '2026';
 
   const container = document.getElementById('cashbook-printable-area') || document.getElementById('cashbook-printable-card');
 
   // Safe split helper ensuring zero trailing minus signs
   const splitAmount = (val) => {
-    const num = Math.abs(parseFloat(val) || 0);
+    const num = Math.abs(parseFloat(val)) || 0;
     const fixed = num.toFixed(2);
     const parts = fixed.split('.');
     return {
@@ -785,27 +971,28 @@ function recalculateCashbook() {
   const renderCells = (amt) => {
     const sp = splitAmount(amt);
     if ((parseFloat(amt) || 0) === 0) {
-      return `<td class="col-rs col-divide-left">-</td><td class="col-p">-</td>`;
+      return '<td class="col-rs col-divide-left">-</td><td class="col-p">-</td>';
     }
     return `<td class="col-rs col-divide-left">${sp.rs}</td><td class="col-p">${sp.p}</td>`;
   };
 
   currentVouchers.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
 
-  // STATUTORY AUDIT RULE:
-  // Physical cash cannot be negative on paper (< 0).
-  // Any negative opening balance is an un-reimbursed liability owed to the teacher.
-  let physicalOpCash = cbRawCash < 0 ? 0 : cbRawCash;
-  let teacherAdvanceBroughtForward = cbRawCash < 0 ? Math.abs(cbRawCash) : 0;
+  // STATUTORY AUDIT RULES:
+  // 1. Physical cash in hand cannot be negative.
+  let physicalOpCash = Math.max(0, cbRawCash);
   let physicalOpBank = Math.max(0, cbRawBank);
+  let teacherAdvanceBroughtForward = Math.max(0, cbRawAdv);
 
-  let runningCash = physicalOpCash + teacherAdvanceBroughtForward;
+  let runningCash = physicalOpCash;
   let runningBank = physicalOpBank;
 
-  let totRcptCash = runningCash;
-  let totRcptBank = runningBank;
+  let totRcptCash = physicalOpCash;
+  let totRcptBank = physicalOpBank;
   let totPmtCash = 0;
   let totPmtBank = 0;
+
+  let thisMonthTeacherAdvances = 0;
 
   let rcptRows = [];
   let pmtRows = [];
@@ -814,7 +1001,7 @@ function recalculateCashbook() {
   rcptRows.push(`
     <tr style="font-weight:600;">
       <td class="text-center">1st</td>
-      <td><strong>To Opening Balance (b/f)</strong><br><small style="color:#555;">(Unspent closing balance of previous month brought forward)</small></td>
+      <td><strong>To Opening Balance (b/f)</strong><br><small style="color:#555;">(Cash in Hand & Bank Balance brought forward)</small></td>
       <td class="text-center">-</td>
       ${renderCells(physicalOpCash)}
       ${renderCells(physicalOpBank)}
@@ -822,32 +1009,19 @@ function recalculateCashbook() {
     </tr>
   `);
 
-  // 2. Head Teacher Advance Row (conditional if opening balance was negative)
-  if (teacherAdvanceBroughtForward > 0) {
-    rcptRows.push(`
-      <tr>
-        <td class="text-center">1st</td>
-        <td><strong>To Head Teacher's Personal Advance</strong><br><small style="color:#0369a1;">(Carried forward out-of-pocket expenditure arranged to serve uninterrupted MDM pending grant credit / passbook confirmation)</small></td>
-        <td class="text-center">-</td>
-        ${renderCells(teacherAdvanceBroughtForward)}
-        ${renderCells(0)}
-        ${renderCells(teacherAdvanceBroughtForward)}
-      </tr>
-    `);
-  }
-
-  // 3. Process All Vouchers Chronologically
-  currentVouchers.forEach(v => {
+  // 2. Process all Vouchers in chronological sequence
+  currentVouchers.forEach((v, idx) => {
+    const day = v.date ? v.date.split('-')[2] : '-';
     const amt = parseFloat(v.amount) || 0;
-    const isBank = (v.channel === 'BANK' || v.paidFrom === 'BANK');
-    const day = v.date ? (v.date.split('-')[2] || v.date) : '01';
-    const cleanDesc = (v.desc || v.narration || '').replace(/^(By|To)\s+/i, '').trim();
-    const delBtn = `<span class="no-print" style="margin-left:6px;"><button type="button" class="btn btn-sm btn-danger" onclick="deleteTransaction('${v.id}')">✕</button></span>`;
-    const lf = v.lf || v.folio || '-';
+    const isBank = (v.channel === 'BANK');
+    const lf = v.lf || '-';
+    const cleanDesc = (v.desc || '').replace(/</g, "&lt;").replace(/>/g, "&gt;");
+    const delBtn = `<span class="no-print" style="cursor:pointer; color:red; margin-left:6px;" onclick="removeVoucher(${idx})">✖</span>`;
 
     if (v.type === 'RECEIPT') {
-      const cAmt = isBank ? 0 : amt;
-      const bAmt = isBank ? amt : 0;
+      let cAmt = isBank ? 0 : amt;
+      let bAmt = isBank ? amt : 0;
+
       runningCash += cAmt;
       runningBank += bAmt;
       totRcptCash += cAmt;
@@ -856,7 +1030,7 @@ function recalculateCashbook() {
       rcptRows.push(`
         <tr>
           <td class="text-center">${day}</td>
-          <td><strong>To ${cleanDesc}</strong>${delBtn}</td>
+          <td><strong>To ${cleanDesc}</strong> ${delBtn}</td>
           <td class="text-center">${lf}</td>
           ${renderCells(cAmt)}
           ${renderCells(bAmt)}
@@ -864,6 +1038,7 @@ function recalculateCashbook() {
         </tr>
       `);
     } else if (v.type === 'WITHDRAWAL') {
+      // CONTRA ENTRY: Bank to Cash
       runningBank -= amt;
       runningCash += amt;
       totRcptCash += amt;
@@ -872,17 +1047,18 @@ function recalculateCashbook() {
       rcptRows.push(`
         <tr>
           <td class="text-center">${day}</td>
-          <td><strong>To Bank (Contra: Cash drawn for MDM daily marketing)</strong>${delBtn}</td>
+          <td><strong>To Bank (Contra - Self Withdrawal)</strong> ${delBtn}</td>
           <td class="text-center">C</td>
           ${renderCells(amt)}
           ${renderCells(0)}
           ${renderCells(amt)}
         </tr>
       `);
+
       pmtRows.push(`
         <tr>
           <td class="text-center">${day}</td>
-          <td><strong>By Self (Contra: Cheque / SNA drawn for Cash in Hand)</strong></td>
+          <td><strong>By Cash (Contra - Received from Bank)</strong> ${delBtn}</td>
           <td class="text-center">C</td>
           ${renderCells(0)}
           ${renderCells(amt)}
@@ -893,21 +1069,25 @@ function recalculateCashbook() {
       let cAmt = isBank ? 0 : amt;
       let bAmt = isBank ? amt : 0;
 
-      // RULE: If cash expense exceeds available physical cash, Head Teacher covers the difference
+      // AUDIT RULE: If cash payment exceeds physical cash in hand,
+      // Head Teacher automatically funds the difference out-of-pocket.
       if (!isBank && cAmt > runningCash) {
-        const requiredAdvance = cAmt - runningCash;
+        const requiredAdvance = parseFloat((cAmt - runningCash).toFixed(2));
+        
         rcptRows.push(`
           <tr>
             <td class="text-center">${day}</td>
-            <td><strong>To Temporary Advance from Head Teacher</strong><br><small style="color:#0369a1;">(Out-of-pocket cash provided to meet voucher expense pending bank grant drawal / passbook confirmation)</small></td>
+            <td><strong>To Head Teacher's Personal Advance</strong><br><small style="color:#0369a1;">(Out-of-pocket funds introduced to clear expenditure voucher)</small></td>
             <td class="text-center">-</td>
             ${renderCells(requiredAdvance)}
             ${renderCells(0)}
             ${renderCells(requiredAdvance)}
           </tr>
         `);
+
         runningCash += requiredAdvance;
         totRcptCash += requiredAdvance;
+        thisMonthTeacherAdvances += requiredAdvance;
       }
 
       runningCash -= cAmt;
@@ -918,7 +1098,7 @@ function recalculateCashbook() {
       pmtRows.push(`
         <tr>
           <td class="text-center">${day}</td>
-          <td><strong>By ${cleanDesc}</strong>${delBtn}</td>
+          <td><strong>By ${cleanDesc}</strong> ${delBtn}</td>
           <td class="text-center">${lf}</td>
           ${renderCells(cAmt)}
           ${renderCells(bAmt)}
@@ -928,14 +1108,15 @@ function recalculateCashbook() {
     }
   });
 
-  // 4. Closing Balance (c/f)
-  const closingCash = runningCash;
-  const closingBank = runningBank;
+  // 3. Closing Balances (c/f)
+  const closingCash = Math.max(0, runningCash);
+  const closingBank = Math.max(0, runningBank);
+  const totalCumulativeAdvance = teacherAdvanceBroughtForward + thisMonthTeacherAdvances;
 
   pmtRows.push(`
     <tr style="font-weight:600;">
       <td class="text-center">End</td>
-      <td><strong>By Closing Balance (c/f to next month)</strong><br><small style="color:#555;">(Cash in hand and Bank balance carried forward)</small></td>
+      <td><strong>By Closing Balance (c/f to next month)</strong><br><small style="color:#555;">(Unspent Cash in hand and Bank Balance)</small></td>
       <td class="text-center">-</td>
       ${renderCells(closingCash)}
       ${renderCells(closingBank)}
@@ -956,7 +1137,7 @@ function recalculateCashbook() {
   const finalPmtT = splitAmount(grandPmtCash + grandPmtBank);
 
   const activeDrawerKey = (typeof CashBookModule !== 'undefined' && CashBookModule.activeDrawer) ? CashBookModule.activeDrawer : 'mdm';
-  const drawerTitleText = (typeof CashBookModule !== 'undefined' && CashBookModule.getDrawerTitle) ? CashBookModule.getDrawerTitle(activeDrawerKey) : 'PM POSHAN / MDM REGISTER';
+  const drawerTitleText = (typeof CashBookModule !== 'undefined' && CashBookModule.getDrawerTitle) ? CashBookModule.getDrawerTitle(activeDrawerKey) : 'PM POSHAN';
 
   if (container) {
     container.innerHTML = `
@@ -971,17 +1152,16 @@ function recalculateCashbook() {
           <table class="table-cashbook">
             <thead>
               <tr>
-                <th rowspan="2" style="width:10%;">Month & Date</th>
-                <th rowspan="2" style="width:42%;">PARTICULARS</th>
-                <th rowspan="2" style="width:8%;">Ledger Folio</th>
-                <th colspan="2" class="col-divide-left">Amount (Cash)</th>
-                <th colspan="2" class="col-divide-left">Bank Amount</th>
-                <th colspan="2" class="col-divide-left">Total Amount</th>
+                <th style="width:10%;">Date</th>
+                <th style="width:44%;">Particulars</th>
+                <th style="width:8%;">L.F.</th>
+                <th colspan="2" style="width:19%;">Cash (₹)</th>
+                <th colspan="2" style="width:19%;">Bank (₹)</th>
               </tr>
-              <tr>
-                <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
-                <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
-                <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
+              <tr class="sub-head">
+                <th></th><th></th><th></th>
+                <th>Rs.</th><th>P.</th>
+                <th>Rs.</th><th>P.</th>
               </tr>
             </thead>
             <tbody>
@@ -992,13 +1172,12 @@ function recalculateCashbook() {
                 <td colspan="3" class="text-center">TOTAL RECEIPTS</td>
                 <td class="col-rs col-divide-left">${finalRcptC.rs}</td><td class="col-p">${finalRcptC.p}</td>
                 <td class="col-rs col-divide-left">${finalRcptB.rs}</td><td class="col-p">${finalRcptB.p}</td>
-                <td class="col-rs col-divide-left">${finalRcptT.rs}</td><td class="col-p">${finalRcptT.p}</td>
               </tr>
             </tfoot>
           </table>
-          <div class="ledger-signatures">
-            <div>Prepared by: Assistant Teacher</div>
-            <div>Verified: Head Teacher</div>
+          <div class="ledger-signatures" style="display:flex; justify-content:space-between; margin-top:20px; font-size:0.8rem;">
+            <div>Prepared by: _______________________</div>
+            <div>Verified by: _______________________</div>
           </div>
         </div>
 
@@ -1012,17 +1191,16 @@ function recalculateCashbook() {
           <table class="table-cashbook">
             <thead>
               <tr>
-                <th rowspan="2" style="width:10%;">Month & Date</th>
-                <th rowspan="2" style="width:42%;">PARTICULARS</th>
-                <th rowspan="2" style="width:8%;">Ledger Folio</th>
-                <th colspan="2" class="col-divide-left">Amount (Cash)</th>
-                <th colspan="2" class="col-divide-left">Bank Amount</th>
-                <th colspan="2" class="col-divide-left">Total Amount</th>
+                <th style="width:10%;">Date</th>
+                <th style="width:44%;">Particulars</th>
+                <th style="width:8%;">L.F.</th>
+                <th colspan="2" style="width:19%;">Cash (₹)</th>
+                <th colspan="2" style="width:19%;">Bank (₹)</th>
               </tr>
-              <tr>
-                <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
-                <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
-                <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
+              <tr class="sub-head">
+                <th></th><th></th><th></th>
+                <th>Rs.</th><th>P.</th>
+                <th>Rs.</th><th>P.</th>
               </tr>
             </thead>
             <tbody>
@@ -1033,11 +1211,21 @@ function recalculateCashbook() {
                 <td colspan="3" class="text-center">GRAND TOTAL (Payments + Closing)</td>
                 <td class="col-rs col-divide-left">${finalPmtC.rs}</td><td class="col-p">${finalPmtC.p}</td>
                 <td class="col-rs col-divide-left">${finalPmtB.rs}</td><td class="col-p">${finalPmtB.p}</td>
-                <td class="col-rs col-divide-left">${finalPmtT.rs}</td><td class="col-p">${finalPmtT.p}</td>
               </tr>
             </tfoot>
           </table>
-          <div class="ledger-signatures">
+
+          <!-- STATUTORY AUDIT CERTIFICATE FOR OUT-OF-POCKET EXPENSES -->
+          ${totalCumulativeAdvance > 0 ? `
+            <div style="margin-top:12px; padding:6px 10px; border:1px solid #cbd5e1; background:#f8fafc; font-size:0.75rem; border-radius:4px;">
+              <b>Auditor Note (Teacher Personal Liability):</b><br>
+              • Prior Unreimbursed Advance (b/f): <b>₹${teacherAdvanceBroughtForward.toFixed(2)}</b><br>
+              • Advanced Out-of-Pocket this month: <b>₹${thisMonthTeacherAdvances.toFixed(2)}</b><br>
+              • Total Cumulative Debt due to Teacher (c/f): <b>₹${totalCumulativeAdvance.toFixed(2)}</b>
+            </div>
+          ` : ''}
+
+          <div class="ledger-signatures" style="display:flex; justify-content:space-between; margin-top:20px; font-size:0.8rem;">
             <div>Signature of Head Teacher</div>
             <div>President / Secretary, SMC</div>
           </div>
@@ -1049,7 +1237,7 @@ function recalculateCashbook() {
   // Backward compatibility with screen UI summary values
   const setEl = (id, val) => {
     const el = document.getElementById(id);
-    if (el) el.innerText = val.toFixed(2);
+    if (el) el.innerText = (parseFloat(val) || 0).toFixed(2);
   };
   setEl('tot-rcpt-cash', totRcptCash);
   setEl('tot-rcpt-bank', totRcptBank);
@@ -1064,6 +1252,8 @@ function recalculateCashbook() {
   setEl('tot-grand-bank', grandPmtBank);
   setEl('tot-grand-total', grandPmtCash + grandPmtBank);
 
+  updateMandateTallyStatus();
+
   if (typeof CashBookModule !== 'undefined' && CashBookModule.activeSubView === 'ledger') {
     renderLedgerSheet();
   }
@@ -1071,17 +1261,18 @@ function recalculateCashbook() {
   return {
     opCash: physicalOpCash,
     opBank: physicalOpBank,
-    totRcptCash,
-    totRcptBank,
-    totPmtCash,
-    totPmtBank,
+    priorAdvanceBroughtForward: teacherAdvanceBroughtForward,
+    thisMonthTeacherAdvances: thisMonthTeacherAdvances,
+    totRcptCash: totRcptCash,
+    totRcptBank: totRcptBank,
+    totPmtCash: totPmtCash,
+    totPmtBank: totPmtBank,
     clCash: closingCash,
     clBank: closingBank,
-    totalCumulativeAdvance: teacherAdvanceBroughtForward
+    totalCumulativeAdvance: totalCumulativeAdvance
   };
         }
-    
-            
+      
 
 // GENERAL LEDGER SHEET GENERATOR (খতিয়ান বহি)
 function renderLedgerSheet() {
@@ -1154,27 +1345,62 @@ function renderLedgerSheet() {
   document.getElementById('led-tot-bal').innerText = `₹ ${Math.abs(runningBal).toFixed(2)} ${runningBal >= 0 ? 'Dr' : 'Cr'}`;
 }
 
+function getNextMonthYM(ym) {
+  const [year, month] = ym.split('-').map(Number);
+  const d = new Date(year, month, 1); // JS months are 0-indexed; this targets the next calendar month
+  const y = d.getFullYear();
+  const m = String(d.getMonth() + 1).padStart(2, '0');
+  return `${y}-${m}`;
+}
+
 function saveCurrentMonthCashbook() {
   const ym = getSelectedCBYM();
   const drawer = CashBookModule.activeDrawer;
   const calc = recalculateCashbook();
 
+  const rateUsed = parseFloat(document.getElementById('cb-cooking-rate')?.value) || 0;
+  const targetExp = parseFloat(document.getElementById('cb-mandate-target')?.value) || 0;
+  const mealsCount = parseInt(document.getElementById('cb-mandate-meals')?.value) || 0;
+
   const record = {
     ym,
     drawer,
+    rateUsed,
+    targetExp,
+    mealsCount,
     opCash: calc.opCash,
     opBank: calc.opBank,
+    opAdvance: calc.priorAdvanceBroughtForward,
     clCash: calc.clCash,
     clBank: calc.clBank,
-    vouchers: currentVouchers,
+    clAdvance: calc.totalCumulativeAdvance,
+    thisMonthAdvance: calc.thisMonthTeacherAdvances,
+    vouchers: [...currentVouchers],
     updatedAt: new Date().toISOString()
   };
 
+  // 1. Commit and seal the current month record
   CashBookModule.saveMonthRecord(drawer, ym, record);
 
-  const status = document.getElementById('cb-save-msg');
-  status.style.color = '#15803d';
-  status.innerText = `✅ Both Cash Book & General Ledger for ${ym} Saved! Closing Balances rolled into next month.`;
+  // 2. Cascade Forward: update next month's opening balance if it exists
+  const nextYm = getNextMonthYM(ym);
+  const nextRecord = CashBookModule.getMonthRecord(drawer, nextYm);
+  if (nextRecord) {
+    nextRecord.opCash = calc.clCash;
+    nextRecord.opBank = calc.clBank;
+    nextRecord.opAdvance = calc.totalCumulativeAdvance;
+    CashBookModule.saveMonthRecord(drawer, nextYm, nextRecord);
+  }
 
-  setTimeout(() => { status.innerText = ''; }, 4500);
+  // 3. UI feedback
+  const status = document.getElementById('cb-save-msg');
+  if (status) {
+    status.style.color = '#15803d';
+    status.innerText = `✅ Month ${ym} Sealed! Closing Cash: ₹${calc.clCash.toFixed(2)} | Teacher Advance c/f: ₹${calc.totalCumulativeAdvance.toFixed(2)}`;
+    setTimeout(() => { status.innerText = ''; }, 5000);
+  }
+
+  // Update status badge
+  const badge = document.getElementById('cb-op-status-badge');
+  if (badge) badge.innerText = '[Saved Month]';
 }

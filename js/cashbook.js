@@ -328,10 +328,11 @@ function setTransactionType(type) {
 }
 
 function getSelectedCBYM() {
-  const m = document.getElementById('cb-sel-month').value;
-  const y = document.getElementById('cb-sel-year').value;
+  const y = (document.getElementById('cb-sel-year') || document.getElementById('cb-year-select'))?.value || '2026';
+  const m = (document.getElementById('cb-sel-month') || document.getElementById('cb-month-select'))?.value || '04';
   return `${y}-${m}`;
 }
+
 
 function switchDrawer(drawerKey) {
   CashBookModule.activeDrawer = drawerKey;
@@ -378,9 +379,10 @@ function initDrawerUI() {
 function onCashbookPeriodChange() {
   let ym = getSelectedCBYM();
   if (ym < '2020-04') {
-    alert("Statutory records start from April 2020. Resetting to April 2020.");
-    document.getElementById('cb-sel-year').value = '2020';
-    document.getElementById('cb-sel-month').value = '04';
+    const yEl = document.getElementById('cb-sel-year') || document.getElementById('cb-year-select');
+const mEl = document.getElementById('cb-sel-month') || document.getElementById('cb-month-select');
+if (yEl) yEl.value = '2020';
+if (mEl) mEl.value = '04';
     ym = '2020-04';
   }
 

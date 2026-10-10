@@ -752,20 +752,21 @@ function splitAmount(val) {
 
 // --- 2. AUDIT-GRADE RECALCULATE ENGINE (TWO-PAGE FOLIO) ---
 function recalculateCashbook() {
-  const rawOpCash = parseFloat(document.getElementById('cb-op-cash')?.value) || 0;
-  const rawOpBank = parseFloat(document.getElementById('cb-op-bank')?.value) || 0;
-  const monthName = document.getElementById('cb-month-select')?.value || 'Month';
-  const yearName = document.getElementById('cb-year-select')?.value || '2026';
 
-  const container = document.getElementById('cashbook-printable-area') || document.getElementById('cashbook-printable-card');
+    const cbRawCash = parseFloat(document.getElementById('cb-op-cash')?.value) || 0;
+    const cbRawBank = parseFloat(document.getElementById('cb-op-bank')?.value) || 0;
+    const monthName = document.getElementById('cb-month-select')?.value || 'Month';
+    const yearName = document.getElementById('cb-year-select')?.value || '2026';
 
-  currentVouchers.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+    const container = document.getElementById('cashbook-printable-area') || document.getElementById('cashbook-printable-card');
 
-  // Statutory Rule: Physical cash cannot be negative on paper (< 0).
-  // Any negative opening balance is an un-reimbursed liability owed to the teacher.
-  const historicalDebt = rawOpCash < 0 ? Math.abs(rawOpCash) : 0;
-  const physicalOpCash = Math.max(0, rawOpCash);
-  const physicalOpBank = Math.max(0, rawOpBank);
+    currentVouchers.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+    // Statutory Rule: Physical cash cannot be negative on paper (< 0).
+    // Any negative opening balance is an un-reimbursed liability owed to the teacher.
+    const historicalDebt = cbRawCash < 0 ? Math.abs(cbRawCash) : 0;
+    const physicalOpCash = Math.max(0, cbRawCash);
+    const physicalOpBank = Math.max(0, cbRawBank);
 
   let totRcptCash = physicalOpCash;
   let totRcptBank = physicalOpBank;

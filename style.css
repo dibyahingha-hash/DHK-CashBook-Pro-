@@ -36,7 +36,7 @@ body {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  max-width: 900px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 
@@ -44,7 +44,7 @@ body {
   display: flex;
   background: #fff;
   border-bottom: 2px solid var(--border-color);
-  max-width: 900px;
+  max-width: 1100px;
   margin: 0 auto;
 }
 .tab-btn {
@@ -66,14 +66,14 @@ body {
 }
 
 .view-panel {
-  display: none !important;
+  display: none;
 }
 .view-panel.active {
-  display: block !important;
+  display: block;
 }
 
 .main-content {
-  max-width: 900px;
+  max-width: 1100px;
   margin: 0 auto;
   padding: 12px;
 }
@@ -91,7 +91,7 @@ body {
   grid-template-columns: 1fr 1fr;
   gap: 10px;
 }
-@media (max-width: 500px) {
+@media (max-width: 600px) {
   .grid-2 {
     grid-template-columns: 1fr;
   }
@@ -121,42 +121,105 @@ input, select {
   cursor: pointer;
   font-weight: 600;
 }
+.btn-sm {
+  padding: 6px 12px;
+  font-size: 0.8rem;
+}
 .btn-secondary {
   background: var(--accent);
   color: #fff;
 }
 
-/* Voucher feed cards on mobile */
-.voucher-feed-item {
-  background: #f8fafc;
-  border: 1px solid #e2e8f0;
-  border-left: 4px solid #0284c7;
-  padding: 8px 10px;
-  margin-bottom: 6px;
-  border-radius: 4px;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
 /* ==========================================================================
-   OFFICIAL TWO-PAGE STATUTORY CASH BOOK (GOVERNMENT STATIONERY THEME)
+   ON-SCREEN FOLIO & CASHBOOK TABLES (VISIBLE IN BROWSER)
    ========================================================================== */
-
-/* Receipts Left Page: Blue/Black Ink */
-.receipt-folio,
-.receipt-folio td {
-  color: #002b80 !important;
+#subview-cashbook-wrap {
+  width: 100%;
+  overflow-x: auto; /* Allows smooth swipe horizontally on phone */
+  margin-top: 10px;
 }
 
-/* Payments Right Page: Red Ink */
-.payment-folio,
-.payment-folio td {
-  color: #b91c1c !important;
+.two-page-folio {
+  display: flex;
+  flex-direction: row;
+  gap: 14px;
+  min-width: 800px; /* Ensures columns stay aligned like a physical book */
 }
 
-.empty-row td {
-  height: 24px !important;
-  border-bottom: 1px solid #cbd5e1 !important;
+.folio-page {
+  flex: 1;
+  background: #fffdfa;
+  border: 1px solid #cbd5e1;
+  border-radius: 6px;
+  padding: 10px;
+  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+}
+
+.folio-header h3 {
+  font-size: 1.05rem;
+  color: #991b1b;
+  margin-bottom: 2px;
+  text-align: center;
+}
+.folio-header h4, .folio-header p {
+  text-align: center;
+  font-size: 0.85rem;
+  margin-bottom: 6px;
+  color: #475569;
+}
+
+.table-cashbook {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1.5px solid #991b1b;
+  font-size: 0.8rem;
+}
+
+.table-cashbook th,
+.table-cashbook td {
+  border: 1px solid #cbd5e1;
+  padding: 5px 6px;
+}
+
+.table-cashbook thead tr:first-child th {
+  background: #f1f5f9;
+  font-weight: 700;
+  border-bottom: 1.5px solid #991b1b;
+}
+
+.table-cashbook thead tr.sub-head th {
+  background: #f8fafc;
+  font-size: 0.72rem;
+  padding: 2px 4px;
+  border-bottom: 2px solid #991b1b;
+}
+
+.col-divide-left {
+  border-left: 2px solid #991b1b !important;
+}
+
+.col-rs {
+  text-align: right;
+  padding-right: 4px;
+}
+
+.col-p {
+  border-left: 1px dashed #94a3b8;
+  width: 28px;
+  text-align: center;
+}
+
+.table-cashbook tfoot tr td {
+  border-top: 2px solid #991b1b;
+  font-weight: bold;
+}
+
+.text-center {
+  text-align: center;
+}
+
+.num {
+  text-align: right;
 }
 
 /* ==========================================================================
@@ -168,7 +231,6 @@ input, select {
     margin: 6mm 8mm;
   }
 
-  /* 1. Force everything on the page to hide completely */
   body, html {
     background: #fffdfa !important;
     margin: 0 !important;
@@ -177,111 +239,45 @@ input, select {
     print-color-adjust: exact !important;
   }
 
-  body * {
+  .no-print {
     display: none !important;
-    visibility: hidden !important;
   }
 
-  /* 2. ONLY display the printable register area */
+  body * {
+    visibility: hidden;
+  }
+
   #cashbook-printable-area,
   #cashbook-printable-area * {
-    display: revert !important;
-    visibility: visible !important;
+    visibility: visible;
   }
 
   #cashbook-printable-area {
-    display: block !important;
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
   }
 
-  /* 3. Authentic Folio Register Layout */
   .two-page-folio {
     display: flex !important;
     flex-direction: row !important;
     gap: 12px !important;
     width: 100% !important;
+    min-width: 100% !important;
     page-break-inside: avoid !important;
   }
 
   .folio-page {
     flex: 1 !important;
-    min-width: 48% !important;
     background: #fffdfa !important;
-    padding: 6px 10px !important;
+    padding: 4px 6px !important;
+    box-shadow: none !important;
   }
 
-  .folio-header h3 {
-    font-size: 13pt !important;
-    color: #991b1b !important;
-    margin-bottom: 2px !important;
-    text-align: center !important;
-  }
-
-  .folio-header h4, .folio-header p {
-    text-align: center !important;
-    margin-bottom: 4px !important;
-    font-size: 9.5pt !important;
-  }
-
-  /* 4. Physical Ruled Ledger Table */
   .table-cashbook {
-    width: 100% !important;
-    border-collapse: collapse !important;
-    border: 2px solid #991b1b !important;
-    font-size: 9pt !important;
-  }
-
-  .table-cashbook th,
-  .table-cashbook td {
-    border: 1px solid #93c5fd !important;
-    padding: 3px 5px !important;
-    height: 22px !important;
-  }
-
-  .table-cashbook thead tr:first-child th {
-    border-bottom: 1.5px solid #991b1b !important;
-    background-color: #f1f5f9 !important;
-    font-weight: bold !important;
-  }
-
-  .table-cashbook thead tr:last-child th {
-    border-bottom: 2px solid #991b1b !important;
-    background-color: #f8fafc !important;
-    font-size: 8pt !important;
-  }
-
-  .col-divide-left {
-    border-left: 2px solid #991b1b !important;
-  }
-
-  .col-rs {
-    text-align: right !important;
-    padding-right: 4px !important;
-  }
-
-  .col-p {
-    border-left: 1px dashed #60a5fa !important;
-    width: 28px !important;
-    text-align: center !important;
-  }
-
-  .table-cashbook tfoot tr td {
-    border-top: 2px solid #991b1b !important;
-    border-bottom: 3px double #991b1b !important;
-    font-weight: bold !important;
-    color: #000000 !important;
-  }
-
-  .ledger-signatures {
-    display: flex !important;
-    justify-content: space-between !important;
-    margin-top: 20px !important;
-    font-weight: bold !important;
-    font-size: 9.5pt !important;
+    font-size: 8.5pt !important;
   }
 }

@@ -206,31 +206,6 @@
     </section>
 
   </main>
-
-  <!-- Core Scripts -->
-  <script src="js/storage.js"></script>
-  <script src="js/profile.js"></script>
-  <script src="js/daily.js"></script>
-  <script src="js/stock.js"></script>
-  <script src="js/cashbook.js?v=20261010"></script>
-  
-  
-  
-  <script src="js/print.js"></script>
-
-  <!-- Main Controller & Protected Reset Logic -->
-  <script>
-    function switchTab(tabId) {
-      document.querySelectorAll('.view-panel').forEach(p => {
-        p.style.display = 'none';
-        p.classList.remove('active');
-      });
-      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
-
-      const activeView = document.getElementById('view-' + tabId);
-      const activeBtn = document.getElementById('tab-' + tabId);
-
-      if (activeView) {
   <!-- Core Scripts -->
   <script src="js/storage.js"></script>
   <script src="js/profile.js"></script>
@@ -239,6 +214,7 @@
   <script src="js/cashbook.js?v=20261010_patch"></script>
   <script src="js/print.js"></script>
 
+  
   <!-- Main Controller & Protected Reset Logic -->
   <script>
     function switchTab(tabId) {

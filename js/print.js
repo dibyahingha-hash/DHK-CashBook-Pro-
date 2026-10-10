@@ -17,13 +17,9 @@ function prepareAndPrintRegister() {
   const receipts = [];
   const payments = [];
 
-  const rawOpCash = cb.opCash || 0;
-  const rawOpBank = cb.opBank || 0;
-
-    // Parse numeric values strictly
-  const rawOpCash = parseFloat(cb.opCash) || 0;
+    const rawOpCash = parseFloat(cb.opCash) || 0;
   const rawOpBank = parseFloat(cb.opBank) || 0;
-
+  
   // Opening Balance Row
   if (rawOpCash < 0) {
     // 1. Left side (Receipts): Cash is 0.00

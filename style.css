@@ -139,119 +139,58 @@ input, select {
   align-items: center;
 }
 
-/* ==========================================================================
-   PRINT ENGINE: EXACT 2-PAGE STATUTORY CASH BOOK
+ /* ==========================================================================
+   OFFICIAL TWO-PAGE STATUTORY CASH BOOK (GOVERNMENT STATIONERY THEME)
    ========================================================================== */
+
+/* Screen view rules */
 @media screen {
-  /* On mobile/desktop screen, hide the giant printable book to save screen space */
-  .statutory-print-area {
-    display: none;
+  .no-print {
+    display: inline-block;
   }
 }
 
+/* Print & PDF Export Rules */
 @media print {
   @page {
     size: A4 landscape;
-    margin: 10mm 12mm 10mm 12mm;
-  }
-
-  body {
-    background: #fff !important;
-    color: #000 !important;
-    font-size: 9pt;
-  }
-
-  .no-print,
-  .app-header,
-  .tabs-nav,
-  #profile-gatekeeper {
-    display: none !important;
-  }
-
-  .statutory-print-area {
-    display: block !important;
-  }
-
-  /* Force exact Page 1 and Page 2 break */
-  .print-page-1 {
-    page-break-after: always;
-    break-after: page;
-    min-height: 98vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .print-page-2 {
-    page-break-after: avoid;
-    break-after: avoid;
-    min-height: 98vh;
-    display: flex;
-    flex-direction: column;
-    justify-content: space-between;
-  }
-
-  .print-header {
-    display: flex;
-    justify-content: space-between;
-    align-items: flex-end;
-    border-bottom: 2px solid #000;
-    padding-bottom: 4px;
-    margin-bottom: 6px;
-  }
-
-  .print-table {
-    width: 100%;
-    border-collapse: collapse;
-    border: 1px solid #000;
-  }
-
-  .print-table th, .print-table td {
-    border: 1px solid #000;
-    padding: 3px 4px;
-    font-size: 8.5pt;
-  }
-
-  .print-table th {
-    background: #f0f0f0 !important;
-    text-align: center;
-    font-weight: bold;
-  }
-
-  .num-c {
-    text-align: right;
-    font-variant-numeric: tabular-nums;
-  }
-
-  .footer-signatures {
-    display: flex;
-    justify-content: space-between;
-    margin-top: 15px;
-    font-size: 8.5pt;
-  }
-}
-/* =========================================================
-   STRICT AUDIT REGISTER PRINT & PDF PURGE RULES
-   ========================================================= */
-@media print {
-  /* 1. Reset standard A4 Landscape / Portrait folio */
-  @page {
-    size: A4 portrait;
     margin: 8mm 10mm;
   }
 
-  body {
-    background: #ffffff !important;
-    color: #000000 !important;
+  /* 1. Reset base canvas to pure stationery background */
+  html, body {
+    background-color: #fffdfa !important; /* Authentic light register tint */
+    color: #111827 !important;
     font-family: 'Times New Roman', Times, serif !important;
-    font-size: 9.5pt !important;
-    -webkit-print-color-adjust: exact;
-    print-color-adjust: exact;
+    margin: 0 !important;
+    padding: 0 !important;
+    -webkit-print-color-adjust: exact !important;
+    print-color-adjust: exact !important;
   }
 
-  /* 2. Hide all app chrome, tabs, action buttons, inputs */
-  .almirah-nav,
-  .top-bar,
+  /* 2. Purge all app UI chrome, forms, action buttons, and inputs */
+  body * {
+    visibility: hidden;
+  }
+
+  #cashbook-printable-area,
+  #cashbook-printable-area * {
+    visibility: visible;
+  }
+
+  #cashbook-printable-area {
+    position: absolute;
+    left: 0;
+    top: 0;
+    width: 100%;
+    margin: 0;
+    padding: 0;
+    background: transparent !important;
+  }
+
+  .app-header,
+  .tabs-nav,
+  .main-content > .card:not(#cashbook-printable-area),
   .entry-form-card,
   .voucher-entry-section,
   #voucher-entry-form,
@@ -261,85 +200,125 @@ input, select {
   button,
   .btn,
   input,
-  select,
-  .card:not(#cashbook-printable-area) {
+  select {
     display: none !important;
+    visibility: hidden !important;
   }
 
-  /* 3. Folio Page Enclosure (Page 1 = Receipts, Page 2 = Payments) */
-  .cashbook-folio-page {
+  /* 3. Folio Page Dimensions & Break Rules */
+  .two-page-folio {
     display: block !important;
     width: 100% !important;
-    min-height: 96vh !important;
-    box-sizing: border-box !important;
-    border: 2px solid #000000 !important;
-    border-radius: 12px !important;
-    padding: 6px 10px 10px 10px !important;
-    position: relative !important;
   }
 
-  /* Page break to separate Receipts and Payments onto two distinct sheets */
-  .page-receipts {
+  .folio-page {
+    width: 100% !important;
+    min-height: 94vh !important;
+    box-sizing: border-box !important;
+    padding: 6px 12px 14px 12px !important;
+    background-color: #fffdfa !important;
+    display: flex !important;
+    flex-direction: column !important;
+    justify-content: space-between !important;
+  }
+
+  /* Page 1 (Receipts) always breaks; Page 2 (Payments) does not */
+  .folio-receipts {
     page-break-after: always !important;
     break-after: page !important;
   }
 
-  .page-payments {
+  .folio-payments {
     page-break-before: always !important;
     break-before: page !important;
+    page-break-after: avoid !important;
+    break-after: avoid !important;
   }
 
-  /* 4. Ledger Table Styles (Strict Stationery Ruling) */
-  table.ledger-table {
+  .folio-header h3 {
+    font-size: 14pt !important;
+    letter-spacing: 1px !important;
+    margin-bottom: 2px !important;
+    color: #991b1b !important; /* Traditional Deep Red Heading */
+  }
+
+  .folio-header h4 {
+    font-size: 11pt !important;
+    margin-bottom: 2px !important;
+  }
+
+  .folio-header p {
+    font-size: 10pt !important;
+    margin-bottom: 6px !important;
+  }
+
+  /* 4. Ruled Stationery Register Tables */
+  .table-cashbook {
     width: 100% !important;
     border-collapse: collapse !important;
-    border: 1.5px solid #000000 !important;
+    border: 2px solid #991b1b !important; /* Deep Red Outer Border */
     margin-top: 4px !important;
+    font-size: 9.5pt !important;
   }
 
-  table.ledger-table th, 
-  table.ledger-table td {
-    border: 1px solid #000000 !important;
-    padding: 3px 4px !important;
-    color: #000000 !important;
-    height: 22px !important; /* Uniform ruled line height */
+  .table-cashbook th,
+  .table-cashbook td {
+    border: 1px solid #93c5fd !important; /* Faint Azure/Blue Horizontal & Vertical Lines */
+    padding: 3px 5px !important;
+    color: #0f172a !important;
+    height: 22px !important;
   }
 
-  /* Double-line divider between major financial columns */
-  .col-divide-left {
-    border-left: 2px double #000000 !important;
-  }
-
-  /* Header styling */
-  table.ledger-table th {
-    background-color: #f3f4f6 !important;
+  /* Outer Table Header in Red */
+  .table-cashbook thead tr:first-child th {
+    border-bottom: 1.5px solid #991b1b !important;
+    background-color: #f1f5f9 !important;
     font-weight: bold !important;
     text-align: center !important;
-    font-size: 8.5pt !important;
   }
 
-  /* Split Paise column */
-  .col-p {
-    width: 26px !important;
-    text-align: right !important;
-    padding-right: 2px !important;
+  .table-cashbook thead tr:last-child th {
+    border-bottom: 2px solid #991b1b !important;
+    background-color: #f8fafc !important;
+    font-size: 8pt !important;
   }
 
+  /* Red vertical line separating Cash, Bank, and Total amount columns */
+  .col-divide-left {
+    border-left: 2px solid #991b1b !important;
+  }
+
+  /* Rupee & Paise Rulings */
   .col-rs {
     text-align: right !important;
     padding-right: 4px !important;
+    font-variant-numeric: tabular-nums !important;
+  }
+
+  .col-p {
+    border-left: 1px dashed #60a5fa !important; /* Blue dashed vertical line for Paise */
+    width: 32px !important;
+    text-align: center !important;
+    font-variant-numeric: tabular-nums !important;
   }
 
   .text-center {
     text-align: center !important;
   }
 
-  /* Bottom Signatures */
+  .table-cashbook tfoot tr {
+    border-top: 2px solid #991b1b !important;
+    border-bottom: 2px solid #991b1b !important;
+    background-color: #f8fafc !important;
+  }
+
+  /* Signatures line */
   .ledger-signatures {
     display: flex !important;
     justify-content: space-between !important;
-    margin-top: 18px !important;
+    margin-top: 24px !important;
+    padding: 0 20px !important;
     font-weight: bold !important;
-    font-size: 9pt !important;
+    font-size: 10pt !important;
   }
 }

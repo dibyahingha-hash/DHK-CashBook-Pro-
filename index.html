@@ -231,28 +231,51 @@
       const activeBtn = document.getElementById('tab-' + tabId);
 
       if (activeView) {
+  <!-- Core Scripts -->
+  <script src="js/storage.js"></script>
+  <script src="js/profile.js"></script>
+  <script src="js/daily.js"></script>
+  <script src="js/stock.js"></script>
+  <script src="js/cashbook.js?v=20261010_patch"></script>
+  <script src="js/print.js"></script>
+
+  <!-- Main Controller & Protected Reset Logic -->
+  <script>
+    function switchTab(tabId) {
+      document.querySelectorAll('.view-panel').forEach(p => {
+        p.style.display = 'none';
+        p.classList.remove('active');
+      });
+      document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+
+      const activeView = document.getElementById('view-' + tabId);
+      const activeBtn = document.getElementById('tab-' + tabId);
+
+      if (activeView) {
         activeView.style.display = 'block';
         activeView.classList.add('active');
       }
       if (activeBtn) activeBtn.classList.add('active');
 
       if (tabId === 'stock') {
-        renderStockView();
+        if (typeof renderStockView === 'function') renderStockView();
       } else if (tabId === 'cashbook') {
-        renderCashbookView();
+        if (typeof renderCashbookView === 'function') renderCashbookView();
       } else if (tabId === 'setup') {
         loadSetupEditor();
       }
     }
 
     function loadSetupEditor() {
+      if (typeof ProfileModule === 'undefined') return;
       const p = ProfileModule.getProfile();
       if (!p) return;
-      document.getElementById('edit-school-name').value = p.schoolName || '';
-      document.getElementById('edit-udise').value = p.udise || '';
-      document.getElementById('edit-block').value = p.block || '';
-      document.getElementById('edit-ht-name').value = p.htName || '';
-      if (p.category) document.getElementById('edit-cat').value = p.category;
+      const setVal = (id, val) => { const el = document.getElementById(id); if (el) el.value = val || ''; };
+      setVal('edit-school-name', p.schoolName);
+      setVal('edit-udise', p.udise);
+      setVal('edit-block', p.block);
+      setVal('edit-ht-name', p.htName);
+      if (p.category) { const c = document.getElementById('edit-cat'); if (c) c.value = p.category; }
     }
 
     function updateExistingProfile() {
@@ -273,7 +296,6 @@
       alert("✅ School profile updated successfully!");
     }
 
-    // PROTECTED CLEAR FUNCTION: Deletes attendance, stock, and vouchers, but KEEPS School Profile
     function clearTestDataPreserveProfile() {
       const confirmed = confirm(
         "Are you sure you want to clear all test records?\n\n" +
@@ -290,8 +312,7 @@
 
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        // Delete everything starting with the app prefix EXCEPT the school profile
-        if (k.startsWith(StorageEngine.PREFIX) && k !== profileKey) {
+        if (k && k.startsWith(StorageEngine.PREFIX) && k !== profileKey) {
           keysToRemove.push(k);
         }
       }
@@ -301,12 +322,11 @@
       location.reload();
     }
 
-    // Backup & Restore
     function exportFullBackup() {
       const backup = {};
       for (let i = 0; i < localStorage.length; i++) {
         const k = localStorage.key(i);
-        if (k.startsWith(StorageEngine.PREFIX)) {
+        if (k && k.startsWith(StorageEngine.PREFIX)) {
           backup[k] = localStorage.getItem(k);
         }
       }
@@ -338,9 +358,11 @@
 
     // App Initialization
     window.addEventListener('DOMContentLoaded', () => {
-      ProfileModule.init();
-      if (ProfileModule.isConfigured()) {
-        DailyLogModule.init();
+      if (typeof ProfileModule !== 'undefined') {
+        ProfileModule.init();
+        if (ProfileModule.isConfigured() && typeof DailyLogModule !== 'undefined') {
+          DailyLogModule.init();
+        }
       }
     });
   </script>

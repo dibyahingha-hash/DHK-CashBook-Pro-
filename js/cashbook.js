@@ -755,275 +755,298 @@ function splitAmount(val) {
 }
 
 // --- 2. AUDIT-GRADE RECALCULATE ENGINE (TWO-PAGE FOLIO) ---
+
+    // --- 2. AUDIT-GRADE RECALCULATE ENGINE (TWO-PAGE FOLIO) ---
 function recalculateCashbook() {
+  const cbRawCash = parseFloat(document.getElementById('cb-op-cash')?.value) || 0;
+  const cbRawBank = parseFloat(document.getElementById('cb-op-bank')?.value) || 0;
 
-    const cbRawCash = parseFloat(document.getElementById('cb-op-cash')?.value) || 0;
-    const cbRawBank = parseFloat(document.getElementById('cb-op-bank')?.value) || 0;
-    const monthName = document.getElementById('cb-month-select')?.value || 'Month';
-    const yearName = document.getElementById('cb-year-select')?.value || '2026';
+  // Resolve dynamic month and year
+  const selMonth = document.getElementById('cb-sel-month') || document.getElementById('cb-month-select');
+  const selYear = document.getElementById('cb-sel-year') || document.getElementById('cb-year-select');
+  const monthName = (selMonth && selMonth.options && selMonth.selectedIndex >= 0)
+    ? selMonth.options[selMonth.selectedIndex].text
+    : 'October';
+  const yearName = selYear ? selYear.value : '2026';
 
-    const container = document.getElementById('cashbook-printable-area') || document.getElementById('cashbook-printable-card');
+  const container = document.getElementById('cashbook-printable-area') || document.getElementById('cashbook-printable-card');
 
-    currentVouchers.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+  // Safe split helper ensuring zero trailing minus signs
+  const splitAmount = (val) => {
+    const num = Math.abs(parseFloat(val) || 0);
+    const fixed = num.toFixed(2);
+    const parts = fixed.split('.');
+    return {
+      rs: Number(parts[0]).toLocaleString('en-IN'),
+      p: parts[1]
+    };
+  };
 
-    // Statutory Rule: Physical cash cannot be negative on paper (< 0).
-    // Any negative opening balance is an un-reimbursed liability owed to the teacher.
-    const historicalDebt = cbRawCash < 0 ? Math.abs(cbRawCash) : 0;
-    const physicalOpCash = Math.max(0, cbRawCash);
-    const physicalOpBank = Math.max(0, cbRawBank);
+  const renderCells = (amt) => {
+    const sp = splitAmount(amt);
+    if ((parseFloat(amt) || 0) === 0) {
+      return `<td class="col-rs col-divide-left">-</td><td class="col-p">-</td>`;
+    }
+    return `<td class="col-rs col-divide-left">${sp.rs}</td><td class="col-p">${sp.p}</td>`;
+  };
 
-  let totRcptCash = physicalOpCash;
-  let totRcptBank = physicalOpBank;
+  currentVouchers.sort((a, b) => (a.date || '').localeCompare(b.date || ''));
+
+  // STATUTORY AUDIT RULE:
+  // Physical cash cannot be negative on paper (< 0).
+  // Any negative opening balance is an un-reimbursed liability owed to the teacher.
+  let physicalOpCash = cbRawCash < 0 ? 0 : cbRawCash;
+  let teacherAdvanceBroughtForward = cbRawCash < 0 ? Math.abs(cbRawCash) : 0;
+  let physicalOpBank = Math.max(0, cbRawBank);
+
+  let runningCash = physicalOpCash + teacherAdvanceBroughtForward;
+  let runningBank = physicalOpBank;
+
+  let totRcptCash = runningCash;
+  let totRcptBank = runningBank;
   let totPmtCash = 0;
   let totPmtBank = 0;
-
-  let userCashSpent = 0;
-  let cashDrawnFromBank = 0;
 
   let rcptRows = [];
   let pmtRows = [];
 
-  // Opening Balance Row
-  const opC = splitAmount(physicalOpCash);
-  const opB = splitAmount(physicalOpBank);
-  const opT = splitAmount(physicalOpCash + physicalOpBank);
-
+  // 1. Opening Balance Row (Receipts Side)
   rcptRows.push(`
     <tr style="font-weight:600;">
       <td class="text-center">1st</td>
       <td><strong>To Opening Balance (b/f)</strong><br><small style="color:#555;">(Unspent closing balance of previous month brought forward)</small></td>
       <td class="text-center">-</td>
-      <td class="col-rs col-divide-left">${opC.rs}</td><td class="col-p">${opC.p}</td>
-      <td class="col-rs col-divide-left">${opB.rs}</td><td class="col-p">${opB.p}</td>
-      <td class="col-rs col-divide-left">${opT.rs}</td><td class="col-p">${opT.p}</td>
+      ${renderCells(physicalOpCash)}
+      ${renderCells(physicalOpBank)}
+      ${renderCells(physicalOpCash + physicalOpBank)}
     </tr>
   `);
 
-  // Process All Normal Vouchers
+  // 2. Head Teacher Advance Row (conditional if opening balance was negative)
+  if (teacherAdvanceBroughtForward > 0) {
+    rcptRows.push(`
+      <tr>
+        <td class="text-center">1st</td>
+        <td><strong>To Head Teacher's Personal Advance</strong><br><small style="color:#0369a1;">(Carried forward out-of-pocket expenditure arranged to serve uninterrupted MDM pending grant credit / passbook confirmation)</small></td>
+        <td class="text-center">-</td>
+        ${renderCells(teacherAdvanceBroughtForward)}
+        ${renderCells(0)}
+        ${renderCells(teacherAdvanceBroughtForward)}
+      </tr>
+    `);
+  }
+
+  // 3. Process All Vouchers Chronologically
   currentVouchers.forEach(v => {
     const amt = parseFloat(v.amount) || 0;
     const isBank = (v.channel === 'BANK' || v.paidFrom === 'BANK');
-    const day = v.date ? (v.date.split('-')[2] || v.date) : '';
-    const delBtn = `<span class="no-print" style="margin-left:6px;"><button type="button" onclick="deleteTransaction('${v.id}')" style="background:none;border:none;cursor:pointer;font-size:13px;">🗑️</button></span>`;
+    const day = v.date ? (v.date.split('-')[2] || v.date) : '01';
+    const cleanDesc = (v.desc || v.narration || '').replace(/^(By|To)\s+/i, '').trim();
+    const delBtn = `<span class="no-print" style="margin-left:6px;"><button type="button" class="btn btn-sm btn-danger" onclick="deleteTransaction('${v.id}')">✕</button></span>`;
+    const lf = v.lf || v.folio || '-';
 
     if (v.type === 'RECEIPT') {
       const cAmt = isBank ? 0 : amt;
       const bAmt = isBank ? amt : 0;
+      runningCash += cAmt;
+      runningBank += bAmt;
       totRcptCash += cAmt;
       totRcptBank += bAmt;
 
-      const spC = splitAmount(cAmt);
-      const spB = splitAmount(bAmt);
-      const spT = splitAmount(amt);
-
       rcptRows.push(`
         <tr>
           <td class="text-center">${day}</td>
-          <td><strong>To ${v.desc || 'Govt. Grant Received'}</strong><br><small style="color:#555;">${v.narration || 'Received PM POSHAN Cooking Cost allocation via PFMS/SNA'}</small>${delBtn}</td>
-          <td class="text-center">${v.lf || v.folio || '5'}</td>
-          <td class="col-rs col-divide-left">${spC.rs}</td><td class="col-p">${spC.p}</td>
-          <td class="col-rs col-divide-left">${spB.rs}</td><td class="col-p">${spB.p}</td>
-          <td class="col-rs col-divide-left">${spT.rs}</td><td class="col-p">${spT.p}</td>
+          <td><strong>To ${cleanDesc}</strong>${delBtn}</td>
+          <td class="text-center">${lf}</td>
+          ${renderCells(cAmt)}
+          ${renderCells(bAmt)}
+          ${renderCells(amt)}
         </tr>
       `);
     } else if (v.type === 'WITHDRAWAL') {
-      cashDrawnFromBank += amt;
+      runningBank -= amt;
+      runningCash += amt;
       totRcptCash += amt;
       totPmtBank += amt;
 
-      const sp = splitAmount(amt);
-
-      // Receipts Side (Cash In)
       rcptRows.push(`
         <tr>
           <td class="text-center">${day}</td>
-          <td><strong>To Bank (Contra)</strong><br><small style="color:#555;">Self Cheque No. ${v.ref || '-'} encashed for daily MDM cash market expenditure</small>${delBtn}</td>
-          <td class="text-center" style="font-weight:bold;">C</td>
-          <td class="col-rs col-divide-left">${sp.rs}</td><td class="col-p">${sp.p}</td>
-          <td class="col-rs col-divide-left">-</td><td class="col-p">-</td>
-          <td class="col-rs col-divide-left">${sp.rs}</td><td class="col-p">${sp.p}</td>
+          <td><strong>To Bank (Contra: Cash drawn for MDM daily marketing)</strong>${delBtn}</td>
+          <td class="text-center">C</td>
+          ${renderCells(amt)}
+          ${renderCells(0)}
+          ${renderCells(amt)}
         </tr>
       `);
-
-      // Payments Side (Bank Out)
       pmtRows.push(`
         <tr>
           <td class="text-center">${day}</td>
-          <td><strong>By Cash (Contra)</strong><br><small style="color:#555;">Self Cheque No. ${v.ref || '-'} drawn to replenish cash in hand</small>${delBtn}</td>
-          <td class="text-center" style="font-weight:bold;">C</td>
-          <td class="col-rs col-divide-left">-</td><td class="col-p">-</td>
-          <td class="col-rs col-divide-left">${sp.rs}</td><td class="col-p">${sp.p}</td>
-          <td class="col-rs col-divide-left">${sp.rs}</td><td class="col-p">${sp.p}</td>
+          <td><strong>By Self (Contra: Cheque / SNA drawn for Cash in Hand)</strong></td>
+          <td class="text-center">C</td>
+          ${renderCells(0)}
+          ${renderCells(amt)}
+          ${renderCells(amt)}
         </tr>
       `);
     } else if (v.type === 'PAYMENT') {
-      const cAmt = isBank ? 0 : amt;
-      const bAmt = isBank ? amt : 0;
-      if (!isBank) userCashSpent += amt;
+      let cAmt = isBank ? 0 : amt;
+      let bAmt = isBank ? amt : 0;
+
+      // RULE: If cash expense exceeds available physical cash, Head Teacher covers the difference
+      if (!isBank && cAmt > runningCash) {
+        const requiredAdvance = cAmt - runningCash;
+        rcptRows.push(`
+          <tr>
+            <td class="text-center">${day}</td>
+            <td><strong>To Temporary Advance from Head Teacher</strong><br><small style="color:#0369a1;">(Out-of-pocket cash provided to meet voucher expense pending bank grant drawal / passbook confirmation)</small></td>
+            <td class="text-center">-</td>
+            ${renderCells(requiredAdvance)}
+            ${renderCells(0)}
+            ${renderCells(requiredAdvance)}
+          </tr>
+        `);
+        runningCash += requiredAdvance;
+        totRcptCash += requiredAdvance;
+      }
+
+      runningCash -= cAmt;
+      runningBank -= bAmt;
       totPmtCash += cAmt;
       totPmtBank += bAmt;
-
-      const spC = splitAmount(cAmt);
-      const spB = splitAmount(bAmt);
-      const spT = splitAmount(amt);
 
       pmtRows.push(`
         <tr>
           <td class="text-center">${day}</td>
-          <td><strong>By ${v.desc || 'Cooking Cost Account'}</strong><br><small style="color:#555;">${v.narration || 'Paid daily market expenditure for MDM'}</small>${delBtn}</td>
-          <td class="text-center">${v.lf || v.folio || '1'}</td>
-          <td class="col-rs col-divide-left">${spC.rs}</td><td class="col-p">${spC.p}</td>
-          <td class="col-rs col-divide-left">${spB.rs}</td><td class="col-p">${spB.p}</td>
-          <td class="col-rs col-divide-left">${spT.rs}</td><td class="col-p">${spT.p}</td>
+          <td><strong>By ${cleanDesc}</strong>${delBtn}</td>
+          <td class="text-center">${lf}</td>
+          ${renderCells(cAmt)}
+          ${renderCells(bAmt)}
+          ${renderCells(amt)}
         </tr>
       `);
     }
   });
 
-  // Calculate Cumulative Deficit (Current Deficit + Prior Unpaid Debt)
-  const physicalCashInHand = physicalOpCash + cashDrawnFromBank;
-  const currentMonthDeficit = Math.max(0, userCashSpent - physicalCashInHand);
-  const totalCumulativeAdvance = historicalDebt + currentMonthDeficit;
-
-  if (totalCumulativeAdvance > 0) {
-    totRcptCash += totalCumulativeAdvance;
-    const advSp = splitAmount(totalCumulativeAdvance);
-    rcptRows.push(`
-      <tr style="background:#fffbeb; font-weight:bold;">
-        <td class="text-center">End</td>
-        <td><strong>To Temporary Advance from In-charge/Teacher</strong><br><small style="color:#b45309;font-weight:normal;">(Out-of-pocket funding arranged to serve uninterrupted MDM pending grant credit; includes prior un-reimbursed balance)</small></td>
-        <td class="text-center">8</td>
-        <td class="col-rs col-divide-left">${advSp.rs}</td><td class="col-p">${advSp.p}</td>
-        <td class="col-rs col-divide-left">-</td><td class="col-p">-</td>
-        <td class="col-rs col-divide-left">${advSp.rs}</td><td class="col-p">${advSp.p}</td>
-      </tr>
-    `);
-  }
-
-  // Closing Balances
-  const clCash = Math.max(0, totRcptCash - totPmtCash);
-  const clBank = Math.max(0, totRcptBank - totPmtBank);
-
-  const clSpC = splitAmount(clCash);
-  const clSpB = splitAmount(clBank);
-  const clSpT = splitAmount(clCash + clBank);
+  // 4. Closing Balance (c/f)
+  const closingCash = runningCash;
+  const closingBank = runningBank;
 
   pmtRows.push(`
     <tr style="font-weight:600;">
       <td class="text-center">End</td>
       <td><strong>By Closing Balance (c/f to next month)</strong><br><small style="color:#555;">(Cash in hand and Bank balance carried forward)</small></td>
       <td class="text-center">-</td>
-      <td class="col-rs col-divide-left">${clSpC.rs}</td><td class="col-p">${clSpC.p}</td>
-      <td class="col-rs col-divide-left">${clSpB.rs}</td><td class="col-p">${clSpB.p}</td>
-      <td class="col-rs col-divide-left">${clSpT.rs}</td><td class="col-p">${clSpT.p}</td>
+      ${renderCells(closingCash)}
+      ${renderCells(closingBank)}
+      ${renderCells(closingCash + closingBank)}
     </tr>
   `);
 
-  // Fill up blank lines to maintain genuine physical register appearance
-  const MIN_ROWS = 14;
-  const emptyRow = `<tr><td>&nbsp;</td><td></td><td></td><td class="col-divide-left"></td><td></td><td class="col-divide-left"></td><td></td><td class="col-divide-left"></td><td></td></tr>`;
-  while (rcptRows.length < MIN_ROWS) rcptRows.push(emptyRow);
-  while (pmtRows.length < MIN_ROWS) pmtRows.push(emptyRow);
+  const grandPmtCash = totPmtCash + closingCash;
+  const grandPmtBank = totPmtBank + closingBank;
 
+  // Final summary formatting
   const finalRcptC = splitAmount(totRcptCash);
   const finalRcptB = splitAmount(totRcptBank);
   const finalRcptT = splitAmount(totRcptCash + totRcptBank);
 
-  const finalPmtC = splitAmount(totPmtCash + clCash);
-  const finalPmtB = splitAmount(totPmtBank + clBank);
-  const finalPmtT = splitAmount(totPmtCash + clCash + totPmtBank + clBank);
+  const finalPmtC = splitAmount(grandPmtCash);
+  const finalPmtB = splitAmount(grandPmtBank);
+  const finalPmtT = splitAmount(grandPmtCash + grandPmtBank);
 
-  // Render the authentic 2-Page Folio into DOM
+  const activeDrawerKey = (typeof CashBookModule !== 'undefined' && CashBookModule.activeDrawer) ? CashBookModule.activeDrawer : 'mdm';
+  const drawerTitleText = (typeof CashBookModule !== 'undefined' && CashBookModule.getDrawerTitle) ? CashBookModule.getDrawerTitle(activeDrawerKey) : 'PM POSHAN / MDM REGISTER';
+
   if (container) {
     container.innerHTML = `
-      <!-- PAGE 1: RECEIPTS (LEFT FOLIO) -->
-      <div class="cashbook-folio-page page-receipts">
-        <div style="text-align:center; margin-bottom:4px; overflow:hidden;">
-          <span style="font-weight:bold; font-size:11pt; float:left;">RECEIPTS</span>
-          <span style="font-weight:bold; font-size:15pt; letter-spacing:1px;">Cash Book</span>
-          <span style="font-size:10pt; margin-left:12px;">for the month of <u>${monthName} ${yearName}</u></span>
+      <div class="two-page-folio">
+        <!-- LEFT FOLIO: RECEIPTS -->
+        <div class="folio-page folio-receipts">
+          <div class="folio-header text-center">
+            <h3>RECEIPTS</h3>
+            <h4>${drawerTitleText}</h4>
+            <p>Cash Book for the month of <strong><span id="cb-prt-month-name">${monthName} ${yearName}</span></strong></p>
+          </div>
+          <table class="table-cashbook">
+            <thead>
+              <tr>
+                <th rowspan="2" style="width:10%;">Month & Date</th>
+                <th rowspan="2" style="width:42%;">PARTICULARS</th>
+                <th rowspan="2" style="width:8%;">Ledger Folio</th>
+                <th colspan="2" class="col-divide-left">Amount (Cash)</th>
+                <th colspan="2" class="col-divide-left">Bank Amount</th>
+                <th colspan="2" class="col-divide-left">Total Amount</th>
+              </tr>
+              <tr>
+                <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
+                <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
+                <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${rcptRows.join('')}
+            </tbody>
+            <tfoot>
+              <tr style="font-weight:bold; background:#f3f4f6;">
+                <td colspan="3" class="text-center">TOTAL RECEIPTS</td>
+                <td class="col-rs col-divide-left">${finalRcptC.rs}</td><td class="col-p">${finalRcptC.p}</td>
+                <td class="col-rs col-divide-left">${finalRcptB.rs}</td><td class="col-p">${finalRcptB.p}</td>
+                <td class="col-rs col-divide-left">${finalRcptT.rs}</td><td class="col-p">${finalRcptT.p}</td>
+              </tr>
+            </tfoot>
+          </table>
+          <div class="ledger-signatures">
+            <div>Prepared by: Assistant Teacher</div>
+            <div>Verified: Head Teacher</div>
+          </div>
         </div>
 
-        <table class="ledger-table">
-          <thead>
-            <tr>
-              <th rowspan="2" style="width:42px;">Month<br>& Date</th>
-              <th rowspan="2">PARTICULARS</th>
-              <th rowspan="2" style="width:28px;">Ledger<br>Folio</th>
-              <th colspan="2" class="col-divide-left">Amount</th>
-              <th colspan="2" class="col-divide-left">Bank Amount</th>
-              <th colspan="2" class="col-divide-left">Total Amount</th>
-            </tr>
-            <tr>
-              <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
-              <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
-              <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${rcptRows.join('')}
-          </tbody>
-          <tfoot>
-            <tr style="font-weight:bold; background:#f3f4f6;">
-              <td colspan="3" class="text-center">TOTAL RECEIPTS</td>
-              <td class="col-rs col-divide-left">${finalRcptC.rs}</td><td class="col-p">${finalRcptC.p}</td>
-              <td class="col-rs col-divide-left">${finalRcptB.rs}</td><td class="col-p">${finalRcptB.p}</td>
-              <td class="col-rs col-divide-left">${finalRcptT.rs}</td><td class="col-p">${finalRcptT.p}</td>
-            </tr>
-          </tfoot>
-        </table>
-
-        <div class="ledger-signatures">
-          <div>Prepared by: Assistant Teacher</div>
-          <div>Verified: Head Teacher</div>
-        </div>
-      </div>
-
-      <!-- PAGE 2: PAYMENTS (RIGHT FOLIO) -->
-      <div class="cashbook-folio-page page-payments">
-        <div style="text-align:center; margin-bottom:4px; overflow:hidden;">
-          <span style="font-weight:bold; font-size:15pt; letter-spacing:1px;">Cash Book</span>
-          <span style="font-weight:bold; font-size:11pt; float:right;">PAYMENTS</span>
-        </div>
-
-        <table class="ledger-table">
-          <thead>
-            <tr>
-              <th rowspan="2" style="width:42px;">Month<br>& Date</th>
-              <th rowspan="2">PARTICULARS</th>
-              <th rowspan="2" style="width:28px;">Ledger<br>Folio</th>
-              <th colspan="2" class="col-divide-left">Amount</th>
-              <th colspan="2" class="col-divide-left">Bank Amount</th>
-              <th colspan="2" class="col-divide-left">Total Amount</th>
-            </tr>
-            <tr>
-              <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
-              <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
-              <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
-            </tr>
-          </thead>
-          <tbody>
-            ${pmtRows.join('')}
-          </tbody>
-          <tfoot>
-            <tr style="font-weight:bold; background:#f3f4f6;">
-              <td colspan="3" class="text-center">GRAND TOTAL (Payments + Closing)</td>
-              <td class="col-rs col-divide-left">${finalPmtC.rs}</td><td class="col-p">${finalPmtC.p}</td>
-              <td class="col-rs col-divide-left">${finalPmtB.rs}</td><td class="col-p">${finalPmtB.p}</td>
-              <td class="col-rs col-divide-left">${finalPmtT.rs}</td><td class="col-p">${finalPmtT.p}</td>
-            </tr>
-          </tfoot>
-        </table>
-
-        <div class="ledger-signatures">
-          <div>Signature of Head Teacher</div>
-          <div>President / Secretary, SMC</div>
+        <!-- RIGHT FOLIO: PAYMENTS -->
+        <div class="folio-page folio-payments">
+          <div class="folio-header text-center">
+            <h3>PAYMENTS</h3>
+            <h4>${drawerTitleText}</h4>
+            <p>Cash Book for the month of <strong>${monthName} ${yearName}</strong></p>
+          </div>
+          <table class="table-cashbook">
+            <thead>
+              <tr>
+                <th rowspan="2" style="width:10%;">Month & Date</th>
+                <th rowspan="2" style="width:42%;">PARTICULARS</th>
+                <th rowspan="2" style="width:8%;">Ledger Folio</th>
+                <th colspan="2" class="col-divide-left">Amount (Cash)</th>
+                <th colspan="2" class="col-divide-left">Bank Amount</th>
+                <th colspan="2" class="col-divide-left">Total Amount</th>
+              </tr>
+              <tr>
+                <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
+                <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
+                <th style="width:52px;" class="col-divide-left">Rs.</th><th class="col-p">P.</th>
+              </tr>
+            </thead>
+            <tbody>
+              ${pmtRows.join('')}
+            </tbody>
+            <tfoot>
+              <tr style="font-weight:bold; background:#f3f4f6;">
+                <td colspan="3" class="text-center">GRAND TOTAL (Payments + Closing)</td>
+                <td class="col-rs col-divide-left">${finalPmtC.rs}</td><td class="col-p">${finalPmtC.p}</td>
+                <td class="col-rs col-divide-left">${finalPmtB.rs}</td><td class="col-p">${finalPmtB.p}</td>
+                <td class="col-rs col-divide-left">${finalPmtT.rs}</td><td class="col-p">${finalPmtT.p}</td>
+              </tr>
+            </tfoot>
+          </table>
+          <div class="ledger-signatures">
+            <div>Signature of Head Teacher</div>
+            <div>President / Secretary, SMC</div>
+          </div>
         </div>
       </div>
     `;
   }
 
-  // Also maintain backward-compatibility with UI screen elements if present
+  // Backward compatibility with screen UI summary values
   const setEl = (id, val) => {
     const el = document.getElementById(id);
     if (el) el.innerText = val.toFixed(2);
@@ -1034,12 +1057,12 @@ function recalculateCashbook() {
   setEl('tot-pmt-cash', totPmtCash);
   setEl('tot-pmt-bank', totPmtBank);
   setEl('tot-pmt-total', totPmtCash + totPmtBank);
-  setEl('tot-cl-cash', clCash);
-  setEl('tot-cl-bank', clBank);
-  setEl('tot-cl-total', clCash + clBank);
-  setEl('tot-grand-cash', totPmtCash + clCash);
-  setEl('tot-grand-bank', totPmtBank + clBank);
-  setEl('tot-grand-total', totPmtCash + clCash + totPmtBank + clBank);
+  setEl('tot-cl-cash', closingCash);
+  setEl('tot-cl-bank', closingBank);
+  setEl('tot-cl-total', closingCash + closingBank);
+  setEl('tot-grand-cash', grandPmtCash);
+  setEl('tot-grand-bank', grandPmtBank);
+  setEl('tot-grand-total', grandPmtCash + grandPmtBank);
 
   if (typeof CashBookModule !== 'undefined' && CashBookModule.activeSubView === 'ledger') {
     renderLedgerSheet();
@@ -1052,13 +1075,13 @@ function recalculateCashbook() {
     totRcptBank,
     totPmtCash,
     totPmtBank,
-    clCash,
-    clBank,
-    totalCumulativeAdvance
+    clCash: closingCash,
+    clBank: closingBank,
+    totalCumulativeAdvance: teacherAdvanceBroughtForward
   };
-}
-
-
+        }
+    
+            
 
 // GENERAL LEDGER SHEET GENERATOR (খতিয়ান বহি)
 function renderLedgerSheet() {

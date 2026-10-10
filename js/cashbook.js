@@ -376,7 +376,7 @@ function initDrawerUI() {
 
 
 function onCashbookPeriodChange() {
-  let ym = getSelectedCRYM();
+  let ym = getSelectedCBYM();
   if (ym < '2020-04') {
     alert("Statutory records start from April 2020. Resetting to April 2020.");
     document.getElementById('cb-sel-year').value = '2020';

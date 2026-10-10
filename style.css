@@ -322,3 +322,71 @@ input, select {
     font-size: 10pt !important;
   }
 }
+/* --- INK COLORS & CLEAN PRINT EXPORT --- */
+
+/* Receipts Left Page: Blue Ink */
+.receipt-folio,
+.receipt-folio td,
+.receipt-folio td.col-particulars,
+.receipt-folio td.col-rs,
+.receipt-folio td.col-p {
+  color: #002b80 !important;
+}
+
+/* Payments Right Page: Red Ink */
+.payment-folio,
+.payment-folio td,
+.payment-folio td.col-particulars,
+.payment-folio td.col-rs,
+.payment-folio td.col-p {
+  color: #b91c1c !important;
+}
+
+/* Neutral headers and totals */
+.table-cashbook thead th,
+.table-cashbook tfoot tr td {
+  color: #000000 !important;
+}
+
+/* Padded empty ledger lines */
+.empty-row td {
+  height: 24px !important;
+  border-bottom: 1px solid #cbd5e1 !important;
+}
+
+/* STRICT A4 LANDSCAPE PRINT: Hides everything except the book */
+@media print {
+  body * {
+    visibility: hidden !important;
+  }
+  #cashbook-printable-area,
+  #cashbook-printable-area * {
+    visibility: visible !important;
+  }
+  #cashbook-printable-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    margin: 0 !important;
+    padding: 0 !important;
+  }
+  .two-page-folio,
+  .register-spread {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 8px !important;
+    width: 100% !important;
+    page-break-inside: avoid !important;
+  }
+  .folio-page,
+  .register-folio {
+    flex: 1 !important;
+    min-width: 48% !important;
+    box-shadow: none !important;
+  }
+  @page {
+    size: A4 landscape;
+    margin: 5mm;
+  }
+}

@@ -103,13 +103,13 @@ function renderCashbookView() {
     <div class="card no-print" style="padding-bottom:10px;">
       <h2 class="card-title">📖 Almirah 2: Accounts & Audit Register</h2>
       <div style="display:flex; gap:8px; flex-wrap:wrap; margin-top:8px;">
-        <button type="button" id="btn-draw-mdm" class="btn" onclick="switchDrawer('mdm')" style="flex:1; padding:8px; font-weight:bold; font-size:0.85rem; background:#0284c7; color:#fff;">
+        <button type="button" id="btn-drawer-mdm" class="btn" onclick="switchDrawer('mdm')" style="flex:1; padding:8px; font-weight:bold; font-size:0.85rem; background:#0284c7; color:#fff;">
           🍲 PM POSHAN
         </button>
-        <button type="button" id="btn-draw-smc" class="btn" onclick="switchDrawer('smc')" style="flex:1; padding:8px; font-weight:bold; font-size:0.85rem; background:#f1f5f9; color:#334155;">
+        <button type="button" id="btn-drawer-smc" class="btn" onclick="switchDrawer('smc')" style="flex:1; padding:8px; font-weight:bold; font-size:0.85rem; background:#f1f5f9; color:#334155;">
           🏫 SMC Savings
         </button>
-        <button type="button" id="btn-draw-sna" class="btn" onclick="switchDrawer('sna')" style="flex:1; padding:8px; font-weight:bold; font-size:0.85rem; background:#f1f5f9; color:#334155;">
+        <button type="button" id="btn-drawer-sna" class="btn" onclick="switchDrawer('sna')" style="flex:1; padding:8px; font-weight:bold; font-size:0.85rem; background:#f1f5f9; color:#334155;">
           🏛️ Canara SNA
         </button>
       </div>
@@ -525,32 +525,36 @@ function switchDrawer(drawerKey) {
 }
 
 function initDrawerUI() {
-  const d = CashBookModule.activeDrawer;
-  const btnMdm = document.getElementById('btn-draw-mdm');
-  const btnSmc = document.getElementById('btn-draw-smc');
-  const btnSna = document.getElementById('btn-draw-sna');
+  const d = CashBookModule.activeDrawer || 'mdm';
+  const btnMdm = document.getElementById('btn-drawer-mdm');
+  const btnSmc = document.getElementById('btn-drawer-smc');
+  const btnSna = document.getElementById('btn-drawer-sna');
 
   [btnMdm, btnSmc, btnSna].forEach(b => {
-    b.style.background = '#f1f5f9';
-    b.style.color = '#334155';
+    if (b) {
+      b.style.background = '#f1f5f9';
+      b.style.color = '#334155';
+    }
   });
 
-  if (d === 'mdm') {
+  if (d === 'mdm' && btnMdm) {
     btnMdm.style.background = '#0284c7';
     btnMdm.style.color = '#fff';
-  } else if (d === 'smc') {
+  } else if (d === 'smc' && btnSmc) {
     btnSmc.style.background = '#0284c7';
     btnSmc.style.color = '#fff';
-  } else if (d === 'sna') {
+  } else if (d === 'sna' && btnSna) {
     btnSna.style.background = '#0284c7';
     btnSna.style.color = '#fff';
   }
 
   const titleText = CashBookModule.getDrawerTitle(d);
-  document.getElementById('cb-header-title').innerText = titleText;
+  const cbHeader = document.getElementById('cb-header-title');
+  if (cbHeader) cbHeader.innerText = titleText;
   const ledDrawer = document.getElementById('led-header-drawer-name');
   if (ledDrawer) ledDrawer.innerText = titleText;
 }
+
 
 function onCashbookPeriodChange() {
   let ym = getSelectedCBYM();

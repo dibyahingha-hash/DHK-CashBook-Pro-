@@ -330,3 +330,87 @@ table.ledger-table tr.total-row td {
     height: 18px !important;
   }
 }
+/* --- AUDIT-GRADE TWO-PAGE REGISTER PRINT ENGINE --- */
+.register-spread {
+  display: flex !important;
+  flex-direction: row !important;
+  justify-content: space-between !important;
+  gap: 12px !important;
+  background: #fff !important;
+  width: 100% !important;
+}
+
+.register-page {
+  flex: 1 1 50% !important;
+  width: 50% !important;
+  box-sizing: border-box !important;
+  background: #fff !important;
+}
+
+.ledger-table {
+  width: 100% !important;
+  table-layout: fixed !important; /* Prevents text overflow into wrong columns */
+  border-collapse: collapse !important;
+}
+
+/* Precise Government Register Column Widths */
+.ledger-table th, .ledger-table td {
+  border: 1px solid #475569 !important;
+  padding: 4px 2px !important;
+  font-size: 11px !important;
+  overflow: hidden !important;
+}
+
+.col-date  { width: 32px !important; text-align: center !important; }
+.col-desc  { width: auto !important; text-align: left !important; padding-left: 4px !important; }
+.col-lf    { width: 22px !important; text-align: center !important; }
+.col-rs    { width: 44px !important; text-align: right !important; padding-right: 3px !important; }
+.col-p     { width: 20px !important; text-align: center !important; color: #475569 !important; font-size: 10px !important; }
+
+/* Red ink for credit payments, Black ink for debit receipts */
+.ink-red td { color: #b91c1c !important; }
+.ink-black td { color: #0f172a !important; }
+
+.total-row td {
+  font-weight: bold !important;
+  border-top: 2px solid #000 !important;
+  border-bottom: 3px double #000 !important;
+  background-color: #f8fafc !important;
+}
+
+/* Force A4 Landscape Print Mode */
+@media print {
+  @page {
+    size: A4 landscape !important;
+    margin: 8mm 6mm !important;
+  }
+  
+  body * {
+    visibility: hidden;
+  }
+  
+  #cashbook-printable-area, #cashbook-printable-area * {
+    visibility: visible;
+  }
+  
+  #cashbook-printable-area {
+    position: absolute !important;
+    left: 0 !important;
+    top: 0 !important;
+    width: 100% !important;
+    display: flex !important;
+    flex-direction: row !important;
+  }
+
+  .register-spread {
+    display: flex !important;
+    flex-direction: row !important;
+    gap: 10mm !important;
+    width: 100% !important;
+  }
+
+  .register-page {
+    width: 49% !important;
+    page-break-inside: avoid !important;
+  }
+}

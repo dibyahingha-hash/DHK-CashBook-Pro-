@@ -1,7 +1,7 @@
 /* ==========================================================================
    css/style.css
    DHK PM POSHAN & SCHOOL CASHBOOK SUITE
-   Responsive Mobile Data-Entry + Statutory 2-Page Strict A4 Cash Book & Ledger
+   Responsive Mobile Data-Entry Desk + Statutory 2-Page Strict A4 Cash Book & Ledger
    ========================================================================== */
 
 :root {
@@ -142,7 +142,7 @@ input, select {
   color: #ffffff;
 }
 
-/* Real-Time Live Reconciliation Monitor Banner */
+/* Reconciliation Monitor Banner */
 #recon-status-banner {
   padding: 10px 14px;
   border: 1.5px solid #cbd5e1;
@@ -211,7 +211,7 @@ input, select {
 .text-payments { color: #b91c1c; }
 
 /* ==========================================================================
-   3. STATUTORY RULED TABLE (SCREEN FORMAT)
+   3. STATUTORY RULED TABLE (SCREEN & ON-PAGE VIEW)
    ========================================================================== */
 table.ledger-table {
   width: 100%;
@@ -237,7 +237,7 @@ table.ledger-table th {
   text-align: center;
 }
 
-/* Header Columns */
+/* Column Dimensions */
 .th-date        { width: 34px; }
 .th-particulars { width: auto; }
 .th-lf          { width: 26px; }
@@ -245,28 +245,56 @@ table.ledger-table th {
 .th-sub         { width: 44px; }
 .th-sub-p       { width: 22px; }
 
-/* Body Columns */
 .col-date { width: 34px; text-align: center; font-weight: 600; }
 .col-desc { width: auto; text-align: left; padding-left: 6px !important; white-space: normal; line-height: 1.2; }
 .col-lf   { width: 26px; text-align: center; font-weight: 700; }
 .col-rs   { width: 44px; text-align: right; padding-right: 3px !important; font-variant-numeric: tabular-nums; }
 .col-p    { width: 22px; text-align: center; font-variant-numeric: tabular-nums; }
 
-/* Dual-Ink Styles */
+/* Dual-Ink Standards */
 .ink-black td { color: #09090b; }
 .ink-red td   { color: #b91c1c; }
 
-/* Filler Rows */
 table.ledger-table tr.empty-line td {
-  height: 24px;
+  height: 22px;
 }
 
-/* Balanced T/P Summary Row */
 table.ledger-table tr.total-row td {
   border-top: 1.5px solid #000000 !important;
   border-bottom: 3px double #000000 !important;
   font-weight: 800;
   background: #fafaf9;
+}
+
+/* Audit Certificate & Signatures (Page 2) */
+.statutory-audit-cert {
+  margin-top: 8px;
+  border: 1px solid #475569;
+  padding: 6px 10px;
+  font-size: 9.5px;
+  background: #ffffff;
+  line-height: 1.35;
+  color: #0f172a;
+}
+
+.signature-block {
+  display: flex;
+  justify-content: space-between;
+  align-items: flex-end;
+  margin-top: 24px;
+  padding: 0 16px;
+  font-size: 10.5px;
+  font-weight: 700;
+}
+
+.sign-box {
+  text-align: center;
+}
+
+.sign-line {
+  border-top: 1px dashed #000000;
+  width: 160px;
+  margin-bottom: 4px;
 }
 
 /* ==========================================================================
@@ -309,7 +337,7 @@ table.ledger-table tr.total-row td {
 @media print {
   @page {
     size: A4 portrait;
-    margin: 8mm 6mm 8mm 6mm;
+    margin: 8mm 6mm;
   }
 
   body, html {
@@ -321,7 +349,7 @@ table.ledger-table tr.total-row td {
     print-color-adjust: exact !important;
   }
 
-  /* Suppress UI elements, forms, trays, and interactive controls */
+  /* 1. Suppress screen UI, navigation, forms, and cards */
   nav,
   header,
   .app-header,
@@ -341,7 +369,7 @@ table.ledger-table tr.total-row td {
   }
 
   /* -------------------------------------------------------------
-     MODE A: TWO-PAGE CASHBOOK (PAGE 1: RECEIPTS, PAGE 2: PAYMENTS)
+     MODE 1: TWO-PAGE CASHBOOK (PAGE 1: RECEIPTS, PAGE 2: PAYMENTS)
      ------------------------------------------------------------- */
   body:not(.print-mode-ledger) #subview-ledger-wrap,
   body:not(.print-mode-ledger) #ledger-printable-area {
@@ -358,7 +386,6 @@ table.ledger-table tr.total-row td {
     width: 100% !important;
   }
 
-  /* Strict physical A4 page containment */
   body:not(.print-mode-ledger) .register-page {
     display: flex !important;
     flex-direction: column !important;
@@ -374,14 +401,12 @@ table.ledger-table tr.total-row td {
     overflow: hidden !important;
   }
 
-  /* SHEET 1: RECEIPTS EXCLUSIVELY */
   body:not(.print-mode-ledger) .page-receipts {
     page-break-before: auto !important;
     page-break-after: always !important;
     break-after: page !important;
   }
 
-  /* SHEET 2: PAYMENTS EXCLUSIVELY */
   body:not(.print-mode-ledger) .page-payments {
     page-break-before: always !important;
     break-before: page !important;
@@ -389,27 +414,38 @@ table.ledger-table tr.total-row td {
     break-after: avoid !important;
   }
 
-  /* Ruled grid print density */
   table.ledger-table {
-    font-size: 10px !important;
+    font-size: 9.8px !important;
     border: 1.5px solid #000000 !important;
   }
 
   table.ledger-table th,
   table.ledger-table td {
     border: 1px solid #333333 !important;
-    padding: 2.5px 2px !important;
+    padding: 2.2px 2px !important;
   }
 
   table.ledger-table tr.empty-line td {
-    height: 23px !important;
+    height: 20px !important;
+  }
+
+  .statutory-audit-cert {
+    font-size: 9px !important;
+    padding: 5px 8px !important;
+    margin-top: 6px !important;
+    border: 1px solid #000000 !important;
+  }
+
+  .signature-block {
+    margin-top: 20px !important;
+    font-size: 10px !important;
   }
 
   /* -------------------------------------------------------------
-     MODE B: STANDALONE GENERAL LEDGER PRINT TRIGGER
+     MODE 2: GENERAL LEDGER PRINT TRIGGER
      ------------------------------------------------------------- */
-  body.print-mode-ledger #subview-cashbook-wrap,
-  body.print-mode-ledger #cashbook-printable-area {
+  body.print-mode-ledger #cashbook-printable-area,
+  body.print-mode-ledger #subview-cashbook-wrap {
     display: none !important;
   }
 
@@ -430,7 +466,15 @@ table.ledger-table tr.total-row td {
   }
 
   body.print-mode-ledger .ledger-table-full {
-    font-size: 10.5px !important;
+    width: 100% !important;
+    border-collapse: collapse !important;
+    font-size: 10pt !important;
+  }
+
+  body.print-mode-ledger .ledger-table-full th,
+  body.print-mode-ledger .ledger-table-full td {
+    border: 1px solid #333333 !important;
+    padding: 4px 6px !important;
   }
 
   body.print-mode-ledger .ledger-table-full tr {

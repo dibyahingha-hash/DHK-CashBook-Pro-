@@ -573,7 +573,8 @@
   };
 
   // --- 11. VOUCHER TRAY LIST ---
-  window.renderVoucherTrayList = function () {
+window.renderVoucherList = window.renderVoucherTrayList = function () {
+  
     const list = document.getElementById('voucher-list');
     if (!list) return;
 

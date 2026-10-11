@@ -1,423 +1,50 @@
-/* ==========================================================================
-   css/style.css
-   DHK PM POSHAN & School CashBook Engine
-   Responsive Mobile Data-Entry + Statutory 2-Page Strict A4 Cash Book & Ledger
-   ========================================================================== */
-
-:root {
-  --primary: #1e3a8a;
-  --primary-light: #0284c7;
-  --accent: #15803d;
-  --danger: #dc2626;
-  --bg-main: #f8fafc;
-  --card-bg: #ffffff;
-  --border-color: #cbd5e1;
-}
-
-* {
-  box-sizing: border-box;
-  margin: 0;
-  padding: 0;
-}
-
-body {
-  font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
-  background-color: var(--bg-main);
-  color: #0f172a;
-  line-height: 1.4;
-}
-
-/* ==========================================================================
-   1. SCREEN DESK & UI COMPONENTS
-   ========================================================================== */
-.app-header {
-  background: var(--primary);
-  color: #fff;
-  padding: 12px 16px;
-}
-.header-content {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  max-width: 1100px;
-  margin: 0 auto;
-}
-
-.tabs-nav {
-  display: flex;
-  background: #fff;
-  border-bottom: 2px solid var(--border-color);
-  max-width: 1100px;
-  margin: 0 auto;
-}
-.tab-btn {
-  flex: 1;
-  padding: 12px 6px;
-  border: none;
-  background: transparent;
-  font-weight: 700;
-  font-size: 0.85rem;
-  color: #64748b;
-  cursor: pointer;
-  text-align: center;
-  border-bottom: 3px solid transparent;
-}
-.tab-btn.active {
-  color: var(--primary-light);
-  border-bottom: 3px solid var(--primary-light);
-  background: #fff;
-}
-
-.view-panel {
-  display: none;
-}
-.view-panel.active {
-  display: block;
-}
-
-.main-content {
-  max-width: 1100px;
-  margin: 0 auto;
-  padding: 12px;
-}
-
-.card {
-  background: var(--card-bg);
-  border-radius: 8px;
-  border: 1px solid var(--border-color);
-  padding: 14px;
-  margin-bottom: 14px;
-}
-
-.grid-2 {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
-  gap: 10px;
-}
-@media (max-width: 600px) {
-  .grid-2 {
-    grid-template-columns: 1fr;
-  }
-}
-
-.form-group {
-  margin-bottom: 10px;
-}
-.form-group label {
-  display: block;
-  font-size: 0.85rem;
-  font-weight: 600;
-  margin-bottom: 4px;
-}
-input, select {
-  width: 100%;
-  padding: 9px;
-  border: 1px solid var(--border-color);
-  border-radius: 6px;
-  font-size: 0.95rem;
-}
-
-.btn {
-  padding: 10px 14px;
-  border-radius: 6px;
-  border: none;
-  cursor: pointer;
-  font-weight: 600;
-}
-.btn-sm {
-  padding: 6px 12px;
-  font-size: 0.8rem;
-}
-.btn-secondary {
-  background: var(--accent);
-  color: #fff;
-}
-
-/* Real-Time Mandate Reconciliation Status Banner */
-#recon-status-banner {
-  padding: 10px 14px;
-  border: 1.5px solid #cbd5e1;
-  border-radius: 6px;
-  font-size: 0.88rem;
-  margin-bottom: 12px;
-  display: none;
-  font-weight: 500;
-}
-
-/* ==========================================================================
-   2. SCREEN REGISTER SPREAD (DUAL-CONTAINER PREVIEW)
-   ========================================================================== */
-#subview-cashbook-wrap {
-  width: 100%;
-  overflow-x: auto;
-  margin-top: 10px;
-}
-
-.print-container {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-  background: #cbd5e1;
-  padding: 14px;
-  border-radius: 8px;
-}
-
-.register-page {
-  background: #ffffff;
-  border: 1px solid #94a3b8;
-  border-radius: 4px;
-  padding: 16px;
-  box-shadow: 0 3px 6px rgba(0,0,0,0.08);
-  min-width: 760px;
-}
-
-.page-header {
-  text-align: center;
-  margin-bottom: 8px;
-  position: relative;
-}
-.cashbook-title {
-  font-size: 1.25rem;
-  font-weight: 800;
-  letter-spacing: 1.5px;
-  color: #0f172a;
-}
-.cashbook-subtitle {
-  font-size: 0.85rem;
-  font-weight: 600;
-  color: #334155;
-}
-.section-indicator {
-  font-size: 0.95rem;
-  font-weight: 900;
-  letter-spacing: 1px;
-  margin-top: 4px;
-  text-align: left;
-}
-.text-receipts { color: #09090b; }
-.text-payments { color: #b91c1c; }
-
-/* Rule-Based Register Tables */
-table.ledger-table {
-  width: 100%;
-  border-collapse: collapse;
-  border: 1.5px solid #334155;
-  font-size: 11px;
-  table-layout: fixed;
-  background: #fff;
-}
-
-table.ledger-table th,
-table.ledger-table td {
-  border: 1px solid #64748b;
-  padding: 3px 2px;
-  vertical-align: middle;
-  overflow: hidden;
-  box-sizing: border-box;
-}
-
-table.ledger-table th {
-  background: #f1f5f9;
-  font-weight: 800;
-  text-align: center;
-}
-
-/* Calibrated Columns for Standard Double-Entry Columns */
-.th-date        { width: 34px; }
-.th-particulars { width: auto; }
-.th-lf          { width: 26px; }
-.th-group       { text-align: center; }
-.th-sub         { width: 44px; }
-.th-sub-p       { width: 22px; }
-
-.col-date { width: 34px; text-align: center; font-weight: 600; }
-.col-desc { width: auto; text-align: left; padding-left: 6px !important; white-space: normal; line-height: 1.2; }
-.col-lf   { width: 26px; text-align: center; font-weight: 700; }
-.col-rs   { width: 44px; text-align: right; padding-right: 3px !important; font-variant-numeric: tabular-nums; }
-.col-p    { width: 22px; text-align: center; font-variant-numeric: tabular-nums; }
-
-/* Ink Colors */
-.ink-black td { color: #09090b; }
-.ink-red td   { color: #b91c1c; }
-
-/* Controlled Fixed Line-Heights to prevent row inflation */
-table.ledger-table tr.empty-line td {
-  height: 24px;
-}
-
-/* Double-ruled Balanced T/P Line */
-table.ledger-table tr.total-row td {
-  border-top: 1.5px solid #000 !important;
-  border-bottom: 3px double #000 !important;
-  font-weight: 800;
-  background: #fafaf9;
-}
-
-/* ==========================================================================
-   3. SCREEN GENERAL LEDGER VIEW
-   ========================================================================== */
-#subview-ledger-wrap {
-  width: 100%;
-  overflow-x: auto;
-  margin-top: 10px;
-}
-
-.ledger-standalone-page {
-  background: #fff;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 16px;
-}
-
-.ledger-table-full {
-  width: 100%;
-  border-collapse: collapse;
-  border: 1.5px solid #0f172a;
-  font-size: 11.5px;
-}
-
-.ledger-table-full th, 
-.ledger-table-full td {
-  border: 1px solid #94a3b8;
-  padding: 6px 8px;
-}
-
-.ledger-table-full thead { background: #f1f5f9; }
-.ledger-table-full .num { text-align: right; font-variant-numeric: tabular-nums; }
-.font-bold { font-weight: 700; }
-.text-center { text-align: center; }
-
-/* ==========================================================================
-   4. STRICT AUDIT-READY A4 PRINT ENGINE
-   ========================================================================== */
-@media print {
-  @page {
-    size: A4 portrait;
-    margin: 8mm 6mm 8mm 6mm;
-  }
-
-  body, html {
-    background: #ffffff !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
-
-  /* Suppress UI controls, forms, drawer switchers, buttons, and trays */
-  nav,
-  header,
-  .app-header,
-  .tabs-nav,
-  .no-print,
-  button,
-  input,
-  select,
-  #recon-status-banner,
-  #advance-consent-banner,
-  #narration-quick-options,
-  #voucher-tray,
-  #archive-tray,
-  #box-mdm-mandate,
-  .card {
-    display: none !important;
-  }
-
-  /* -------------------------------------------------------------
-     MODE A: DEFAULT CASHBOOK (STRICTLY 2 PAGES: RECEIPTS & PAYMENTS)
-     ------------------------------------------------------------- */
-  body:not(.print-mode-ledger) #subview-ledger-wrap,
-  body:not(.print-mode-ledger) #ledger-printable-area {
-    display: none !important;
-  }
-
-  body:not(.print-mode-ledger) #subview-cashbook-wrap,
-  body:not(.print-mode-ledger) #cashbook-printable-area,
-  body:not(.print-mode-ledger) .print-container {
-    display: block !important;
-    background: transparent !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    width: 100% !important;
-  }
-
-  /* Enforce exact single-page height containment (297mm - 16mm margins = 281mm max) */
-  body:not(.print-mode-ledger) .register-page {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-    width: 100% !important;
-    height: 278mm !important;
-    max-height: 278mm !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
-  }
-
-  /* PAGE 1: RECEIPTS EXCLUSIVELY */
-  body:not(.print-mode-ledger) .page-receipts {
-    page-break-before: auto !important;
-    page-break-after: always !important;
-    break-after: page !important;
-  }
-
-  /* PAGE 2: PAYMENTS EXCLUSIVELY */
-  body:not(.print-mode-ledger) .page-payments {
-    page-break-before: always !important;
-    break-before: page !important;
-    page-break-after: avoid !important;
-    break-after: avoid !important;
-  }
-
-  /* Preserve tight font sizes and borders for paper output */
-  table.ledger-table {
-    font-size: 10px !important;
-    border: 1.5px solid #000 !important;
-  }
-
-  table.ledger-table th,
-  table.ledger-table td {
-    border: 1px solid #333 !important;
-    padding: 2.5px 2px !important;
-  }
-
-  table.ledger-table tr.empty-line td {
-    height: 23px !important;
-  }
-
-  /* -------------------------------------------------------------
-     MODE B: GENERAL LEDGER PRINT TRIGGER (ACTIVATED BY JS PRINT CLASS)
-     ------------------------------------------------------------- */
-  body.print-mode-ledger #subview-cashbook-wrap,
-  body.print-mode-ledger #cashbook-printable-area {
-    display: none !important;
-  }
-
-  body.print-mode-ledger #subview-ledger-wrap,
-  body.print-mode-ledger #ledger-printable-area {
-    display: block !important;
-    width: 100% !important;
-    margin: 0 !important;
-    padding: 0 !important;
-  }
-
-  body.print-mode-ledger .ledger-standalone-page {
-    width: 100% !important;
-    height: auto !important;
-    border: none !important;
-    padding: 0 !important;
-    box-shadow: none !important;
-  }
-
-  body.print-mode-ledger .ledger-table-full {
-    font-size: 10.5px !important;
-  }
-
-  body.print-mode-ledger .ledger-table-full tr {
-    page-break-inside: avoid !important;
-  }
-}
+/* ==========================================================================css/style.cssMobile Data-Entry Desk + Statutory 2-Page Landscape Print Cash Book========================================================================== */
+:root {--primary: #1e3a8a;--primary-light: #0284c7;--accent: #15803d;--danger: #dc2626;--bg-main: #f8fafc;--card-bg: #ffffff;--border-color: #cbd5e1;}
+• {box-sizing: border-box;margin: 0;padding: 0;}
+body {font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;background-color: var(--bg-main);color: #0f172a;line-height: 1.4;}
+/* Header & Tabs */.app-header {background: var(--primary);color: #fff;padding: 12px 16px;}.header-content {display: flex;justify-content: space-between;align-items: center;max-width: 1100px;margin: 0 auto;}
+.tabs-nav {display: flex;background: #fff;border-bottom: 2px solid var(--border-color);max-width: 1100px;margin: 0 auto;}.tab-btn {flex: 1;padding: 12px 6px;border: none;background: transparent;font-weight: 700;font-size: 0.85rem;color: #64748b;cursor: pointer;text-align: center;border-bottom: 3px solid transparent;}.tab-btn.active {color: var(--primary-light);border-bottom: 3px solid var(--primary-light);background: #fff;}
+.view-panel {display: none;}.view-panel.active {display: block;}
+.main-content {max-width: 1100px;margin: 0 auto;padding: 12px;}
+.card {background: var(--card-bg);border-radius: 8px;border: 1px solid var(--border-color);padding: 14px;margin-bottom: 14px;}
+.grid-2 {display: grid;grid-template-columns: 1fr 1fr;gap: 10px;}@media (max-width: 600px) {.grid-2 {grid-template-columns: 1fr;}}
+.form-group {margin-bottom: 10px;}.form-group label {display: block;font-size: 0.85rem;font-weight: 600;margin-bottom: 4px;}input, select {width: 100%;padding: 9px;border: 1px solid var(--border-color);border-radius: 6px;font-size: 0.95rem;}
+.btn {padding: 10px 14px;border-radius: 6px;border: none;cursor: pointer;font-weight: 600;}.btn-sm {padding: 6px 12px;font-size: 0.8rem;}.btn-secondary {background: var(--accent);color: #fff;}
+/* ==========================================================================STATUTORY TWO-PAGE PHYSICAL REGISTER (ON-SCREEN VIEW)========================================================================== /#subview-cashbook-wrap {width: 100%;overflow-x: auto; / Enables horizontal swipe on mobile screens */margin-top: 10px;}
+.register-spread {display: grid !important;grid-template-columns: 1fr 1fr !important;gap: 14px;min-width: 860px; /* Locks register dimensions across phone viewports */background: #e2e8f0;padding: 12px;border-radius: 8px;}
+.register-page {background: #fafaf9; /* Ledger page tone */border: 1px solid #94a3b8;border-radius: 4px;padding: 12px;box-shadow: 0 2px 4px rgba(0,0,0,0.06);min-height: 560px;}
+.register-header {text-align: center;margin-bottom: 6px;position: relative;}.register-header h2 {font-size: 1.15rem;font-weight: 800;color: #0f172a;margin: 0;}.register-header .sub {font-size: 0.82rem;font-weight: 600;color: #334155;}.register-header .folio-no {position: absolute;right: 4px;top: 0;font-size: 0.95rem;font-weight: 800;}.side-label {font-size: 0.9rem;font-weight: 900;letter-spacing: 1px;margin-bottom: 6px;}
+/* STATUTORY RULED TABLE */table.ledger-table {width: 100%;border-collapse: collapse;border: 1.5px solid #475569;font-size: 0.78rem;background: #fff;}
+table.ledger-table th,table.ledger-table td {border-right: 1px solid #94a3b8;border-bottom: 1px solid #cbd5e1;padding: 4px 3px;vertical-align: middle;}
+table.ledger-table th {background: #f1f5f9;font-weight: 800;text-align: center;border-bottom: 1.5px solid #475569;font-size: 0.74rem;}
+table.ledger-table td:last-child,table.ledger-table th:last-child {border-right: none;}
+/* Precise Ruled Column Widths */.col-date { width: 34px; text-align: center; }.col-desc { text-align: left; padding-left: 6px !important; }.col-lf { width: 26px; text-align: center; font-weight: 700; }.col-rs { width: 44px; text-align: right; border-right: 1px dotted #94a3b8 !important; padding-right: 3px; }.col-p { width: 24px; text-align: center; }
+/* Statutory Ink Colors */.ink-black { color: #09090b !important; }.ink-red { color: #b91c1c !important; }
+/* Empty Ruled Rows */table.ledger-table tr.empty-line td {height: 22px;}
+/* T/P Totals Row */table.ledger-table tr.total-row td {border-top: 1.5px solid #475569 !important;border-bottom: 2px double #475569 !important;font-weight: 800;background: #fafaf9;}
+/* General Ledger Fallback View */.table-cashbook {width: 100%;border-collapse: collapse;border: 1.5px solid #991b1b;font-size: 0.8rem;}.table-cashbook th, .table-cashbook td {border: 1px solid #cbd5e1;padding: 5px 6px;}.table-cashbook tfoot tr td {border-top: 2px solid #991b1b;font-weight: bold;}.text-center { text-align: center; }.num { text-align: right; }
+/* ==========================================================================STRICT A4 LANDSCAPE PRINT & PDF EXPORT========================================================================== */@media print {@page {size: A4 landscape;margin: 5mm 6mm;}
+body, html {background: #fff !important;margin: 0 !important;padding: 0 !important;-webkit-print-color-adjust: exact !important;print-color-adjust: exact !important;}
+.no-print {display: none !important;}
+body * {visibility: hidden;}
+#cashbook-printable-area,#cashbook-printable-area * {visibility: visible;}
+#cashbook-printable-area {position: absolute;left: 0;top: 0;width: 100%;margin: 0;padding: 0;}
+.register-spread {display: grid !important;grid-template-columns: 1fr 1fr !important;gap: 8px !important;width: 100% !important;min-width: 100% !important;background: #fff !important;padding: 0 !important;page-break-inside: avoid !important;}
+.register-page {box-shadow: none !important;border: 1.2px solid #000 !important;padding: 6px !important;min-height: auto !important;background: #fff !important;}
+table.ledger-table {font-size: 7.5pt !important;}
+table.ledger-table th {font-size: 7pt !important;}
+table.ledger-table tr.empty-line td {height: 18px !important;}}/* --- AUDIT-GRADE TWO-PAGE REGISTER PRINT ENGINE --- */.register-spread {display: flex !important;flex-direction: row !important;justify-content: space-between !important;gap: 12px !important;background: #fff !important;width: 100% !important;}
+.register-page {flex: 1 1 50% !important;width: 50% !important;box-sizing: border-box !important;background: #fff !important;}
+.ledger-table {width: 100% !important;table-layout: fixed !important; /* Prevents text overflow into wrong columns */border-collapse: collapse !important;}
+/* Precise Government Register Column Widths */.ledger-table th, .ledger-table td {border: 1px solid #475569 !important;padding: 4px 2px !important;font-size: 11px !important;overflow: hidden !important;}
+.col-date { width: 32px !important; text-align: center !important; }.col-desc { width: auto !important; text-align: left !important; padding-left: 4px !important; }.col-lf { width: 22px !important; text-align: center !important; }.col-rs { width: 44px !important; text-align: right !important; padding-right: 3px !important; }.col-p { width: 20px !important; text-align: center !important; color: #475569 !important; font-size: 10px !important; }
+/* Red ink for credit payments, Black ink for debit receipts */.ink-red td { color: #b91c1c !important; }.ink-black td { color: #0f172a !important; }
+.total-row td {font-weight: bold !important;border-top: 2px solid #000 !important;border-bottom: 3px double #000 !important;background-color: #f8fafc !important;}
+/* Force A4 Landscape Print Mode */@media print {@page {size: A4 landscape;margin: 8mm 6mm;}
+/* Hide interactive controls, buttons, headers, and trays */nav,header,.no-print,button,input,select,#voucher-tray,#archive-tray,#box-mdm-mandate,#advance-consent-banner,.card:has(input),.card:has(button) {display: none !important;}
+body {background: #fff !important;margin: 0 !important;padding: 0 !important;}
+/* Allow both views to print whenever visible */#cashbook-printable-area,#subview-ledger-wrap,.table-cashbook {display: block !important;width: 100% !important;}
+.register-spread {display: flex !important;flex-direction: row !important;gap: 8mm !important;width: 100% !important;}
+.register-page {width: 49% !important;page-break-inside: avoid !important;}
+table {page-break-inside: auto !important;}
+tr {page-break-inside: avoid !important;page-break-after: auto !important;}}

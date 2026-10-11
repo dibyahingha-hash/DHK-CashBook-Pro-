@@ -21,11 +21,6 @@ window.setTransactionType = function(type) {
     CashBookModule.setTransactionType(type);
   }
 };
-```[span_8](start_span)[span_8](end_span)
-
-Commit those changes[span_9](start_span)[span_9](end_span). Once deployed and reloaded, inputs and buttons will find their global handlers[span_10](start_span)[span_10](end_span).
-
-  
 const CashBookModule = {
   activeDrawer: 'mdm',     // 'mdm' | 'smc' | 'sna'
   activeSubView: 'cashbook', // 'cashbook' | 'ledger'
@@ -1228,6 +1223,15 @@ function updateMandateSummaryDisplay() {
           }
   }
 };
+
+Object.assign(window, CashBookModule);
+
+// Expose internal calculation & UI functions globally
+window.recalculateCashbook = typeof recalculateCashbook !== 'undefined' ? recalculateCashbook : (CashBookModule.recalculateCashbook || function(){});
+window.deriveMealsFromExpenditure = typeof deriveMealsFromExpenditure !== 'undefined' ? deriveMealsFromExpenditure : function(){};
+window.deriveExpenditureFromMeals = typeof deriveExpenditureFromMeals !== 'undefined' ? deriveExpenditureFromMeals : function(){};
+window.calculateCookingMandate = typeof calculateCookingMandate !== 'undefined' ? calculateCookingMandate : function(){};
+window.updateMandateSummaryDisplay = typeof updateMandateSummaryDisplay !== 'undefined' ? updateMandateSummaryDisplay : function(){};
 
 
 

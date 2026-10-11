@@ -4,6 +4,12 @@
  * Complete Double-Entry Posting, Exact Dates, Voucher Refs, and Permanent Storage.
  */
 
+window.onCashbookPeriodChange = function() {
+  if (typeof CashBookModule !== 'undefined' && CashBookModule.onCashbookPeriodChange) {
+    CashBookModule.onCashbookPeriodChange();
+  }
+};
+  
 const CashBookModule = {
   activeDrawer: 'mdm',     // 'mdm' | 'smc' | 'sna'
   activeSubView: 'cashbook', // 'cashbook' | 'ledger'

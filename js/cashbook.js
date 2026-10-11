@@ -1229,9 +1229,9 @@ function updateMandateSummaryDisplay() {
 
 Object.assign(window, CashBookModule);
 
-// Expose calculation & summary functions without recursion
-if (typeof recalculateCashbook === 'function') window.recalculateCashbook = recalculateCashbook;
-if (typeof deriveMealsFromExpenditure === 'function') window.deriveMealsFromExpenditure = deriveMealsFromExpenditure;
-if (typeof deriveExpenditureFromMeals === 'function') window.deriveExpenditureFromMeals = deriveExpenditureFromMeals;
-if (typeof calculateCookingMandate === 'function') window.calculateCookingMandate = calculateCookingMandate;
-if (typeof updateMandateSummaryDisplay === 'function') window.updateMandateSummaryDisplay = updateMandateSummaryDisplay;
+// Direct global assignment without recursive function wrappers
+window.recalculateCashbook = typeof recalculateCashbook === 'function' ? recalculateCashbook : undefined;
+window.deriveMealsFromExpenditure = typeof deriveMealsFromExpenditure === 'function' ? deriveMealsFromExpenditure : undefined;
+window.deriveExpenditureFromMeals = typeof deriveExpenditureFromMeals === 'function' ? deriveExpenditureFromMeals : undefined;
+window.calculateCookingMandate = typeof calculateCookingMandate === 'function' ? calculateCookingMandate : undefined;
+window.updateMandateSummaryDisplay = typeof updateMandateSummaryDisplay === 'function' ? updateMandateSummaryDisplay : undefined;

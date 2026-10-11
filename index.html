@@ -213,14 +213,15 @@
           </div>
 
           <div class="form-group">
-            <label>Mandated Monthly Cooking Expenditure (₹) *</label>
-            <input type="number" step="0.01" id="cb-mandate-exp" value="2847.60" oninput="deriveMealsFromExpenditure()" style="background:#fff; font-weight:bold; font-size:1.05rem;">
-          </div>
+  <label>Mandated Monthly Cooking Expenditure (₹) *</label>
+  <input type="number" step="0.01" id="cb-mandate-exp" value="2847.60" oninput="deriveMealsFromExpenditure()" style="background:#fff; font-weight:bold; font-size:1.05rem;">
+</div>
 
-          <div class="form-group">
-            <label>Total Mandated Meals (Auto-Derived)</label>
-            <input type="number" id="cb-derived-meals" value="420" readonly style="background:#f8fafc; font-weight:bold; color:#334155;">
-          </div>
+<div class="form-group">
+  <label>Total Mandated Meals (Type or Auto-Derived)</label>
+  <input type="number" id="cb-derived-meals" value="420" oninput="deriveExpenditureFromMeals()" style="background:#fff; font-weight:bold; font-size:1.05rem;">
+</div>
+
 
           <div id="cb-mandate-summary" style="background:#fff; border:1px solid #bbf7d0; border-radius:4px; padding:8px; font-size:0.85rem; color:#1e293b; margin-top:6px;">
             Mandate Target: <b id="lbl-mandate-target">₹2847.60</b> | Vouchers Total: <b id="lbl-vouchers-tot">₹0.00</b><br>

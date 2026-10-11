@@ -14,7 +14,7 @@
   window.pendingAdvanceAmount = 0;
 
   // ==========================================================================
-  // 2. STATUTORY FOLIO SCHEMAS (MDM, SMC, SNA)
+  // 2. STATUTORY SCHEMAS (MDM, SMC, SNA)
   // ==========================================================================
   window.ENGINE_SCHEMAS = {
     mdm: {
@@ -74,12 +74,14 @@
   };
 
   // ==========================================================================
-  // 3. NAVIGATION, DRAWER & VIEW SWITCHERS
+  // 3. NAVIGATION & VIEW SWITCHERS
   // ==========================================================================
   window.switchDrawer = function (drawer) {
     window.currentDrawer = drawer;
-    ['mdm', 'smc', 'sna'].forEach(d => {
-      const b = document.getElementById(`btn-drawer-${d}`);
+    var drawers = ['mdm', 'smc', 'sna'];
+    for (var i = 0; i < drawers.length; i++) {
+      var d = drawers[i];
+      var b = document.getElementById('btn-drawer-' + d);
       if (b) {
         if (d === drawer) {
           b.style.background = '#0284c7';
@@ -89,9 +91,9 @@
           b.style.color = '#334155';
         }
       }
-    });
+    }
 
-    const mandateBox = document.getElementById('box-mdm-mandate');
+    var mandateBox = document.getElementById('box-mdm-mandate');
     if (mandateBox) mandateBox.style.display = (drawer === 'mdm') ? 'block' : 'none';
 
     window.renderEngineNarrations(window.currentEntryType);
@@ -101,10 +103,10 @@
   };
 
   window.switchSubView = function (view) {
-    const cbWrap = document.getElementById('subview-cashbook-wrap');
-    const ledWrap = document.getElementById('subview-ledger-wrap');
-    const btnCb = document.getElementById('btn-sub-cashbook');
-    const btnLed = document.getElementById('btn-sub-ledger');
+    var cbWrap = document.getElementById('subview-cashbook-wrap');
+    var ledWrap = document.getElementById('subview-ledger-wrap');
+    var btnCb = document.getElementById('btn-sub-cashbook');
+    var btnLed = document.getElementById('btn-sub-ledger');
 
     if (view === 'cashbook') {
       if (cbWrap) cbWrap.style.display = 'block';
@@ -122,22 +124,23 @@
   };
 
   window.updateCategoryVisibility = function () {
-    const cat = document.getElementById('cb-mandate-cat')?.value || 'COMPOSITE';
-    const lpBox = document.getElementById('box-lp');
-    const upBox = document.getElementById('box-up');
+    var catEl = document.getElementById('cb-mandate-cat');
+    var cat = catEl ? catEl.value : 'COMPOSITE';
+    var lpBox = document.getElementById('box-lp');
+    var upBox = document.getElementById('box-up');
 
     if (cat === 'LP') {
       if (lpBox) lpBox.style.display = 'block';
       if (upBox) upBox.style.display = 'none';
-      const rUp = document.getElementById('rate-up');
-      const mUp = document.getElementById('meals-up');
+      var rUp = document.getElementById('rate-up');
+      var mUp = document.getElementById('meals-up');
       if (rUp) rUp.value = '';
       if (mUp) mUp.value = '';
     } else if (cat === 'UP') {
       if (lpBox) lpBox.style.display = 'none';
       if (upBox) upBox.style.display = 'block';
-      const rLp = document.getElementById('rate-lp');
-      const mLp = document.getElementById('meals-lp');
+      var rLp = document.getElementById('rate-lp');
+      var mLp = document.getElementById('meals-lp');
       if (rLp) rLp.value = '';
       if (mLp) mLp.value = '';
     } else {
@@ -148,18 +151,27 @@
   };
 
   // ==========================================================================
-  // 4. DUAL-RATE MANDATE & RECONCILIATION MONITOR
+  // 4. DUAL-RATE RECONCILIATION MONITOR
   // ==========================================================================
   window.getMandateMetrics = function () {
-    const rateLp = parseFloat(document.getElementById('rate-lp')?.value) || 0;
-    const mealsLp = parseInt(document.getElementById('meals-lp')?.value, 10) || 0;
-    const rateUp = parseFloat(document.getElementById('rate-up')?.value) || 0;
-    const mealsUp = parseInt(document.getElementById('meals-up')?.value, 10) || 0;
-    const target = (mealsLp * rateLp) + (mealsUp * rateUp);
+    var rLpEl = document.getElementById('rate-lp');
+    var mLpEl = document.getElementById('meals-lp');
+    var rUpEl = document.getElementById('rate-up');
+    var mUpEl = document.getElementById('meals-up');
 
-    const booked = window.currentVouchers
-      .filter(v => v.type === 'PAYMENT' && String(v.lf).trim() === '1')
-      .reduce((acc, v) => acc + (parseFloat(v.amount) || 0), 0);
+    var rateLp = rLpEl ? (parseFloat(rLpEl.value) || 0) : 0;
+    var mealsLp = mLpEl ? (parseInt(mLpEl.value, 10) || 0) : 0;
+    var rateUp = rUpEl ? (parseFloat(rUpEl.value) || 0) : 0;
+    var mealsUp = mUpEl ? (parseInt(mUpEl.value, 10) || 0) : 0;
+    var target = (mealsLp * rateLp) + (mealsUp * rateUp);
+
+    var booked = 0;
+    for (var i = 0; i < window.currentVouchers.length; i++) {
+      var v = window.currentVouchers[i];
+      if (v.type === 'PAYMENT' && String(v.lf).trim() === '1') {
+        booked += (parseFloat(v.amount) || 0);
+      }
+    }
 
     return {
       target: target,
@@ -170,7 +182,7 @@
   };
 
   window.updateReconciliationBanner = function () {
-    const banner = document.getElementById('recon-status-banner');
+    var banner = document.getElementById('recon-status-banner');
     if (!banner) return;
 
     if (window.currentDrawer !== 'mdm') {
@@ -178,56 +190,64 @@
       return;
     }
 
-    const metrics = window.getMandateMetrics();
+    var m = window.getMandateMetrics();
     banner.style.display = 'block';
 
-    const fmt = n => '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+    var f = function (num) {
+      return 'Rs.' + Number(num).toFixed(2);
+    };
 
-    if (metrics.target === 0) {
+    if (m.target === 0) {
       banner.style.background = '#f1f5f9';
       banner.style.borderColor = '#cbd5e1';
       banner.style.color = '#475569';
-      banner.innerHTML = `<strong>Status:</strong> No MDM mandate computed yet. Please input rates and meal counts.`;
-    } else if (metrics.deficit > 0) {
+      banner.innerHTML = '<strong>Status:</strong> No MDM mandate computed yet. Please input LP/UP rates and meal counts.';
+    } else if (m.deficit > 0) {
       banner.style.background = '#eff6ff';
       banner.style.borderColor = '#3b82f6';
       banner.style.color = '#1e40af';
-      banner.innerHTML = `Target: <strong>${fmt(metrics.target)}</strong> | Vouchers Booked: <strong>${fmt(metrics.booked)}</strong> | <span style="color:#b91c1c; font-weight:700;">${fmt(metrics.deficit)} is pending.</span> Please provide required vouchers.`;
-    } else if (metrics.deficit === 0) {
+      banner.innerHTML = 'Target: <strong>' + f(m.target) + '</strong> | Vouchers Booked: <strong>' + f(m.booked) + '</strong> | <span style="color:#b91c1c; font-weight:700;">' + f(m.deficit) + ' is pending.</span> Please provide required vouchers.';
+    } else if (m.deficit === 0) {
       banner.style.background = '#f0fdf4';
       banner.style.borderColor = '#22c55e';
       banner.style.color = '#15803d';
-      banner.innerHTML = `Target: <strong>${fmt(metrics.target)}</strong> | Vouchers Booked: <strong>${fmt(metrics.booked)}</strong> | <strong>Fully Reconciled & Audit Ready.</strong>`;
+      banner.innerHTML = 'Target: <strong>' + f(m.target) + '</strong> | Vouchers Booked: <strong>' + f(m.booked) + '</strong> | <strong>Fully Reconciled and Audit Ready.</strong>';
     } else {
       banner.style.background = '#fef2f2';
       banner.style.borderColor = '#ef4444';
       banner.style.color = '#b91c1c';
-      banner.innerHTML = `<strong>OVER-EXPENDITURE WARNING:</strong> Target: ${fmt(metrics.target)} | Booked: ${fmt(metrics.booked)} | Excess: <strong>${fmt(Math.abs(metrics.deficit))}</strong> exceeds the sanctioned limit!`;
+      banner.innerHTML = '<strong>OVER-EXPENDITURE WARNING:</strong> Target: ' + f(m.target) + ' | Booked: ' + f(m.booked) + ' | Excess: <strong>' + f(Math.abs(m.deficit)) + '</strong> exceeds the sanctioned mandate!';
     }
   };
 
   window.calculateMandate = function () {
-    const rateLp = parseFloat(document.getElementById('rate-lp')?.value) || 0;
-    const mealsLp = parseInt(document.getElementById('meals-lp')?.value, 10) || 0;
-    const rateUp = parseFloat(document.getElementById('rate-up')?.value) || 0;
-    const mealsUp = parseInt(document.getElementById('meals-up')?.value, 10) || 0;
-    const costLp = mealsLp * rateLp;
-    const costUp = mealsUp * rateUp;
-    const totalMeals = mealsLp + mealsUp;
-    const totalCost = costLp + costUp;
+    var rLpEl = document.getElementById('rate-lp');
+    var mLpEl = document.getElementById('meals-lp');
+    var rUpEl = document.getElementById('rate-up');
+    var mUpEl = document.getElementById('meals-up');
 
-    const subLp = document.getElementById('subtotal-lp');
-    const subUp = document.getElementById('subtotal-up');
+    var rateLp = rLpEl ? (parseFloat(rLpEl.value) || 0) : 0;
+    var mealsLp = mLpEl ? (parseInt(mLpEl.value, 10) || 0) : 0;
+    var rateUp = rUpEl ? (parseFloat(rUpEl.value) || 0) : 0;
+    var mealsUp = mUpEl ? (parseInt(mUpEl.value, 10) || 0) : 0;
+
+    var costLp = mealsLp * rateLp;
+    var costUp = mealsUp * rateUp;
+    var totalMeals = mealsLp + mealsUp;
+    var totalCost = costLp + costUp;
+
+    var subLp = document.getElementById('subtotal-lp');
+    var subUp = document.getElementById('subtotal-up');
     if (subLp) subLp.innerText = costLp.toFixed(2);
     if (subUp) subUp.innerText = costUp.toFixed(2);
 
-    const mealsDisp = document.getElementById('mandate-meals-display');
-    const targetDisp = document.getElementById('mandate-target-display');
+    var mealsDisp = document.getElementById('mandate-meals-display');
+    var targetDisp = document.getElementById('mandate-target-display');
     if (mealsDisp) mealsDisp.innerText = totalMeals;
     if (targetDisp) targetDisp.innerText = totalCost.toFixed(2);
 
-    const hiddenMeals = document.getElementById('tx-meals');
-    const hiddenTarget = document.getElementById('tx-target-expenditure');
+    var hiddenMeals = document.getElementById('tx-meals');
+    var hiddenTarget = document.getElementById('tx-target-expenditure');
     if (hiddenMeals) hiddenMeals.value = totalMeals;
     if (hiddenTarget) hiddenTarget.value = totalCost.toFixed(2);
 
@@ -239,70 +259,85 @@
 
   function getDynamicNarrationText(item) {
     if (!item.isMealExpense) return item.text;
-    const mealsLp = document.getElementById('meals-lp')?.value || '';
-    const mealsUp = document.getElementById('meals-up')?.value || '';
-    const mTotal = (parseInt(mealsLp, 10) || 0) + (parseInt(mealsUp, 10) || 0);
-    const monthEl = document.getElementById('cb-sel-month');
-    const yearEl = document.getElementById('cb-sel-year');
-    const monthText = monthEl ? monthEl.options[monthEl.selectedIndex]?.text : 'the month';
-    const yearText = yearEl ? yearEl.value : '';
+    var mLpEl = document.getElementById('meals-lp');
+    var mUpEl = document.getElementById('meals-up');
+    var mealsLp = mLpEl ? mLpEl.value : '';
+    var mealsUp = mUpEl ? mUpEl.value : '';
+    var mTotal = (parseInt(mealsLp, 10) || 0) + (parseInt(mealsUp, 10) || 0);
+    var monthEl = document.getElementById('cb-sel-month');
+    var yearEl = document.getElementById('cb-sel-year');
+    var monthText = (monthEl && monthEl.selectedIndex >= 0) ? monthEl.options[monthEl.selectedIndex].text : 'the month';
+    var yearText = yearEl ? yearEl.value : '';
 
     if (mTotal > 0) {
       if (mealsLp && mealsUp) {
-        return `By Cooking Cost for ${mTotal} meals (${mealsLp} LP + ${mealsUp} UP) served in the month of ${monthText} ${yearText}`;
+        return 'By Cooking Cost for ' + mTotal + ' meals (' + mealsLp + ' LP + ' + mealsUp + ' UP) served in the month of ' + monthText + ' ' + yearText;
       }
-      return `By Cooking Cost for ${mTotal} meals served in the month of ${monthText} ${yearText}`;
+      return 'By Cooking Cost for ' + mTotal + ' meals served in the month of ' + monthText + ' ' + yearText;
     }
-    return `By Cooking Cost for meals served in the month of ${monthText} ${yearText}`;
+    return 'By Cooking Cost for meals served in the month of ' + monthText + ' ' + yearText;
   }
 
   window.renderEngineNarrations = function (type) {
-    const drawer = window.currentDrawer || 'mdm';
-    const schemaList = (window.ENGINE_SCHEMAS[drawer] && window.ENGINE_SCHEMAS[drawer][type]) || [];
-    const container = document.getElementById('narration-quick-options');
+    var drawer = window.currentDrawer || 'mdm';
+    var schemaList = (window.ENGINE_SCHEMAS[drawer] && window.ENGINE_SCHEMAS[drawer][type]) ? window.ENGINE_SCHEMAS[drawer][type] : [];
+    var container = document.getElementById('narration-quick-options');
     if (!container) return;
 
     container.innerHTML = '';
-    schemaList.forEach((item, index) => {
-      const text = getDynamicNarrationText(item);
-      const card = document.createElement('div');
-      card.style.cssText = 'padding:6px 10px; margin-bottom:5px; background:#fff; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; font-size:12px; font-weight:500; display:flex; justify-content:space-between; align-items:center;';
-      card.innerHTML = `<span>${text}</span> <span style="color:#64748b; font-size:11px; white-space:nowrap; margin-left:8px;">LF: <strong>${item.lf}</strong> [${item.channel}]</span>`;
+    for (var i = 0; i < schemaList.length; i++) {
+      (function (item, index) {
+        var text = getDynamicNarrationText(item);
+        var card = document.createElement('div');
+        card.style.padding = '6px 10px';
+        card.style.marginBottom = '5px';
+        card.style.background = '#fff';
+        card.style.border = '1px solid #cbd5e1';
+        card.style.borderRadius = '4px';
+        card.style.cursor = 'pointer';
+        card.style.fontSize = '12px';
+        card.style.fontWeight = '500';
+        card.style.display = 'flex';
+        card.style.justifyContent = 'space-between';
+        card.style.alignItems = 'center';
+        card.innerHTML = '<span>' + text + '</span> <span style="color:#64748b; font-size:11px; white-space:nowrap; margin-left:8px;">LF: <strong>' + item.lf + '</strong> [' + item.channel + ']</span>';
 
-      card.onclick = () => {
-        const descEl = document.getElementById('tx-desc');
-        const lfEl = document.getElementById('tx-lf');
-        const chanEl = document.getElementById('tx-channel');
-        if (descEl) descEl.value = text;
-        if (lfEl) lfEl.value = item.lf;
-        if (chanEl) chanEl.value = item.channel;
-      };
-      container.appendChild(card);
+        card.onclick = function () {
+          var descEl = document.getElementById('tx-desc');
+          var lfEl = document.getElementById('tx-lf');
+          var chanEl = document.getElementById('tx-channel');
+          if (descEl) descEl.value = text;
+          if (lfEl) lfEl.value = item.lf;
+          if (chanEl) chanEl.value = item.channel;
+        };
+        container.appendChild(card);
 
-      if (index === 0 && (!document.getElementById('tx-desc')?.value)) {
-        const descEl = document.getElementById('tx-desc');
-        const lfEl = document.getElementById('tx-lf');
-        const chanEl = document.getElementById('tx-channel');
-        if (descEl) descEl.value = text;
-        if (lfEl) lfEl.value = item.lf;
-        if (chanEl) chanEl.value = item.channel;
-      }
-    });
+        if (index === 0) {
+          var descEl = document.getElementById('tx-desc');
+          var lfEl = document.getElementById('tx-lf');
+          var chanEl = document.getElementById('tx-channel');
+          if (descEl && !descEl.value) descEl.value = text;
+          if (lfEl && !lfEl.value) lfEl.value = item.lf;
+          if (chanEl && !chanEl.value) chanEl.value = item.channel;
+        }
+      })(schemaList[i], i);
+    }
   };
 
   window.setTransactionType = function (type) {
     window.currentEntryType = type;
-    const btnReceipt = document.getElementById('btn-type-rcpt');
-    const btnWithdrawal = document.getElementById('btn-type-with');
-    const btnPayment = document.getElementById('btn-type-pmt');
-    const channelEl = document.getElementById('tx-channel');
+    var btnReceipt = document.getElementById('btn-type-rcpt');
+    var btnWithdrawal = document.getElementById('btn-type-with');
+    var btnPayment = document.getElementById('btn-type-pmt');
+    var channelEl = document.getElementById('tx-channel');
 
-    [btnReceipt, btnWithdrawal, btnPayment].forEach(b => {
-      if (b) {
-        b.style.opacity = '0.5';
-        b.style.borderColor = 'transparent';
+    var btns = [btnReceipt, btnWithdrawal, btnPayment];
+    for (var i = 0; i < btns.length; i++) {
+      if (btns[i]) {
+        btns[i].style.opacity = '0.5';
+        btns[i].style.borderColor = 'transparent';
       }
-    });
+    }
 
     if (type === 'RECEIPT' && btnReceipt) {
       btnReceipt.style.opacity = '1';
@@ -324,17 +359,17 @@
   // 5. TRANSACTION INGESTION & AUDIT INTERCEPTOR
   // ==========================================================================
   window.addCompleteTransaction = function () {
-    const dateEl = document.getElementById('tx-date');
-    const lfEl = document.getElementById('tx-lf');
-    const descEl = document.getElementById('tx-desc');
-    const amountEl = document.getElementById('tx-amount');
-    const channelEl = document.getElementById('tx-channel');
+    var dateEl = document.getElementById('tx-date');
+    var lfEl = document.getElementById('tx-lf');
+    var descEl = document.getElementById('tx-desc');
+    var amountEl = document.getElementById('tx-amount');
+    var channelEl = document.getElementById('tx-channel');
 
-    const date = dateEl ? dateEl.value : '';
-    let lf = lfEl ? lfEl.value.trim().toUpperCase() : '';
-    const desc = descEl ? descEl.value.trim() : '';
-    const amount = amountEl ? parseFloat(amountEl.value) || 0 : 0;
-    const channel = channelEl ? channelEl.value : 'CASH';
+    var date = dateEl ? dateEl.value : '';
+    var lf = lfEl ? lfEl.value.trim().toUpperCase() : '';
+    var desc = descEl ? descEl.value.trim() : '';
+    var amount = amountEl ? parseFloat(amountEl.value) || 0 : 0;
+    var channel = channelEl ? channelEl.value : 'CASH';
 
     if (!date) { alert("Please pick the transaction date."); return; }
     if (!desc) { alert("Please specify the particulars / narration."); return; }
@@ -350,13 +385,11 @@
     // Intercept Cooking Cost Mandate Breaches
     if (window.currentDrawer === 'mdm' && window.currentEntryType === 'PAYMENT' && (lf === '1' || !lf)) {
       lf = '1';
-      const metrics = window.getMandateMetrics();
+      var metrics = window.getMandateMetrics();
       if (metrics.target > 0 && (metrics.booked + amount) > metrics.target) {
-        const excess = (metrics.booked + amount) - metrics.target;
-        const confirmEntry = confirm(
-          `AUDIT WARNING: Adding ₹${amount.toFixed(2)} exceeds the monthly Cooking Cost mandate by ₹${excess.toFixed(2)}.\n\nMandate Target: ₹${metrics.target.toFixed(2)}\nCurrent Booked: ₹${metrics.booked.toFixed(2)}\n\nDo you want to intercept and correct this voucher? Press Cancel to return.`
-        );
-        if (!confirmEntry) return;
+        var excess = (metrics.booked + amount) - metrics.target;
+        var confirmMsg = "AUDIT WARNING: Adding Rs." + amount.toFixed(2) + " exceeds the monthly Cooking Cost mandate by Rs." + excess.toFixed(2) + ".\n\nMandate Target: Rs." + metrics.target.toFixed(2) + "\nCurrent Booked: Rs." + metrics.booked.toFixed(2) + "\n\nDo you want to intercept and correct this voucher? Press Cancel to return.";
+        if (!confirm(confirmMsg)) return;
       }
     }
 
@@ -376,15 +409,17 @@
   };
 
   window.removeVoucher = function (id) {
-    window.currentVouchers = window.currentVouchers.filter(v => String(v.id) !== String(id));
+    window.currentVouchers = window.currentVouchers.filter(function (v) {
+      return String(v.id) !== String(id);
+    });
     window.recalculateCashbook();
   };
 
   // ==========================================================================
-  // 6. VOUCHER TRAY LIST RENDERER
+  // 6. VOUCHER TRAY LIST
   // ==========================================================================
   window.renderVoucherList = function () {
-    const listEl = document.getElementById('voucher-tray');
+    var listEl = document.getElementById('voucher-tray');
     if (!listEl) return;
     listEl.innerHTML = '';
 
@@ -393,81 +428,93 @@
       return;
     }
 
-    window.currentVouchers.forEach(v => {
-      const item = document.createElement('div');
-      item.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:#fff; border:1px solid #e2e8f0; border-radius:4px; margin-bottom:6px; font-size:12px;';
-      const color = v.type === 'RECEIPT' ? '#16a34a' : (v.type === 'WITHDRAWAL' ? '#2563eb' : '#dc2626');
-      const day = v.date ? v.date.split('-')[2] : '';
+    for (var i = 0; i < window.currentVouchers.length; i++) {
+      var v = window.currentVouchers[i];
+      var item = document.createElement('div');
+      item.style.display = 'flex';
+      item.style.justifyContent = 'space-between';
+      item.style.alignItems = 'center';
+      item.style.padding = '8px 10px';
+      item.style.background = '#fff';
+      item.style.border = '1px solid #e2e8f0';
+      item.style.borderRadius = '4px';
+      item.style.marginBottom = '6px';
+      item.style.fontSize = '12px';
 
-      item.innerHTML = `
-        <div>
-          <span style="font-weight:700; color:${color}; margin-right:4px;">[${v.type}]</span>
-          <strong>${day ? 'Date ' + day : v.date}</strong>: ${v.desc}
-          <span style="color:#64748b; font-weight:600;">(LF: ${v.lf})</span>
-        </div>
-        <div style="display:flex; align-items:center; gap:8px;">
-          <strong>₹${Number(v.amount).toFixed(2)}</strong>
-          <button onclick="window.removeVoucher(${v.id})" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size:14px; padding:2px 4px;">✕</button>
-        </div>
-      `;
+      var color = v.type === 'RECEIPT' ? '#16a34a' : (v.type === 'WITHDRAWAL' ? '#2563eb' : '#dc2626');
+      var day = v.date ? v.date.split('-')[2] : '';
+
+      item.innerHTML = '<div>' +
+        '<span style="font-weight:700; color:' + color + '; margin-right:4px;">[' + v.type + ']</span>' +
+        '<strong>' + (day ? 'Date ' + day : v.date) + '</strong>: ' + v.desc +
+        ' <span style="color:#64748b; font-weight:600;">(LF: ' + v.lf + ')</span>' +
+        '</div>' +
+        '<div style="display:flex; align-items:center; gap:8px;">' +
+        '<strong>Rs.' + Number(v.amount).toFixed(2) + '</strong>' +
+        '<button onclick="window.removeVoucher(' + v.id + ')" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size:14px; padding:2px 4px;">X</button>' +
+        '</div>';
+
       listEl.appendChild(item);
-    });
+    }
   };
 
   // ==========================================================================
-  // 7. TWO-PAGE STRICT A4 REGISTER BUILDER
+  // 7. TWO-PAGE STRICT A4 REGISTER ENGINE
   // ==========================================================================
   function splitAmount(num) {
     if (num === null || num === undefined || isNaN(num) || num === 0) {
       return { rs: '', p: '' };
     }
-    const val = Number(Math.abs(num)).toFixed(2);
-    const parts = val.split('.');
+    var val = Number(Math.abs(num)).toFixed(2);
+    var parts = val.split('.');
     return { rs: parts[0], p: parts[1] };
   }
 
   function renderRegisterRow(date, particular, lf, cashAmt, bankAmt, isRed) {
-    const c = splitAmount(cashAmt);
-    const b = splitAmount(bankAmt);
-    const tot = (cashAmt || 0) + (bankAmt || 0);
-    const t = tot > 0 ? splitAmount(tot) : { rs: '', p: '' };
-    const inkClass = isRed ? 'ink-red' : 'ink-black';
+    var c = splitAmount(cashAmt);
+    var b = splitAmount(bankAmt);
+    var tot = (cashAmt || 0) + (bankAmt || 0);
+    var t = tot > 0 ? splitAmount(tot) : { rs: '', p: '' };
+    var inkClass = isRed ? 'ink-red' : 'ink-black';
 
-    return `
-      <tr class="${inkClass}">
-        <td class="col-date">${date}</td>
-        <td class="col-desc">${particular}</td>
-        <td class="col-lf">${lf || '-'}</td>
-        <td class="col-rs">${c.rs}</td>
-        <td class="col-p">${c.p}</td>
-        <td class="col-rs">${b.rs}</td>
-        <td class="col-p">${b.p}</td>
-        <td class="col-rs">${t.rs}</td>
-        <td class="col-p">${t.p}</td>
-      </tr>
-    `;
+    return '<tr class="' + inkClass + '">' +
+      '<td class="col-date">' + date + '</td>' +
+      '<td class="col-desc">' + particular + '</td>' +
+      '<td class="col-lf">' + (lf || '-') + '</td>' +
+      '<td class="col-rs">' + c.rs + '</td>' +
+      '<td class="col-p">' + c.p + '</td>' +
+      '<td class="col-rs">' + b.rs + '</td>' +
+      '<td class="col-p">' + b.p + '</td>' +
+      '<td class="col-rs">' + t.rs + '</td>' +
+      '<td class="col-p">' + t.p + '</td>' +
+      '</tr>';
   }
 
   window.recalculateCashbook = function () {
-    const opCash = parseFloat(document.getElementById('cb-op-cash')?.value) || 0;
-    const opBank = parseFloat(document.getElementById('cb-op-bank')?.value) || 0;
+    var opCashEl = document.getElementById('cb-op-cash');
+    var opBankEl = document.getElementById('cb-op-bank');
+    var opCash = opCashEl ? (parseFloat(opCashEl.value) || 0) : 0;
+    var opBank = opBankEl ? (parseFloat(opBankEl.value) || 0) : 0;
 
-    let totRecCash = opCash;
-    let totRecBank = opBank;
-    let totPayCash = 0;
-    let totPayBank = 0;
+    var totRecCash = opCash;
+    var totRecBank = opBank;
+    var totPayCash = 0;
+    var totPayBank = 0;
 
-    let receiptsHtml = renderRegisterRow('1st', '<strong>To Opening Balance (O/B)</strong>', '-', opCash, opBank, false);
-    let paymentsHtml = '';
+    var receiptsHtml = renderRegisterRow('1st', '<strong>To Opening Balance (O/B)</strong>', '-', opCash, opBank, false);
+    var paymentsHtml = '';
 
-    const sortedVouchers = [...window.currentVouchers].sort((a, b) => new Date(a.date) - new Date(b.date));
+    var sortedVouchers = window.currentVouchers.slice().sort(function (a, b) {
+      return new Date(a.date) - new Date(b.date);
+    });
 
-    sortedVouchers.forEach(v => {
-      const amt = parseFloat(v.amount) || 0;
-      const day = v.date ? parseInt(v.date.split('-')[2], 10) : '-';
+    for (var i = 0; i < sortedVouchers.length; i++) {
+      var v = sortedVouchers[i];
+      var amt = parseFloat(v.amount) || 0;
+      var day = v.date ? parseInt(v.date.split('-')[2], 10) : '-';
 
       if (v.type === 'RECEIPT') {
-        const isBank = v.channel === 'BANK';
+        var isBank = v.channel === 'BANK';
         if (isBank) totRecBank += amt; else totRecCash += amt;
         receiptsHtml += renderRegisterRow(day, v.desc, v.lf, !isBank ? amt : 0, isBank ? amt : 0, false);
       } else if (v.type === 'WITHDRAWAL') {
@@ -476,22 +523,21 @@
         receiptsHtml += renderRegisterRow(day, 'To Bank (Contra)', 'C', amt, 0, false);
         paymentsHtml += renderRegisterRow(day, 'By Cash (Contra)', 'C', 0, amt, true);
       } else if (v.type === 'PAYMENT') {
-        const isBank = v.channel === 'BANK';
-        if (isBank) totPayBank += amt; else totPayCash += amt;
-        paymentsHtml += renderRegisterRow(day, v.desc, v.lf, !isBank ? amt : 0, isBank ? amt : 0, true);
+        var isBankPay = v.channel === 'BANK';
+        if (isBankPay) totPayBank += amt; else totPayCash += amt;
+        paymentsHtml += renderRegisterRow(day, v.desc, v.lf, !isBankPay ? amt : 0, isBankPay ? amt : 0, true);
       }
-    });
+    }
 
-    const rawCloseCash = totRecCash - totPayCash;
-    const rawCloseBank = totRecBank - totPayBank;
+    var rawCloseCash = totRecCash - totPayCash;
+    var rawCloseBank = totRecBank - totPayBank;
 
-    // Check for cash deficits
-    const alertBanner = document.getElementById('advance-consent-banner');
+    var alertBanner = document.getElementById('advance-consent-banner');
     if (rawCloseCash < 0) {
       window.pendingAdvanceAmount = Math.abs(rawCloseCash);
       if (alertBanner) {
         alertBanner.style.display = 'flex';
-        const advAmtEl = document.getElementById('advance-deficit-amount');
+        var advAmtEl = document.getElementById('advance-deficit-amount');
         if (advAmtEl) advAmtEl.innerText = window.pendingAdvanceAmount.toFixed(2);
       }
     } else {
@@ -501,110 +547,84 @@
 
     paymentsHtml += renderRegisterRow('End', '<strong>By Closing Balance (C/B)</strong>', '-', Math.max(0, rawCloseCash), Math.max(0, rawCloseBank), true);
 
-    // Exact filler lines to ensure tight A4 single-page height
-    const countReceipts = (receiptsHtml.match(/<tr/g) || []).length;
-    const countPayments = (paymentsHtml.match(/<tr/g) || []).length;
-    const EXACT_PAGE_LINES = 15;
+    var countReceipts = (receiptsHtml.match(/<tr/g) || []).length;
+    var countPayments = (paymentsHtml.match(/<tr/g) || []).length;
+    var EXACT_PAGE_LINES = 15;
 
-    for (let i = countReceipts; i < EXACT_PAGE_LINES; i++) {
-      receiptsHtml += `<tr class="empty-line"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+    for (var r = countReceipts; r < EXACT_PAGE_LINES; r++) {
+      receiptsHtml += '<tr class="empty-line"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
     }
-    for (let i = countPayments; i < EXACT_PAGE_LINES; i++) {
-      paymentsHtml += `<tr class="empty-line"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+    for (var p = countPayments; p < EXACT_PAGE_LINES; p++) {
+      paymentsHtml += '<tr class="empty-line"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
     }
 
-    const tRecCash = splitAmount(totRecCash);
-    const tRecBank = splitAmount(totRecBank);
-    const tRecTot = splitAmount(totRecCash + totRecBank);
+    var tRecCash = splitAmount(totRecCash);
+    var tRecBank = splitAmount(totRecBank);
+    var tRecTot = splitAmount(totRecCash + totRecBank);
 
-    const grandPayCash = totPayCash + Math.max(0, rawCloseCash);
-    const grandPayBank = totPayBank + Math.max(0, rawCloseBank);
-    const tPayCash = splitAmount(grandPayCash);
-    const tPayBank = splitAmount(grandPayBank);
-    const tPayTot = splitAmount(grandPayCash + grandPayBank);
+    var grandPayCash = totPayCash + Math.max(0, rawCloseCash);
+    var grandPayBank = totPayBank + Math.max(0, rawCloseBank);
+    var tPayCash = splitAmount(grandPayCash);
+    var tPayBank = splitAmount(grandPayBank);
+    var tPayTot = splitAmount(grandPayCash + grandPayBank);
 
-    receiptsHtml += `
-      <tr class="total-row ink-black">
-        <td></td><td><strong>Total / Balanced (T/P)</strong></td><td></td>
-        <td class="col-rs"><strong>${tRecCash.rs}</strong></td><td class="col-p"><strong>${tRecCash.p}</strong></td>
-        <td class="col-rs"><strong>${tRecBank.rs}</strong></td><td class="col-p"><strong>${tRecBank.p}</strong></td>
-        <td class="col-rs"><strong>${tRecTot.rs}</strong></td><td class="col-p"><strong>${tRecTot.p}</strong></td>
-      </tr>
-    `;
+    receiptsHtml += '<tr class="total-row ink-black">' +
+      '<td></td><td><strong>Total / Balanced (T/P)</strong></td><td></td>' +
+      '<td class="col-rs"><strong>' + tRecCash.rs + '</strong></td><td class="col-p"><strong>' + tRecCash.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + tRecBank.rs + '</strong></td><td class="col-p"><strong>' + tRecBank.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + tRecTot.rs + '</strong></td><td class="col-p"><strong>' + tRecTot.p + '</strong></td>' +
+      '</tr>';
 
-    paymentsHtml += `
-      <tr class="total-row ink-red">
-        <td></td><td><strong>Total / Balanced (T/P)</strong></td><td></td>
-        <td class="col-rs"><strong>${tPayCash.rs}</strong></td><td class="col-p"><strong>${tPayCash.p}</strong></td>
-        <td class="col-rs"><strong>${tPayBank.rs}</strong></td><td class="col-p"><strong>${tPayBank.p}</strong></td>
-        <td class="col-rs"><strong>${tPayTot.rs}</strong></td><td class="col-p"><strong>${tPayTot.p}</strong></td>
-      </tr>
-    `;
+    paymentsHtml += '<tr class="total-row ink-red">' +
+      '<td></td><td><strong>Total / Balanced (T/P)</strong></td><td></td>' +
+      '<td class="col-rs"><strong>' + tPayCash.rs + '</strong></td><td class="col-p"><strong>' + tPayCash.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + tPayBank.rs + '</strong></td><td class="col-p"><strong>' + tPayBank.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + tPayTot.rs + '</strong></td><td class="col-p"><strong>' + tPayTot.p + '</strong></td>' +
+      '</tr>';
 
-    const mEl = document.getElementById('cb-sel-month');
-    const yEl = document.getElementById('cb-sel-year');
-    const mName = mEl ? mEl.options[mEl.selectedIndex]?.text : '';
-    const yName = yEl ? yEl.value : '';
+    var mEl = document.getElementById('cb-sel-month');
+    var yEl = document.getElementById('cb-sel-year');
+    var mName = (mEl && mEl.selectedIndex >= 0) ? mEl.options[mEl.selectedIndex].text : '';
+    var yName = yEl ? yEl.value : '';
 
-    const area = document.getElementById('cashbook-printable-area');
+    var tableHeader = '<thead>' +
+      '<tr>' +
+      '<th rowspan="2" class="th-date">Month &<br>Date</th>' +
+      '<th rowspan="2" class="th-particulars">PARTICULARS</th>' +
+      '<th rowspan="2" class="th-lf">Ledger<br>Folio</th>' +
+      '<th colspan="2" class="th-group">Cash Amount</th>' +
+      '<th colspan="2" class="th-group">Bank Amount</th>' +
+      '<th colspan="2" class="th-group">Total Amount</th>' +
+      '</tr>' +
+      '<tr>' +
+      '<th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>' +
+      '<th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>' +
+      '<th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>' +
+      '</tr>' +
+      '</thead>';
+
+    var area = document.getElementById('cashbook-printable-area');
     if (area) {
-      area.innerHTML = `
-        <div class="print-container">
-          <!-- PAGE 1: RECEIPTS EXCLUSIVELY -->
-          <div class="register-page page-receipts">
-            <div class="page-header">
-              <div class="cashbook-title">CASH BOOK</div>
-              <div class="cashbook-subtitle">For the month of ${mName} ${yName}</div>
-              <div class="section-indicator text-receipts">RECEIPTS</div>
-            </div>
-            <table class="ledger-table">
-              <thead>
-                <tr>
-                  <th rowspan="2" class="th-date">Month &<br>Date</th>
-                  <th rowspan="2" class="th-particulars">PARTICULARS</th>
-                  <th rowspan="2" class="th-lf">Ledger<br>Folio</th>
-                  <th colspan="2" class="th-group">Cash Amount</th>
-                  <th colspan="2" class="th-group">Bank Amount</th>
-                  <th colspan="2" class="th-group">Total Amount</th>
-                </tr>
-                <tr>
-                  <th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>
-                  <th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>
-                  <th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>
-                </tr>
-              </thead>
-              <tbody>${receiptsHtml}</tbody>
-            </table>
-          </div>
-
-          <!-- PAGE 2: PAYMENTS EXCLUSIVELY -->
-          <div class="register-page page-payments">
-            <div class="page-header">
-              <div class="cashbook-title">CASH BOOK</div>
-              <div class="cashbook-subtitle">For the month of ${mName} ${yName}</div>
-              <div class="section-indicator text-payments">PAYMENTS</div>
-            </div>
-            <table class="ledger-table">
-              <thead>
-                <tr>
-                  <th rowspan="2" class="th-date">Month &<br>Date</th>
-                  <th rowspan="2" class="th-particulars">PARTICULARS</th>
-                  <th rowspan="2" class="th-lf">Ledger<br>Folio</th>
-                  <th colspan="2" class="th-group">Cash Amount</th>
-                  <th colspan="2" class="th-group">Bank Amount</th>
-                  <th colspan="2" class="th-group">Total Amount</th>
-                </tr>
-                <tr>
-                  <th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>
-                  <th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>
-                  <th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>
-                </tr>
-              </thead>
-              <tbody>${paymentsHtml}</tbody>
-            </table>
-          </div>
-        </div>
-      `;
+      area.innerHTML = '<div class="print-container">' +
+        '<!-- PAGE 1: RECEIPTS -->' +
+        '<div class="register-page page-receipts">' +
+        '<div class="page-header">' +
+        '<div class="cashbook-title">CASH BOOK</div>' +
+        '<div class="cashbook-subtitle">For the month of ' + mName + ' ' + yName + '</div>' +
+        '<div class="section-indicator text-receipts">RECEIPTS</div>' +
+        '</div>' +
+        '<table class="ledger-table">' + tableHeader + '<tbody>' + receiptsHtml + '</tbody></table>' +
+        '</div>' +
+        '<!-- PAGE 2: PAYMENTS -->' +
+        '<div class="register-page page-payments">' +
+        '<div class="page-header">' +
+        '<div class="cashbook-title">CASH BOOK</div>' +
+        '<div class="cashbook-subtitle">For the month of ' + mName + ' ' + yName + '</div>' +
+        '<div class="section-indicator text-payments">PAYMENTS</div>' +
+        '</div>' +
+        '<table class="ledger-table">' + tableHeader + '<tbody>' + paymentsHtml + '</tbody></table>' +
+        '</div>' +
+        '</div>';
     }
 
     if (typeof window.renderVoucherList === 'function') {
@@ -620,9 +640,9 @@
   // 8. DECOUPLED GENERAL LEDGER ENGINE
   // ==========================================================================
   window.updateLedgerHeadFilterOptions = function () {
-    const sel = document.getElementById('sel-filter-ledger');
+    var sel = document.getElementById('sel-filter-ledger');
     if (!sel) return;
-    const heads = [
+    var heads = [
       { lf: 'ALL', name: '--- All Heads (Consolidated) ---' },
       { lf: '1', name: 'LF 1: Cooking Cost (Meal Operations)' },
       { lf: '2', name: 'LF 2: LPG Cylinder & Kitchen Fuel' },
@@ -634,46 +654,50 @@
       { lf: '8', name: 'LF 8: In-Charge Advance & Reimbursement' },
       { lf: 'C', name: 'LF C: Contra Bank Withdrawals' }
     ];
-    const currentVal = sel.value;
+    var currentVal = sel.value;
     sel.innerHTML = '';
-    heads.forEach(h => {
-      const opt = document.createElement('option');
-      opt.value = h.lf;
-      opt.innerText = h.name;
-      if (h.lf === currentVal) opt.selected = true;
+    for (var i = 0; i < heads.length; i++) {
+      var opt = document.createElement('option');
+      opt.value = heads[i].lf;
+      opt.innerText = heads[i].name;
+      if (heads[i].lf === currentVal) opt.selected = true;
       sel.appendChild(opt);
-    });
+    }
   };
 
   window.renderLedgerSheet = function () {
-    const filterEl = document.getElementById('sel-filter-ledger');
-    const selectedLf = filterEl ? filterEl.value : 'ALL';
+    var filterEl = document.getElementById('sel-filter-ledger');
+    var selectedLf = filterEl ? filterEl.value : 'ALL';
 
-    const mEl = document.getElementById('cb-sel-month');
-    const yEl = document.getElementById('cb-sel-year');
-    const mName = mEl ? mEl.options[mEl.selectedIndex]?.text : '';
-    const yName = yEl ? yEl.value : '';
+    var mEl = document.getElementById('cb-sel-month');
+    var yEl = document.getElementById('cb-sel-year');
+    var mName = (mEl && mEl.selectedIndex >= 0) ? mEl.options[mEl.selectedIndex].text : '';
+    var yName = yEl ? yEl.value : '';
 
-    let headLabel = 'CONSOLIDATED GENERAL LEDGER';
+    var headLabel = 'CONSOLIDATED GENERAL LEDGER';
     if (filterEl && filterEl.selectedIndex >= 0) {
       headLabel = filterEl.options[filterEl.selectedIndex].text.toUpperCase();
     }
 
-    let runningBal = 0;
-    let totDr = 0;
-    let totCr = 0;
-    let html = '';
+    var runningBal = 0;
+    var totDr = 0;
+    var totCr = 0;
+    var html = '';
 
-    const list = window.currentVouchers.filter(v => {
+    var list = window.currentVouchers.filter(function (v) {
       if (!selectedLf || selectedLf === 'ALL') return true;
       return String(v.lf).trim().toUpperCase() === selectedLf.toUpperCase();
     });
-    list.sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    list.forEach(v => {
-      const amt = parseFloat(v.amount) || 0;
-      let dr = 0;
-      let cr = 0;
+    list.sort(function (a, b) {
+      return new Date(a.date) - new Date(b.date);
+    });
+
+    for (var i = 0; i < list.length; i++) {
+      var v = list[i];
+      var amt = parseFloat(v.amount) || 0;
+      var dr = 0;
+      var cr = 0;
 
       if (v.type === 'RECEIPT') {
         dr = amt; runningBal += amt; totDr += amt;
@@ -683,60 +707,55 @@
         dr = amt; cr = amt; totDr += amt; totCr += amt;
       }
 
-      html += `
-        <tr>
-          <td class="text-center">${v.date}</td>
-          <td class="text-center">${v.lf || '-'}</td>
-          <td>${v.desc}</td>
-          <td class="num">${dr > 0 ? '₹' + dr.toFixed(2) : '-'}</td>
-          <td class="num">${cr > 0 ? '₹' + cr.toFixed(2) : '-'}</td>
-          <td class="num font-bold">₹${runningBal.toFixed(2)}</td>
-        </tr>
-      `;
-    });
-
-    if (list.length === 0) {
-      html = `<tr><td colspan="6" style="text-align:center; padding:18px; color:#64748b;">No voucher entries recorded under this account head.</td></tr>`;
+      html += '<tr>' +
+        '<td class="text-center">' + v.date + '</td>' +
+        '<td class="text-center">' + (v.lf || '-') + '</td>' +
+        '<td>' + v.desc + '</td>' +
+        '<td class="num">' + (dr > 0 ? 'Rs.' + dr.toFixed(2) : '-') + '</td>' +
+        '<td class="num">' + (cr > 0 ? 'Rs.' + cr.toFixed(2) : '-') + '</td>' +
+        '<td class="num font-bold">Rs.' + runningBal.toFixed(2) + '</td>' +
+        '</tr>';
     }
 
-    // Render directly into the standalone ledger container
-    const ledgerPrintArea = document.getElementById('ledger-printable-area');
+    if (list.length === 0) {
+      html = '<tr><td colspan="6" style="text-align:center; padding:18px; color:#64748b;">No voucher entries recorded under this account head.</td></tr>';
+    }
+
+    var ledgerPrintArea = document.getElementById('ledger-printable-area');
     if (ledgerPrintArea) {
-      ledgerPrintArea.innerHTML = `
-        <div class="ledger-standalone-page">
-          <div class="page-header">
-            <div class="cashbook-title">GENERAL LEDGER STATEMENT</div>
-            <div class="cashbook-subtitle">${headLabel}</div>
-            <div style="font-size:11px; color:#475569; margin-top:2px;">Period: ${mName} ${yName} | Drawer: ${window.currentDrawer.toUpperCase()}</div>
-          </div>
-          <table class="ledger-table-full">
-            <thead>
-              <tr>
-                <th style="width:80px; text-align:center;">Date</th>
-                <th style="width:45px; text-align:center;">Folio</th>
-                <th>Particulars / Head Description</th>
-                <th style="width:95px; text-align:right;">Debit (Dr)</th>
-                <th style="width:95px; text-align:right;">Credit (Cr)</th>
-                <th style="width:105px; text-align:right;">Balance</th>
-              </tr>
-            </thead>
-            <tbody>${html}</tbody>
-            <tfoot>
-              <tr class="total-row">
-                <td colspan="3" style="text-align:right; font-weight:bold;">Total Cumulative Turnover:</td>
-                <td style="text-align:right; font-weight:bold;">₹${totDr.toFixed(2)}</td>
-                <td style="text-align:right; font-weight:bold;">₹${totCr.toFixed(2)}</td>
-                <td style="text-align:right; font-weight:bold;">₹${runningBal.toFixed(2)}</td>
-              </tr>
-            </tfoot>
-          </table>
-        </div>
-      `;
+      ledgerPrintArea.innerHTML = '<div class="ledger-standalone-page">' +
+        '<div class="page-header">' +
+        '<div class="cashbook-title">GENERAL LEDGER STATEMENT</div>' +
+        '<div class="cashbook-subtitle">' + headLabel + '</div>' +
+        '<div style="font-size:11px; color:#475569; margin-top:2px;">Period: ' + mName + ' ' + yName + ' | Drawer: ' + window.currentDrawer.toUpperCase() + '</div>' +
+        '</div>' +
+        '<table class="ledger-table-full">' +
+        '<thead>' +
+        '<tr>' +
+        '<th style="width:80px; text-align:center;">Date</th>' +
+        '<th style="width:45px; text-align:center;">Folio</th>' +
+        '<th>Particulars / Head Description</th>' +
+        '<th style="width:95px; text-align:right;">Debit (Dr)</th>' +
+        '<th style="width:95px; text-align:right;">Credit (Cr)</th>' +
+        '<th style="width:105px; text-align:right;">Balance</th>' +
+        '</tr>' +
+        '</thead>' +
+        '<tbody>' + html + '</tbody>' +
+        '<tfoot>' +
+        '<tr class="total-row">' +
+        '<td colspan="3" style="text-align:right; font-weight:bold;">Total Cumulative Turnover:</td>' +
+        '<td style="text-align:right; font-weight:bold;">Rs.' + totDr.toFixed(2) + '</td>' +
+        '<td style="text-align:right; font-weight:bold;">Rs.' + totCr.toFixed(2) + '</td>' +
+        '<td style="text-align:right; font-weight:bold;">Rs.' + runningBal.toFixed(2) + '</td>' +
+        '</tr>' +
+        '</tfoot>' +
+        '</table>' +
+        '</div>';
     }
   };
 
   // ==========================================================================
-  // 9. EXPLICIT PRINT INVOCATION HANDLERS
+  // 9. EXPLICIT PRINT HANDLERS
   // ==========================================================================
   window.triggerCashbookPrint = function () {
     document.body.classList.remove('print-mode-ledger');
@@ -746,18 +765,18 @@
   window.triggerLedgerPrint = function () {
     document.body.classList.add('print-mode-ledger');
     window.print();
-    setTimeout(() => {
+    setTimeout(function () {
       document.body.classList.remove('print-mode-ledger');
     }, 800);
   };
 
   // ==========================================================================
-  // 10. TEACHER ADVANCE & MULTI-MONTH PERSISTENCE
+  // 10. ADVANCES & STORAGE
   // ==========================================================================
   window.consentTeacherAdvance = function () {
     if (window.pendingAdvanceAmount <= 0) return;
-    const dEl = document.getElementById('tx-date');
-    const advDate = dEl?.value || new Date().toISOString().split('T')[0];
+    var dEl = document.getElementById('tx-date');
+    var advDate = dEl ? dEl.value : new Date().toISOString().split('T')[0];
 
     window.currentVouchers.push({
       id: Date.now(),
@@ -770,29 +789,35 @@
     });
 
     window.pendingAdvanceAmount = 0;
-    const banner = document.getElementById('advance-consent-banner');
+    var banner = document.getElementById('advance-consent-banner');
     if (banner) banner.style.display = 'none';
     window.recalculateCashbook();
   };
 
   function getStorageKey(drawer, year, month) {
-    return `cashbook_rec_${drawer}_${year}_${String(month).padStart(2, '0')}`;
+    return 'cashbook_rec_' + drawer + '_' + year + '_' + String(month).padStart(2, '0');
   }
 
   window.saveCurrentMonthRecord = function () {
-    const drawer = window.currentDrawer;
-    const year = document.getElementById('cb-sel-year')?.value;
-    const month = document.getElementById('cb-sel-month')?.value;
-    const opCash = parseFloat(document.getElementById('cb-op-cash')?.value) || 0;
-    const opBank = parseFloat(document.getElementById('cb-op-bank')?.value) || 0;
+    var drawer = window.currentDrawer;
+    var yearEl = document.getElementById('cb-sel-year');
+    var monthEl = document.getElementById('cb-sel-month');
+    var year = yearEl ? yearEl.value : '';
+    var month = monthEl ? monthEl.value : '';
 
-    let totCashRec = opCash;
-    let totBankRec = opBank;
-    let totCashPay = 0;
-    let totBankPay = 0;
+    var opCashEl = document.getElementById('cb-op-cash');
+    var opBankEl = document.getElementById('cb-op-bank');
+    var opCash = opCashEl ? (parseFloat(opCashEl.value) || 0) : 0;
+    var opBank = opBankEl ? (parseFloat(opBankEl.value) || 0) : 0;
 
-    window.currentVouchers.forEach(v => {
-      const a = parseFloat(v.amount) || 0;
+    var totCashRec = opCash;
+    var totBankRec = opBank;
+    var totCashPay = 0;
+    var totBankPay = 0;
+
+    for (var i = 0; i < window.currentVouchers.length; i++) {
+      var v = window.currentVouchers[i];
+      var a = parseFloat(v.amount) || 0;
       if (v.type === 'RECEIPT') {
         if (v.channel === 'BANK') totBankRec += a; else totCashRec += a;
       } else if (v.type === 'WITHDRAWAL') {
@@ -800,20 +825,26 @@
       } else if (v.type === 'PAYMENT') {
         if (v.channel === 'BANK') totBankPay += a; else totCashPay += a;
       }
-    });
+    }
 
-    const closeCash = Math.max(0, totCashRec - totCashPay);
-    const closeBank = Math.max(0, totBankRec - totBankPay);
+    var closeCash = Math.max(0, totCashRec - totCashPay);
+    var closeBank = Math.max(0, totBankRec - totBankPay);
 
-    const payload = {
+    var catEl = document.getElementById('cb-mandate-cat');
+    var rLpEl = document.getElementById('rate-lp');
+    var mLpEl = document.getElementById('meals-lp');
+    var rUpEl = document.getElementById('rate-up');
+    var mUpEl = document.getElementById('meals-up');
+
+    var payload = {
       drawer: drawer,
       year: year,
       month: month,
-      category: document.getElementById('cb-mandate-cat')?.value,
-      rateLp: document.getElementById('rate-lp')?.value,
-      mealsLp: document.getElementById('meals-lp')?.value,
-      rateUp: document.getElementById('rate-up')?.value,
-      mealsUp: document.getElementById('meals-up')?.value,
+      category: catEl ? catEl.value : '',
+      rateLp: rLpEl ? rLpEl.value : '',
+      mealsLp: mLpEl ? mLpEl.value : '',
+      rateUp: rUpEl ? rUpEl.value : '',
+      mealsUp: mUpEl ? mUpEl.value : '',
       opCash: opCash,
       opBank: opBank,
       closeCash: closeCash,
@@ -824,67 +855,84 @@
 
     localStorage.setItem(getStorageKey(drawer, year, month), JSON.stringify(payload));
 
-    // Carry forward Closing Balance as next month's Opening Balance
-    let nextMonth = parseInt(month, 10) + 1;
-    let nextYear = parseInt(year, 10);
+    var nextMonth = parseInt(month, 10) + 1;
+    var nextYear = parseInt(year, 10);
     if (nextMonth > 12) { nextMonth = 1; nextYear += 1; }
 
-    const nextKey = getStorageKey(drawer, nextYear, nextMonth);
-    let nextRec = localStorage.getItem(nextKey);
-    nextRec = nextRec ? JSON.parse(nextRec) : {};
+    var nextKey = getStorageKey(drawer, nextYear, nextMonth);
+    var nextRecStr = localStorage.getItem(nextKey);
+    var nextRec = nextRecStr ? JSON.parse(nextRecStr) : {};
     nextRec.opCash = closeCash;
     nextRec.opBank = closeBank;
     localStorage.setItem(nextKey, JSON.stringify(nextRec));
 
-    alert(`Cashbook for ${month}/${year} permanently recorded. C/B carried forward.`);
+    alert('Cashbook for ' + month + '/' + year + ' permanently saved. C/B carried forward.');
     window.renderArchiveTray();
   };
 
   window.onCashbookPeriodChange = function () {
-    const year = document.getElementById('cb-sel-year')?.value;
-    const month = document.getElementById('cb-sel-month')?.value;
+    var yearEl = document.getElementById('cb-sel-year');
+    var monthEl = document.getElementById('cb-sel-month');
+    var year = yearEl ? yearEl.value : '';
+    var month = monthEl ? monthEl.value : '';
     window.loadMonthRecord(year, month);
   };
 
   window.loadMonthRecord = function (year, month) {
-    const drawer = window.currentDrawer;
-    const key = getStorageKey(drawer, year, month);
-    const dataStr = localStorage.getItem(key);
+    var drawer = window.currentDrawer;
+    var key = getStorageKey(drawer, year, month);
+    var dataStr = localStorage.getItem(key);
 
-    const yEl = document.getElementById('cb-sel-year');
-    const mEl = document.getElementById('cb-sel-month');
+    var yEl = document.getElementById('cb-sel-year');
+    var mEl = document.getElementById('cb-sel-month');
     if (yEl) yEl.value = year;
     if (mEl) mEl.value = String(month).padStart(2, '0');
 
     if (dataStr) {
-      const data = JSON.parse(dataStr);
-      document.getElementById('cb-mandate-cat').value = data.category || 'COMPOSITE';
-      document.getElementById('rate-lp').value = data.rateLp || '';
-      document.getElementById('meals-lp').value = data.mealsLp || '';
-      document.getElementById('rate-up').value = data.rateUp || '';
-      document.getElementById('meals-up').value = data.mealsUp || '';
-      document.getElementById('cb-op-cash').value = data.opCash !== undefined ? data.opCash : '';
-      document.getElementById('cb-op-bank').value = data.opBank !== undefined ? data.opBank : '';
+      var data = JSON.parse(dataStr);
+      var catEl = document.getElementById('cb-mandate-cat');
+      var rLpEl = document.getElementById('rate-lp');
+      var mLpEl = document.getElementById('meals-lp');
+      var rUpEl = document.getElementById('rate-up');
+      var mUpEl = document.getElementById('meals-up');
+      var opCashEl = document.getElementById('cb-op-cash');
+      var opBankEl = document.getElementById('cb-op-bank');
+
+      if (catEl) catEl.value = data.category || 'COMPOSITE';
+      if (rLpEl) rLpEl.value = data.rateLp || '';
+      if (mLpEl) mLpEl.value = data.mealsLp || '';
+      if (rUpEl) rUpEl.value = data.rateUp || '';
+      if (mUpEl) mUpEl.value = data.mealsUp || '';
+      if (opCashEl) opCashEl.value = data.opCash !== undefined ? data.opCash : '';
+      if (opBankEl) opBankEl.value = data.opBank !== undefined ? data.opBank : '';
       window.currentVouchers = data.vouchers || [];
     } else {
-      let prevM = parseInt(month, 10) - 1;
-      let prevY = parseInt(year, 10);
+      var prevM = parseInt(month, 10) - 1;
+      var prevY = parseInt(year, 10);
       if (prevM < 1) { prevM = 12; prevY -= 1; }
 
-      const prevKey = getStorageKey(drawer, prevY, prevM);
-      const prevDataStr = localStorage.getItem(prevKey);
+      var prevKey = getStorageKey(drawer, prevY, prevM);
+      var prevDataStr = localStorage.getItem(prevKey);
+      var opCEl = document.getElementById('cb-op-cash');
+      var opBEl = document.getElementById('cb-op-bank');
+
       if (prevDataStr) {
-        const prevData = JSON.parse(prevDataStr);
-        document.getElementById('cb-op-cash').value = prevData.closeCash !== undefined ? prevData.closeCash : 0;
-        document.getElementById('cb-op-bank').value = prevData.closeBank !== undefined ? prevData.closeBank : 0;
+        var prevData = JSON.parse(prevDataStr);
+        if (opCEl) opCEl.value = prevData.closeCash !== undefined ? prevData.closeCash : 0;
+        if (opBEl) opBEl.value = prevData.closeBank !== undefined ? prevData.closeBank : 0;
       } else {
-        document.getElementById('cb-op-cash').value = '';
-        document.getElementById('cb-op-bank').value = '';
+        if (opCEl) opCEl.value = '';
+        if (opBEl) opBEl.value = '';
       }
-      document.getElementById('rate-lp').value = '';
-      document.getElementById('meals-lp').value = '';
-      document.getElementById('rate-up').value = '';
-      document.getElementById('meals-up').value = '';
+
+      var rLp = document.getElementById('rate-lp');
+      var mLp = document.getElementById('meals-lp');
+      var rUp = document.getElementById('rate-up');
+      var mUp = document.getElementById('meals-up');
+      if (rLp) rLp.value = '';
+      if (mLp) mLp.value = '';
+      if (rUp) rUp.value = '';
+      if (mUp) mUp.value = '';
       window.currentVouchers = [];
     }
     window.updateCategoryVisibility();
@@ -892,31 +940,39 @@
   };
 
   window.renderArchiveTray = function () {
-    const tray = document.getElementById('archive-tray');
+    var tray = document.getElementById('archive-tray');
     if (!tray) return;
     tray.innerHTML = '';
 
-    const drawer = window.currentDrawer;
-    const prefix = `cashbook_rec_${drawer}_`;
+    var drawer = window.currentDrawer;
+    var prefix = 'cashbook_rec_' + drawer + '_';
 
-    for (let i = 0; i < localStorage.length; i++) {
-      const key = localStorage.key(i);
-      if (key && key.startsWith(prefix)) {
+    for (var i = 0; i < localStorage.length; i++) {
+      var key = localStorage.key(i);
+      if (key && key.indexOf(prefix) === 0) {
         try {
-          const rec = JSON.parse(localStorage.getItem(key));
+          var rec = JSON.parse(localStorage.getItem(key));
           if (!rec.savedAt) continue;
-          const card = document.createElement('div');
-          card.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#fff; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:6px; font-size:13px;';
-          card.innerHTML = `
-            <div>
-              <strong>${rec.month}/${rec.year}</strong> 
-              <span style="color:#64748b; font-size:11px;">(C/B Cash: ₹${Number(rec.closeCash).toFixed(2)} | Bank: ₹${Number(rec.closeBank).toFixed(2)})</span>
-            </div>
-            <div>
-              <button onclick="loadMonthRecord('${rec.year}', '${rec.month}')" style="background:#0284c7; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;">View</button>
-              <button onclick="deleteRecord('${key}')" style="background:#ef4444; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px; margin-left:4px;">Delete</button>
-            </div>
-          `;
+          var card = document.createElement('div');
+          card.style.display = 'flex';
+          card.style.justifyContent = 'space-between';
+          card.style.alignItems = 'center';
+          card.style.padding = '8px 12px';
+          card.style.background = '#fff';
+          card.style.border = '1px solid #cbd5e1';
+          card.style.borderRadius = '6px';
+          card.style.marginBottom = '6px';
+          card.style.fontSize = '13px';
+
+          card.innerHTML = '<div>' +
+            '<strong>' + rec.month + '/' + rec.year + '</strong> ' +
+            '<span style="color:#64748b; font-size:11px;">(C/B Cash: Rs.' + Number(rec.closeCash).toFixed(2) + ' | Bank: Rs.' + Number(rec.closeBank).toFixed(2) + ')</span>' +
+            '</div>' +
+            '<div>' +
+            '<button onclick="window.loadMonthRecord(\'' + rec.year + '\', \'' + rec.month + '\')" style="background:#0284c7; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;">View</button>' +
+            '<button onclick="window.deleteRecord(\'' + key + '\')" style="background:#ef4444; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px; margin-left:4px;">Delete</button>' +
+            '</div>';
+
           tray.appendChild(card);
         } catch (e) {}
       }
@@ -933,7 +989,7 @@
   // ==========================================================================
   // 11. BOOTSTRAP INITIALIZATION
   // ==========================================================================
-  document.addEventListener('DOMContentLoaded', () => {
+  document.addEventListener('DOMContentLoaded', function () {
     window.updateCategoryVisibility();
     window.setTransactionType('RECEIPT');
     window.updateLedgerHeadFilterOptions();

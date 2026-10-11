@@ -354,16 +354,25 @@
         </div>
       </div>
 
-      <!-- Bottom Controls & Permanent Archives -->
-      <div class="card no-print" style="margin-top:14px;">
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <button class="btn btn-secondary" onclick="saveCurrentMonthRecord()" style="padding:10px 16px; background:#16a34a; color:#fff; font-weight:bold; border:none; border-radius:4px; cursor:pointer;">
-            💾 Save & Seal Month
-          </button>
-          <button class="btn" onclick="window.print()" style="background:#334155; color:#fff; padding:10px 16px; font-weight:bold; border:none; border-radius:4px; cursor:pointer;">
-            🖨️ Print Two-Page Book
-          </button>
-        </div>
+      <!-- STANDALONE LEDGER PRINTABLE CONTAINER -->
+<div id="ledger-printable-area"></div>
+
+<!-- Bottom Controls & Permanent Archives -->
+<div class="card no-print" style="margin-top:14px;">
+  <div style="display:flex; justify-content:space-between; align-items:center; gap:8px; flex-wrap:wrap;">
+    <button class="btn btn-secondary" onclick="saveCurrentMonthRecord()">
+      💾 Save & Seal Month
+    </button>
+    
+    <button class="btn" onclick="triggerCashbookPrint()" style="background:#334155; color:#fff;">
+      🖨️ Print Two-Page Book
+    </button>
+
+    <button class="btn" onclick="triggerLedgerPrint()" style="background:#0284c7; color:#fff;">
+      🖨️ Print General Ledger
+    </button>
+  </div>
+  
         <div style="margin-top:14px; border-top:1px solid #e2e8f0; padding-top:10px;">
           <label style="font-weight:bold; color:#475569;">Permanent Saved Cashbooks (Local Storage)</label>
           <div id="archive-tray" style="margin-top:6px;"></div>

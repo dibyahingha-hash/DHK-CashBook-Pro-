@@ -1,6 +1,6 @@
 /**
- * DHK PM POSHAN & SCHOOL CASHBOOK STANDALONE ENGINE
- * Zero dependencies | Audit Compliant | Two-Page Physical Register Model
+ * DHK PM POSHAN & SCHOOL CASHBOOK ENGINE
+ * Dual-Rate LP/UP Engine | Two-Page Ruled Register | Consent-Based Advance | Multi-Month Archive
  */
 
 (function (window) {
@@ -54,12 +54,68 @@
         { text: "By Sports items and recreational play materials purchased", lf: "5", channel: "CASH" },
         { text: "By Statutory Bank Charges / SMS alert charges in SNA Account", lf: "6", channel: "BANK" }
       ]
+    },
+    sna: {
+      RECEIPT: [
+        { text: "To Central/State Share SNA Grant received via PFMS limit credit", lf: "1", channel: "BANK" },
+        { text: "To Bank Interest / statutory adjustment credited", lf: "2", channel: "BANK" }
+      ],
+      WITHDRAWAL: [
+        { text: "To Bank (Contra - Limit utilized / drawn)", lf: "C", channel: "BANK" }
+      ],
+      PAYMENT: [
+        { text: "By Direct Vendor Payment via PFMS SNA Portal for approved activity", lf: "1", channel: "BANK" },
+        { text: "By Statutory Bank charges / deductions in SNA portal", lf: "2", channel: "BANK" }
+      ]
     }
   };
 
-  // --- 1. CATEGORY & VISIBILITY ---
+  // --- DRAWER SWITCH ---
+  window.switchDrawer = function (drawer) {
+    window.currentDrawer = drawer;
+    ['mdm', 'smc', 'sna'].forEach(d => {
+      const b = document.getElementById(`btn-drawer-${d}`);
+      if (b) {
+        if (d === drawer) {
+          b.style.background = '#0284c7';
+          b.style.color = '#fff';
+        } else {
+          b.style.background = '#f1f5f9';
+          b.style.color = '#334155';
+        }
+      }
+    });
+
+    const mandateBox = document.getElementById('box-mdm-mandate');
+    if (mandateBox) mandateBox.style.display = (drawer === 'mdm') ? 'block' : 'none';
+
+    window.renderEngineNarrations(window.currentEntryType);
+    window.onCashbookPeriodChange();
+  };
+
+  // --- SUB-VIEW TOGGLE (CASHBOOK VS GENERAL LEDGER) ---
+  window.switchSubView = function (view) {
+    const cbWrap = document.getElementById('subview-cashbook-wrap');
+    const ledWrap = document.getElementById('subview-ledger-wrap');
+    const btnCb = document.getElementById('btn-sub-cashbook');
+    const btnLed = document.getElementById('btn-sub-ledger');
+
+    if (view === 'cashbook') {
+      if (cbWrap) cbWrap.style.display = 'block';
+      if (ledWrap) ledWrap.style.display = 'none';
+      if (btnCb) { btnCb.style.background = '#1e3a8a'; btnCb.style.color = '#fff'; }
+      if (btnLed) { btnLed.style.background = '#f8fafc'; btnLed.style.color = '#334155'; }
+    } else {
+      if (cbWrap) cbWrap.style.display = 'none';
+      if (ledWrap) ledWrap.style.display = 'block';
+      if (btnCb) { btnCb.style.background = '#f8fafc'; btnCb.style.color = '#334155'; }
+      if (btnLed) { btnLed.style.background = '#1e3a8a'; btnLed.style.color = '#fff'; }
+    }
+  };
+
+  // --- CATEGORY VISIBILITY ---
   window.updateCategoryVisibility = function () {
-    const cat = document.getElementById('school-category')?.value || 'COMPOSITE';
+    const cat = document.getElementById('cb-mandate-cat')?.value || 'COMPOSITE';
     const lpBox = document.getElementById('box-lp');
     const upBox = document.getElementById('box-up');
 
@@ -84,7 +140,7 @@
     window.calculateMandate();
   };
 
-  // --- 2. DUAL-RATE MANDATE ENGINE (COMPOSITE / LP / UP) ---
+  // --- DUAL-RATE MANDATE ENGINE ---
   window.calculateMandate = function () {
     const rateLp = parseFloat(document.getElementById('rate-lp')?.value) || 0;
     const mealsLp = parseInt(document.getElementById('meals-lp')?.value, 10) || 0;
@@ -116,15 +172,15 @@
     }
   };
 
-  // --- 3. DYNAMIC NARRATIONS ---
+  // --- NARRATIONS ---
   function getDynamicNarrationText(item) {
     if (!item.isMealExpense) return item.text;
 
     const totalMeals = document.getElementById('tx-meals')?.value || '0';
     const mealsLp = document.getElementById('meals-lp')?.value || '';
     const mealsUp = document.getElementById('meals-up')?.value || '';
-    const monthEl = document.getElementById('select-month');
-    const yearEl = document.getElementById('select-year');
+    const monthEl = document.getElementById('cb-sel-month');
+    const yearEl = document.getElementById('cb-sel-year');
 
     const monthText = monthEl ? monthEl.options[monthEl.selectedIndex]?.text : 'the month';
     const yearText = yearEl ? yearEl.value : '';
@@ -174,12 +230,12 @@
     }
   };
 
-  // --- 4. TRANSACTION CONTROLLER ---
+  // --- TRANSACTION TYPE SELECTION ---
   window.setTransactionType = function (type) {
     window.currentEntryType = type;
-    const btnReceipt = document.getElementById('btn-type-receipt');
-    const btnWithdrawal = document.getElementById('btn-type-withdrawal');
-    const btnPayment = document.getElementById('btn-type-payment');
+    const btnReceipt = document.getElementById('btn-type-rcpt');
+    const btnWithdrawal = document.getElementById('btn-type-with');
+    const btnPayment = document.getElementById('btn-type-pmt');
     const channelEl = document.getElementById('tx-channel');
 
     [btnReceipt, btnWithdrawal, btnPayment].forEach(b => {
@@ -191,11 +247,11 @@
 
     if (type === 'RECEIPT' && btnReceipt) {
       btnReceipt.style.opacity = '1';
-      btnReceipt.style.borderColor = '#16a34a';
+      btnReceipt.style.borderColor = '#15803d';
       if (channelEl) channelEl.value = 'BANK';
     } else if (type === 'WITHDRAWAL' && btnWithdrawal) {
       btnWithdrawal.style.opacity = '1';
-      btnWithdrawal.style.borderColor = '#2563eb';
+      btnWithdrawal.style.borderColor = '#0284c7';
       if (channelEl) channelEl.value = 'BANK';
     } else if (type === 'PAYMENT' && btnPayment) {
       btnPayment.style.opacity = '1';
@@ -242,7 +298,7 @@
     window.recalculateCashbook();
   };
 
-  // --- 5. DOUBLE-ENTRY LEDGER RECONCILIATION & REGISTER RENDER ---
+  // --- RECONCILIATION & TWO-PAGE REGISTER BUILDER ---
   function splitAmount(num) {
     if (num === null || num === undefined || isNaN(num) || num === 0) {
       return { rs: '-', p: '--' };
@@ -275,8 +331,8 @@
   }
 
   window.recalculateCashbook = function () {
-    const opCashEl = document.getElementById('op-cash');
-    const opBankEl = document.getElementById('op-bank');
+    const opCashEl = document.getElementById('cb-op-cash');
+    const opBankEl = document.getElementById('cb-op-bank');
 
     const opCash = opCashEl ? parseFloat(opCashEl.value) || 0 : 0;
     const opBank = opBankEl ? parseFloat(opBankEl.value) || 0 : 0;
@@ -285,9 +341,6 @@
     let totRecBank = opBank;
     let totPayCash = 0;
     let totPayBank = 0;
-
-    const receiptBody = document.getElementById('register-receipts-body');
-    const paymentBody = document.getElementById('register-payments-body');
 
     // 1. O/B Row (Debit / Receipts in Black Ink)
     let receiptsHtml = renderRegisterRow('1st', '<strong>To O/B</strong>', '-', opCash, opBank, false);
@@ -318,7 +371,7 @@
       }
     });
 
-    // 2. Physical Balances & Deficit Evaluation
+    // 2. Physical Balances & Deficit Check
     const rawCloseCash = totRecCash - totPayCash;
     const rawCloseBank = totRecBank - totPayBank;
 
@@ -337,7 +390,7 @@
     // 3. By C/B Row (Credit / Payments in Red Ink)
     paymentsHtml += renderRegisterRow('End', '<strong>By C/B</strong>', '-', rawCloseCash, rawCloseBank, true);
 
-    // 4. Fill Ruled Empty Lines
+    // 4. Fill Ruled Empty Ledger Lines
     const receiptRowsCount = (receiptsHtml.match(/<tr/g) || []).length;
     const paymentRowsCount = (paymentsHtml.match(/<tr/g) || []).length;
     const maxRows = Math.max(16, receiptRowsCount, paymentRowsCount);
@@ -378,21 +431,79 @@
       </tr>
     `;
 
-    if (receiptBody) receiptBody.innerHTML = receiptsHtml;
-    if (paymentBody) paymentBody.innerHTML = paymentsHtml;
-
-    // Header Display Sync
-    const mEl = document.getElementById('select-month');
-    const yEl = document.getElementById('select-year');
+    // Render Full Two-Page Spread into #cashbook-printable-area
+    const mEl = document.getElementById('cb-sel-month');
+    const yEl = document.getElementById('cb-sel-year');
     const mName = mEl ? mEl.options[mEl.selectedIndex]?.text : '';
     const yName = yEl ? yEl.value : '';
-    const label = document.getElementById('register-month-label');
-    if (label) label.innerText = `${mName} ${yName}`;
+
+    const area = document.getElementById('cashbook-printable-area');
+    if (area) {
+      area.innerHTML = `
+        <div class="register-spread" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; background:#e2e8f0; padding:12px; border-radius:8px;">
+          
+          <!-- LEFT PAGE: RECEIPTS (BLACK INK) -->
+          <div class="register-page" style="background:#fafaf9; border:1px solid #94a3b8; padding:14px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
+            <div style="text-align:center; margin-bottom:6px;">
+              <h2 style="margin:0; font-size:18px; font-weight:800;">Cash Book</h2>
+              <div style="font-size:12px; font-weight:600; color:#334155;">for the month of ${mName} ${yName}</div>
+            </div>
+            <div style="font-size:14px; font-weight:900; letter-spacing:1px; margin-bottom:4px; color:#09090b;">RECEIPTS</div>
+            <table class="ledger-table" style="width:100%; border-collapse:collapse; border:1.5px solid #475569; font-size:11.5px; background:#fff;">
+              <thead>
+                <tr style="background:#f1f5f9; border-bottom:1.5px solid #475569;">
+                  <th rowspan="2" style="border:1px solid #94a3b8; width:34px; text-align:center;">Month &<br>Date</th>
+                  <th rowspan="2" style="border:1px solid #94a3b8; text-align:center;">PARTICULARS</th>
+                  <th rowspan="2" style="border:1px solid #94a3b8; width:26px; text-align:center;">Ledger<br>Folio</th>
+                  <th colspan="2" style="border:1px solid #94a3b8; text-align:center;">Amount</th>
+                  <th colspan="2" style="border:1px solid #94a3b8; text-align:center;">Bank Amount</th>
+                  <th colspan="2" style="border:1px solid #94a3b8; text-align:center;">Total Amount</th>
+                </tr>
+                <tr style="background:#f1f5f9; border-bottom:1.5px solid #475569;">
+                  <th style="border:1px solid #94a3b8; width:44px; text-align:center;">Rs.</th><th style="border:1px solid #94a3b8; width:24px; text-align:center;">P.</th>
+                  <th style="border:1px solid #94a3b8; width:44px; text-align:center;">Rs.</th><th style="border:1px solid #94a3b8; width:24px; text-align:center;">P.</th>
+                  <th style="border:1px solid #94a3b8; width:44px; text-align:center;">Rs.</th><th style="border:1px solid #94a3b8; width:24px; text-align:center;">P.</th>
+                </tr>
+              </thead>
+              <tbody>${receiptsHtml}</tbody>
+            </table>
+          </div>
+
+          <!-- RIGHT PAGE: PAYMENTS (RED INK) -->
+          <div class="register-page" style="background:#fafaf9; border:1px solid #94a3b8; padding:14px; box-shadow:0 4px 6px rgba(0,0,0,0.1); position:relative;">
+            <div style="text-align:center; margin-bottom:6px; position:relative;">
+              <h2 style="margin:0; font-size:18px; font-weight:800;">Cash Book</h2>
+              <div style="position:absolute; right:0; top:0; font-size:14px; font-weight:800; color:#b91c1c;">5</div>
+            </div>
+            <div style="font-size:14px; font-weight:900; letter-spacing:1px; margin-bottom:4px; color:#b91c1c;">PAYMENTS</div>
+            <table class="ledger-table" style="width:100%; border-collapse:collapse; border:1.5px solid #475569; font-size:11.5px; background:#fff;">
+              <thead>
+                <tr style="background:#f1f5f9; border-bottom:1.5px solid #475569;">
+                  <th rowspan="2" style="border:1px solid #94a3b8; width:34px; text-align:center;">Month &<br>Date</th>
+                  <th rowspan="2" style="border:1px solid #94a3b8; text-align:center;">PARTICULARS</th>
+                  <th rowspan="2" style="border:1px solid #94a3b8; width:26px; text-align:center;">Ledger<br>Folio</th>
+                  <th colspan="2" style="border:1px solid #94a3b8; text-align:center;">Amount</th>
+                  <th colspan="2" style="border:1px solid #94a3b8; text-align:center;">Bank Amount</th>
+                  <th colspan="2" style="border:1px solid #94a3b8; text-align:center;">Total Amount</th>
+                </tr>
+                <tr style="background:#f1f5f9; border-bottom:1.5px solid #475569;">
+                  <th style="border:1px solid #94a3b8; width:44px; text-align:center;">Rs.</th><th style="border:1px solid #94a3b8; width:24px; text-align:center;">P.</th>
+                  <th style="border:1px solid #94a3b8; width:44px; text-align:center;">Rs.</th><th style="border:1px solid #94a3b8; width:24px; text-align:center;">P.</th>
+                  <th style="border:1px solid #94a3b8; width:44px; text-align:center;">Rs.</th><th style="border:1px solid #94a3b8; width:24px; text-align:center;">P.</th>
+                </tr>
+              </thead>
+              <tbody>${paymentsHtml}</tbody>
+            </table>
+          </div>
+
+        </div>
+      `;
+    }
 
     window.renderVoucherList();
   };
 
-  // --- 6. USER-CONSENT TEACHER ADVANCE ---
+  // --- CONSENT ADVANCE ---
   window.consentTeacherAdvance = function () {
     if (window.pendingAdvanceAmount <= 0) return;
     const dEl = document.getElementById('tx-date');
@@ -415,7 +526,7 @@
     window.recalculateCashbook();
   };
 
-  // --- 7. VOUCHER LIST (EDIT / REMOVE) ---
+  // --- VOUCHER TRAY ---
   window.renderVoucherList = function () {
     const listEl = document.getElementById('voucher-tray');
     if (!listEl) return;
@@ -439,18 +550,18 @@
     });
   };
 
-  // --- 8. MULTI-MONTH STORAGE, CARRY FORWARD & ARCHIVE ---
+  // --- MULTI-MONTH STORAGE & RECOVERY ---
   function getStorageKey(drawer, year, month) {
     return `cashbook_rec_${drawer}_${year}_${String(month).padStart(2, '0')}`;
   }
 
   window.saveCurrentMonthRecord = function () {
     const drawer = window.currentDrawer;
-    const year = document.getElementById('select-year')?.value;
-    const month = document.getElementById('select-month')?.value;
+    const year = document.getElementById('cb-sel-year')?.value;
+    const month = document.getElementById('cb-sel-month')?.value;
 
-    const opCash = parseFloat(document.getElementById('op-cash')?.value) || 0;
-    const opBank = parseFloat(document.getElementById('op-bank')?.value) || 0;
+    const opCash = parseFloat(document.getElementById('cb-op-cash')?.value) || 0;
+    const opBank = parseFloat(document.getElementById('cb-op-bank')?.value) || 0;
 
     let totCashRec = opCash;
     let totBankRec = opBank;
@@ -478,7 +589,7 @@
       drawer: drawer,
       year: year,
       month: month,
-      category: document.getElementById('school-category')?.value,
+      category: document.getElementById('cb-mandate-cat')?.value,
       rateLp: document.getElementById('rate-lp')?.value,
       mealsLp: document.getElementById('meals-lp')?.value,
       rateUp: document.getElementById('rate-up')?.value,
@@ -508,8 +619,14 @@
     nextRec.opBank = closeBank;
     localStorage.setItem(nextKey, JSON.stringify(nextRec));
 
-    alert(`Cashbook for ${month}/${year} permanently saved. C/B carried forward to next month.`);
+    alert(`Cashbook for ${month}/${year} permanently saved. C/B carried forward.`);
     window.renderArchiveTray();
+  };
+
+  window.onCashbookPeriodChange = function () {
+    const year = document.getElementById('cb-sel-year')?.value;
+    const month = document.getElementById('cb-sel-month')?.value;
+    window.loadMonthRecord(year, month);
   };
 
   window.loadMonthRecord = function (year, month) {
@@ -517,23 +634,22 @@
     const key = getStorageKey(drawer, year, month);
     const dataStr = localStorage.getItem(key);
 
-    const yEl = document.getElementById('select-year');
-    const mEl = document.getElementById('select-month');
+    const yEl = document.getElementById('cb-sel-year');
+    const mEl = document.getElementById('cb-sel-month');
     if (yEl) yEl.value = year;
-    if (mEl) mEl.value = month;
+    if (mEl) mEl.value = String(month).padStart(2, '0');
 
     if (dataStr) {
       const data = JSON.parse(dataStr);
-      document.getElementById('school-category').value = data.category || 'COMPOSITE';
+      document.getElementById('cb-mandate-cat').value = data.category || 'COMPOSITE';
       document.getElementById('rate-lp').value = data.rateLp || '';
       document.getElementById('meals-lp').value = data.mealsLp || '';
       document.getElementById('rate-up').value = data.rateUp || '';
       document.getElementById('meals-up').value = data.mealsUp || '';
-      document.getElementById('op-cash').value = data.opCash !== undefined ? data.opCash : '';
-      document.getElementById('op-bank').value = data.opBank !== undefined ? data.opBank : '';
+      document.getElementById('cb-op-cash').value = data.opCash !== undefined ? data.opCash : '';
+      document.getElementById('cb-op-bank').value = data.opBank !== undefined ? data.opBank : '';
       window.currentVouchers = data.vouchers || [];
     } else {
-      // Check if previous month has C/B to auto carry-forward
       let prevM = parseInt(month, 10) - 1;
       let prevY = parseInt(year, 10);
       if (prevM < 1) { prevM = 12; prevY -= 1; }
@@ -542,11 +658,11 @@
 
       if (prevDataStr) {
         const prevData = JSON.parse(prevDataStr);
-        document.getElementById('op-cash').value = prevData.closeCash !== undefined ? prevData.closeCash : 0;
-        document.getElementById('op-bank').value = prevData.closeBank !== undefined ? prevData.closeBank : 0;
+        document.getElementById('cb-op-cash').value = prevData.closeCash !== undefined ? prevData.closeCash : 0;
+        document.getElementById('cb-op-bank').value = prevData.closeBank !== undefined ? prevData.closeBank : 0;
       } else {
-        document.getElementById('op-cash').value = '';
-        document.getElementById('op-bank').value = '';
+        document.getElementById('cb-op-cash').value = '';
+        document.getElementById('cb-op-bank').value = '';
       }
       document.getElementById('rate-lp').value = '';
       document.getElementById('meals-lp').value = '';
@@ -598,7 +714,7 @@
     }
   };
 
-  // --- 9. LIFECYCLE BOOTSTRAP ---
+  // --- BOOTSTRAP ---
   document.addEventListener('DOMContentLoaded', () => {
     window.updateCategoryVisibility();
     window.setTransactionType('RECEIPT');

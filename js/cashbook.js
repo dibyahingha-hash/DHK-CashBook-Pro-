@@ -1229,9 +1229,14 @@ function updateMandateSummaryDisplay() {
 
 Object.assign(window, CashBookModule);
 
-// Direct global assignment without recursive function wrappers
-window.recalculateCashbook = typeof recalculateCashbook === 'function' ? recalculateCashbook : undefined;
-window.deriveMealsFromExpenditure = typeof deriveMealsFromExpenditure === 'function' ? deriveMealsFromExpenditure : undefined;
-window.deriveExpenditureFromMeals = typeof deriveExpenditureFromMeals === 'function' ? deriveExpenditureFromMeals : undefined;
-window.calculateCookingMandate = typeof calculateCookingMandate === 'function' ? calculateCookingMandate : undefined;
-window.updateMandateSummaryDisplay = typeof updateMandateSummaryDisplay === 'function' ? updateMandateSummaryDisplay : undefined;
+Object.assign(window, CashBookModule);
+
+// Expose mandate calculation triggers directly to window
+window.recalculateCashbook = function() {
+  calculateCookingMandate();
+  updateMandateSummaryDisplay();
+};
+window.calculateCookingMandate = calculateCookingMandate;
+window.deriveMealsFromExpenditure = deriveMealsFromExpenditure;
+window.deriveExpenditureFromMeals = deriveExpenditureFromMeals;
+window.updateMandateSummaryDisplay = updateMandateSummaryDisplay;

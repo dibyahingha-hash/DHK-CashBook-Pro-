@@ -1237,3 +1237,25 @@ if (typeof deriveMealsFromExpenditure === 'function') window.deriveMealsFromExpe
 if (typeof deriveExpenditureFromMeals === 'function') window.deriveExpenditureFromMeals = deriveExpenditureFromMeals;
 if (typeof calculateCookingMandate === 'function') window.calculateCookingMandate = calculateCookingMandate;
 if (typeof updateMandateSummaryDisplay === 'function') window.updateMandateSummaryDisplay = updateMandateSummaryDisplay;
+// Global bindings for inline HTML onclick handlers
+if (typeof addCompleteTransaction === 'function') {
+  window.addCompleteTransaction = addCompleteTransaction;
+}
+if (typeof recalculateCashbook === 'function') {
+  window.recalculateCashbook = recalculateCashbook;
+}
+if (typeof refreshNarrationDropdown === 'function') {
+  window.refreshNarrationDropdown = refreshNarrationDropdown;
+}
+if (typeof deriveMealsFromExpenditure === 'function') {
+  window.deriveMealsFromExpenditure = deriveMealsFromExpenditure;
+}
+if (typeof deriveExpenditureFromMeals === 'function') {
+  window.deriveExpenditureFromMeals = deriveExpenditureFromMeals;
+}
+if (typeof calculateCookingMandate === 'function') {
+  window.calculateCookingMandate = calculateCookingMandate;
+}
+if (typeof updateMandateSummaryDisplay === 'function') {
+  window.updateMandateSummaryDisplay = updateMandateSummaryDisplay;
+}

@@ -383,12 +383,11 @@ function initDrawerUI() {
     btnSna.style.color = '#fff';
   }
 
-  const titleText = CashBookModule.getDrawerTitle(d);
+    const titleText = CashBookModule.getDrawerTitle(d);
   const cbHeader = document.getElementById('cb-header-title');
   if (cbHeader) cbHeader.innerText = titleText;
   const ledDrawer = document.getElementById('led-header-drawer-name');
   if (ledDrawer) ledDrawer.innerText = titleText;
-}
 
 
 function onCashbookPeriodChange() {

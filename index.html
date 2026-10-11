@@ -134,13 +134,13 @@
     <section id="view-stock" class="view-panel" style="display:none;">
       <!-- Populated dynamically by js/stock.js -->
     </section>
-                <!-- ROOM 3: ALMIRAH 2 (STATUTORY CASH BOOKS) -->
+                 <!-- ROOM 3: ALMIRAH 2 (STATUTORY CASH BOOKS) -->
     <section id="view-cashbook" class="view-panel" style="display:none;">
       
       <!-- Top Book / Ledger Toggle -->
       <div class="card no-print" style="margin-bottom:12px; display:flex; gap:10px;">
         <button id="btn-sub-cashbook" class="btn" onclick="switchSubView('cashbook')" style="flex:1; background:#1e3a8a; color:#fff; font-weight:bold; padding:10px;">
-          📖 Three-Column Cash Book
+          📖 Two-Page Cash Book Register
         </button>
         <button id="btn-sub-ledger" class="btn" onclick="switchSubView('ledger')" style="flex:1; background:#f8fafc; color:#334155; border:1px solid #cbd5e1; font-weight:bold; padding:10px;">
           📑 General Ledger
@@ -149,174 +149,176 @@
 
       <!-- Account Drawer Selector -->
       <div class="card no-print" style="margin-bottom:12px; padding:8px; display:flex; gap:8px;">
-        <button id="btn-drawer-mdm" class="btn btn-sm" onclick="switchDrawer('mdm')" style="flex:1; background:#0284c7; color:#fff;">MDM Cooking Cost</button>
-        <button id="btn-drawer-smc" class="btn btn-sm" onclick="switchDrawer('smc')" style="flex:1; background:#f1f5f9; color:#334155;">SMC Normal</button>
-        <button id="btn-drawer-sna" class="btn btn-sm" onclick="switchDrawer('sna')" style="flex:1; background:#f1f5f9; color:#334155;">Canara SNA</button>
+        <button id="btn-drawer-mdm" class="btn btn-sm" onclick="switchDrawer('mdm')" style="flex:1; background:#0284c7; color:#fff; font-weight:bold; padding:8px;">MDM Cooking Cost</button>
+        <button id="btn-drawer-smc" class="btn btn-sm" onclick="switchDrawer('smc')" style="flex:1; background:#f1f5f9; color:#334155; font-weight:bold; padding:8px;">SMC Normal</button>
+        <button id="btn-drawer-sna" class="btn btn-sm" onclick="switchDrawer('sna')" style="flex:1; background:#f1f5f9; color:#334155; font-weight:bold; padding:8px;">Canara SNA</button>
       </div>
 
-      <!-- Main Period & Mandate Card -->
+      <!-- Period, Blank Rates & Dual Mandate Card -->
       <div class="card no-print" style="margin-bottom:14px;">
         
         <div class="grid-2 form-group">
           <div>
             <label><b>Accounting Month</b></label>
-            <select id="cb-sel-month" onchange="onCashbookPeriodChange()" style="font-weight:bold; padding:8px;">
-              <option value="01">January</option>
-              <option value="02">February</option>
-              <option value="03">March</option>
-              <option value="04">April</option>
-              <option value="05">May</option>
-              <option value="06">June</option>
-              <option value="07">July</option>
-              <option value="08">August</option>
-              <option value="09" selected>September</option>
-              <option value="10">October</option>
-              <option value="11">November</option>
-              <option value="12">December</option>
+            <select id="cb-sel-month" onchange="onCashbookPeriodChange()" style="font-weight:bold; padding:8px; width:100%;">
+              <option value="01">January</option><option value="02">February</option><option value="03">March</option>
+              <option value="04">April</option><option value="05">May</option><option value="06">June</option>
+              <option value="07">July</option><option value="08">August</option><option value="09" selected>September</option>
+              <option value="10">October</option><option value="11">November</option><option value="12">December</option>
             </select>
           </div>
           <div>
             <label><b>Accounting Year</b></label>
-            <select id="cb-sel-year" onchange="onCashbookPeriodChange()" style="font-weight:bold; padding:8px;">
-              <option value="2020">2020</option>
-              <option value="2021">2021</option>
-              <option value="2022">2022</option>
-              <option value="2023">2023</option>
-              <option value="2024">2024</option>
-              <option value="2025">2025</option>
+            <select id="cb-sel-year" onchange="onCashbookPeriodChange()" style="font-weight:bold; padding:8px; width:100%;">
+              <option value="2020">2020</option><option value="2021">2021</option><option value="2022">2022</option>
+              <option value="2023">2023</option><option value="2024">2024</option><option value="2025">2025</option>
               <option value="2026" selected>2026</option>
             </select>
           </div>
         </div>
 
-        <!-- Statutory Cooking Mandate Calculator -->
-        <div id="box-mdm-mandate" style="background:#f0fdf4; border:1px solid #86efac; border-radius:6px; padding:12px; margin:12px 0;">
-          <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:8px;">
-            <b style="color:#166534; font-size:0.95rem;">🎯 Statutory Monthly Cooking Mandate</b>
-            <button type="button" onclick="resetGovtRate()" style="background:none; border:none; color:#0284c7; cursor:pointer; font-size:0.8rem; font-weight:bold;">
-              [ ↺ Reset to Govt Notified Rate ]
-            </button>
-          </div>
-
-          <div class="form-group">
-            <label>School Category</label>
-            <select id="cb-mandate-cat" onchange="calculateCookingMandate()" style="background:#fff;">
-              <option value="LP" selected>Bal Vatika & Primary (LP: Class I - V)</option>
-              <option value="UP">Upper Primary (UP: Class VI - VIII)</option>
-              <option value="COMPOSITE">Composite Elementary (Classes I - VIII)</option>
-            </select>
-          </div>
-
-          <div class="form-group">
-            <label>Cooking Cost Rate per Meal (₹) *</label>
-            <input type="number" step="0.01" id="cb-rate-meal" value="6.78" oninput="calculateCookingMandate()" style="background:#fff; font-weight:bold;">
-          </div>
-
-          <div class="form-group">
-  <label>Mandated Monthly Cooking Expenditure (₹) *</label>
-  <input type="number" step="0.01" id="cb-mandate-exp" value="2847.60" oninput="deriveMealsFromExpenditure()" style="background:#fff; font-weight:bold; font-size:1.05rem;">
-</div>
-
-<div class="form-group">
-  <label>Total Mandated Meals (Type or Auto-Derived)</label>
-  <input type="number" id="cb-derived-meals" value="420" oninput="deriveExpenditureFromMeals()" style="background:#fff; font-weight:bold; font-size:1.05rem;">
-</div>
-
-
-          <div id="cb-mandate-summary" style="background:#fff; border:1px solid #bbf7d0; border-radius:4px; padding:8px; font-size:0.85rem; color:#1e293b; margin-top:6px;">
-            Mandate Target: <b id="lbl-mandate-target">₹2847.60</b> | Vouchers Total: <b id="lbl-vouchers-tot">₹0.00</b><br>
-            <span id="lbl-mandate-diff" style="color:#dc2626; font-weight:bold;">| Vouchers Short by ₹2847.60</span>
-          </div>
+        <!-- School Category Selector -->
+        <div class="form-group" style="margin-top:8px;">
+          <label><b>School Category</b></label>
+          <select id="cb-mandate-cat" onchange="updateCategoryVisibility()" style="background:#fff; font-weight:bold; padding:8px; width:100%;">
+            <option value="COMPOSITE" selected>Composite Elementary (Bal Vatika - VIII)</option>
+            <option value="LP">Lower Primary (Bal Vatika - V)</option>
+            <option value="UP">Upper Primary (VI - VIII)</option>
+          </select>
         </div>
 
-        <!-- Opening Balances -->
-        <div style="border-top:1px dashed #cbd5e1; padding-top:12px; margin-top:8px;">
-          <label style="font-weight:bold; color:#1e3a8a; margin-bottom:8px; display:block;">
-            Opening Balance on 1st of Month (To Opening Balance b/f)
-          </label>
-          <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:8px;">
-            <div>
-              <label style="font-size:0.75rem;">Cash in Hand (₹)</label>
-              <input type="number" step="0.01" id="cb-op-cash" value="0.00" oninput="recalculateCashbook()" style="font-weight:bold;">
+        <!-- Statutory Cooking Mandate Calculator (Dual LP & UP, Starts Blank) -->
+        <div id="box-mdm-mandate" style="background:#f0fdf4; border:1px solid #86efac; border-radius:6px; padding:12px; margin:10px 0;">
+          <b style="color:#166534; font-size:0.95rem; display:block; margin-bottom:8px;">🎯 Cooking Cost Mandate Targets</b>
+          
+          <div class="grid-2">
+            <!-- LP Block -->
+            <div id="box-lp" style="background:#fff; border:1px solid #bbf7d0; padding:8px; border-radius:4px;">
+              <span style="font-size:12px; font-weight:800; color:#15803d;">LP (Bal Vatika - V)</span>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:4px;">
+                <div>
+                  <label style="font-size:10px;">Rate / Meal (₹)</label>
+                  <input type="number" step="0.01" id="rate-lp" placeholder="Rate" oninput="calculateMandate()" style="padding:6px; font-weight:bold; width:100%;">
+                </div>
+                <div>
+                  <label style="font-size:10px;">Meals Count</label>
+                  <input type="number" id="meals-lp" placeholder="Meals" oninput="calculateMandate()" style="padding:6px; font-weight:bold; width:100%;">
+                </div>
+              </div>
+              <div style="font-size:11px; font-weight:700; color:#0369a1; margin-top:4px;">LP Subtotal: ₹<span id="subtotal-lp">0.00</span></div>
             </div>
-            <div>
-              <label style="font-size:0.75rem;">Bank Balance (₹)</label>
-              <input type="number" step="0.01" id="cb-op-bank" value="15000" oninput="recalculateCashbook()" style="font-weight:bold;">
-            </div>
-            <div>
-              <label style="font-size:0.75rem;">Teacher Advance b/f (₹)</label>
-              <input type="number" step="0.01" id="cb-op-advance" value="0.00" oninput="recalculateCashbook()" style="font-weight:bold;">
+
+            <!-- UP Block -->
+            <div id="box-up" style="background:#fff; border:1px solid #bbf7d0; padding:8px; border-radius:4px;">
+              <span style="font-size:12px; font-weight:800; color:#15803d;">UP (VI - VIII)</span>
+              <div style="display:grid; grid-template-columns: 1fr 1fr; gap:6px; margin-top:4px;">
+                <div>
+                  <label style="font-size:10px;">Rate / Meal (₹)</label>
+                  <input type="number" step="0.01" id="rate-up" placeholder="Rate" oninput="calculateMandate()" style="padding:6px; font-weight:bold; width:100%;">
+                </div>
+                <div>
+                  <label style="font-size:10px;">Meals Count</label>
+                  <input type="number" id="meals-up" placeholder="Meals" oninput="calculateMandate()" style="padding:6px; font-weight:bold; width:100%;">
+                </div>
+              </div>
+              <div style="font-size:11px; font-weight:700; color:#0369a1; margin-top:4px;">UP Subtotal: ₹<span id="subtotal-up">0.00</span></div>
             </div>
           </div>
-          <div style="margin-top:6px; font-size:0.75rem; color:#64748b;">
-            (Starting fresh / retrospective: enter opening figures)
+
+          <div style="margin-top:8px; display:flex; justify-content:space-between; font-size:12px; font-weight:800; background:#ecfdf5; padding:6px 10px; border-radius:4px; border:1px solid #a7f3d0; color:#065f46;">
+            <span>Total Meals: <strong id="mandate-meals-display">0</strong></span>
+            <span>Target Mandate Expenditure: ₹<strong id="mandate-target-display">0.00</strong></span>
+          </div>
+          <input type="hidden" id="tx-meals" value="0">
+          <input type="hidden" id="tx-target-expenditure" value="0">
+        </div>
+
+        <!-- Opening Balances (O/B) -->
+        <div style="border-top:1px dashed #cbd5e1; padding-top:10px; margin-top:8px;">
+          <label style="font-weight:bold; color:#1e3a8a; margin-bottom:6px; display:block;">
+            Opening Balance on 1st of Month (To O/B)
+          </label>
+          <div class="grid-2">
+            <div>
+              <label style="font-size:0.75rem;">O/B Physical Cash in Hand (₹)</label>
+              <input type="number" step="0.01" id="cb-op-cash" placeholder="0.00" oninput="recalculateCashbook()" style="font-weight:bold; padding:8px; width:100%;">
+            </div>
+            <div>
+              <label style="font-size:0.75rem;">O/B Bank Balance (₹)</label>
+              <input type="number" step="0.01" id="cb-op-bank" placeholder="0.00" oninput="recalculateCashbook()" style="font-weight:bold; padding:8px; width:100%;">
+            </div>
           </div>
         </div>
 
       </div>
 
+      <!-- Deficit / Teacher Advance Consent Banner -->
+      <div id="advance-consent-banner" class="no-print" style="display:none; background:#fef2f2; border:1.5px solid #ef4444; border-radius:8px; padding:12px; margin-bottom:14px; justify-content:space-between; align-items:center;">
+        <div>
+          <strong style="color:#b91c1c; font-size:13px;">⚠️ Cash Deficit Detected: ₹<span id="advance-deficit-amount">0.00</span></strong>
+          <div style="font-size:12px; color:#475569; margin-top:2px;">Cash in hand cannot drop below zero. Did the Teacher fund this out-of-pocket?</div>
+        </div>
+        <button onclick="consentTeacherAdvance()" style="background:#dc2626; color:#fff; border:none; padding:8px 14px; font-size:12px; font-weight:bold; border-radius:4px; cursor:pointer;">
+          Yes, Add To Temporary Advance (LF 8)
+        </button>
+      </div>
+
       <!-- Transaction Entry Form -->
       <div class="card no-print" id="tx-entry-card" style="margin-bottom:14px;">
         <div style="display:grid; grid-template-columns: 1fr 1fr 1fr; gap:6px; margin-bottom:12px;">
-          <button id="btn-type-rcpt" class="btn btn-sm" onclick="setTransactionType('RECEIPT')" style="background:#15803d; color:#fff; font-size:0.75rem; padding:8px 4px; text-align:center;">
-            🟢 Add Money Received
+          <button id="btn-type-rcpt" class="btn btn-sm" onclick="setTransactionType('RECEIPT')" style="background:#15803d; color:#fff; font-size:0.8rem; padding:10px 4px; font-weight:bold; border:2px solid #15803d; border-radius:4px;">
+            + RECEIPT (To...)
           </button>
-          <button id="btn-type-with" class="btn btn-sm" onclick="setTransactionType('WITHDRAWAL')" style="background:#0284c7; color:#fff; font-size:0.75rem; padding:8px 4px; text-align:center;">
-            🔄 Bank Withdrawal (Contra)
+          <button id="btn-type-with" class="btn btn-sm" onclick="setTransactionType('WITHDRAWAL')" style="background:#f1f5f9; color:#0284c7; font-size:0.8rem; padding:10px 4px; font-weight:bold; border:2px solid transparent; border-radius:4px;">
+            🔄 CONTRA (C)
           </button>
-          <button id="btn-type-pmt" class="btn btn-sm" onclick="setTransactionType('PAYMENT')" style="background:#dc2626; color:#fff; font-size:0.75rem; padding:8px 4px; text-align:center;">
-            🔴 Add Payment (Expenditure)
+          <button id="btn-type-pmt" class="btn btn-sm" onclick="setTransactionType('PAYMENT')" style="background:#f1f5f9; color:#dc2626; font-size:0.8rem; padding:10px 4px; font-weight:bold; border:2px solid transparent; border-radius:4px;">
+            - PAYMENT (By...)
           </button>
         </div>
 
         <div class="grid-2 form-group">
           <div>
             <label>Date</label>
-            <input type="date" id="tx-date">
+            <input type="date" id="tx-date" style="padding:8px; width:100%;">
           </div>
           <div>
-            <label id="lbl-vch-no">Voucher / Ref No.</label>
-            <input type="text" id="tx-ref" placeholder="e.g. 01">
+            <label>Ledger Folio (LF)</label>
+            <input type="text" id="tx-lf" placeholder="-" style="padding:8px; width:100%;">
           </div>
         </div>
 
         <div class="grid-2 form-group">
           <div>
             <label>Amount (₹)</label>
-            <input type="number" step="0.01" id="tx-amount" placeholder="0.00" style="font-weight:bold;">
+            <input type="number" step="0.01" id="tx-amount" placeholder="0.00" style="font-weight:bold; padding:8px; width:100%;">
           </div>
           <div id="box-channel">
-            <label id="lbl-channel">Payment Channel</label>
-            <select id="tx-channel">
-              <option value="CASH">Cash in Hand</option>
+            <label>Payment Channel</label>
+            <select id="tx-channel" style="padding:8px; width:100%;">
               <option value="BANK">Bank Account</option>
+              <option value="CASH">Cash in Hand</option>
             </select>
           </div>
         </div>
 
-        <div class="grid-2 form-group">
-          <div>
-            <label>Ledger Head</label>
-            <select id="tx-ledger-head" onchange="onLedgerHeadSelected()"></select>
-          </div>
-          <div>
-            <label>Ledger Folio (L.F.)</label>
-            <input type="text" id="tx-lf" value="1">
-          </div>
-        </div>
-
         <div class="form-group">
-          <label>Audit Narration</label>
-          <select id="tx-desc-select" onchange="handleNarrationSelect(this)" style="margin-bottom:6px;"></select>
-          <input type="text" id="tx-desc" placeholder="Enter narration description">
+          <label>Audit Particulars / Narration</label>
+          <input type="text" id="tx-desc" placeholder="Select quick option or type custom narration" style="padding:8px; width:100%; margin-bottom:6px;">
+          <div id="narration-quick-options" style="margin-top:4px;"></div>
         </div>
 
-        <button class="btn btn-secondary" onclick="addCompleteTransaction()" style="width:100%; padding:10px; font-weight:bold;">
-          ➕ Add Entry to Register
+        <button class="btn btn-secondary" onclick="addCompleteTransaction()" style="width:100%; padding:10px; font-weight:bold; background:#0f172a; color:#fff; border:none; border-radius:4px; margin-top:8px;">
+          ➕ Add Entry to Ledger
         </button>
+
+        <div style="margin-top:12px;">
+          <label><b>Current Vouchers in Selected Month</b></label>
+          <div id="voucher-tray" style="margin-top:6px;"></div>
+        </div>
       </div>
 
-      <!-- Physical Register Folio Spread -->
+      <!-- Physical Two-Page Cash Book Register View -->
       <div id="subview-cashbook-wrap">
         <div id="cashbook-printable-area"></div>
       </div>
@@ -352,18 +354,24 @@
         </div>
       </div>
 
-      <!-- Bottom Controls -->
-      <div class="card no-print" style="margin-top:14px; display:flex; justify-content:space-between; align-items:center;">
-        <button class="btn btn-secondary" onclick="saveCurrentMonthCashbook()" style="padding:10px 16px;">
-          💾 Seal & Save Month
-        </button>
-        <button class="btn" onclick="window.print()" style="background:#334155; color:#fff; padding:10px 16px;">
-          🖨️ Print Book
-        </button>
-        <span id="cb-save-msg" style="font-weight:bold;"></span>
+      <!-- Bottom Controls & Permanent Archives -->
+      <div class="card no-print" style="margin-top:14px;">
+        <div style="display:flex; justify-content:space-between; align-items:center;">
+          <button class="btn btn-secondary" onclick="saveCurrentMonthRecord()" style="padding:10px 16px; background:#16a34a; color:#fff; font-weight:bold; border:none; border-radius:4px; cursor:pointer;">
+            💾 Save & Seal Month
+          </button>
+          <button class="btn" onclick="window.print()" style="background:#334155; color:#fff; padding:10px 16px; font-weight:bold; border:none; border-radius:4px; cursor:pointer;">
+            🖨️ Print Two-Page Book
+          </button>
+        </div>
+        <div style="margin-top:14px; border-top:1px solid #e2e8f0; padding-top:10px;">
+          <label style="font-weight:bold; color:#475569;">Permanent Saved Cashbooks (Local Storage)</label>
+          <div id="archive-tray" style="margin-top:6px;"></div>
+        </div>
       </div>
 
     </section>
+                       
 
     <!-- ROOM 4: SETUP, EDIT PROFILE & SAFE DATA RESET -->
     <section id="view-setup" class="view-panel" style="display:none;">

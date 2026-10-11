@@ -136,9 +136,14 @@ function onMandateTargetChanged(trigger) {
     const mSelect = document.getElementById('cb-sel-month');
     const mName = mSelect && mSelect.options[mSelect.selectedIndex] ? mSelect.options[mSelect.selectedIndex].text : '';
 
-    if (narrationInput && exp > 0 && meals > 0) {
-      narrationInput.value = `Being cooking cost of ₹${exp.toFixed(2)} for ${meals} meals for the month of ${mName} ${yVal} @ ₹${rate.toFixed(2)}/meal`;
-    }
+            if (narrationInput && exp > 0 && meals > 0) {
+      const expStr = exp.toFixed(2);
+      const rateStr = rate.toFixed(2);
+      narrationInput.value = 
+        `Being cooking cost of ₹${expStr} for ${meals} meals for ` +
+        `the month of ${mName} ${yVal} @ ₹${rateStr}/meal`;
+            }
+  
 
 function updateMandateTallyStatus() {
   const targetExp = parseFloat(document.getElementById('cb-mandate-target')?.value) || 0;

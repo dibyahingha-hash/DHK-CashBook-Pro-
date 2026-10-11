@@ -393,17 +393,16 @@
 
     // 3. By C/B Row (Payments in Red Ink)
     paymentsHtml += renderRegisterRow('End', '<strong>By C/B</strong>', '-', rawCloseCash, rawCloseBank, true);
-
-    // 4. Fill Ruled Empty Ledger Lines
-    const receiptRowsCount = (receiptsHtml.match(/<tr/g) || []).length;
+        const receiptRowsCount = (receiptsHtml.match(/<tr/g) || []).length;
     const paymentRowsCount = (paymentsHtml.match(/<tr/g) || []).length;
-    const maxRows = Math.max(16, receiptRowsCount, paymentRowsCount);
+    const targetRows = Math.max(18, receiptRowsCount, paymentRowsCount);
 
-    for (let i = receiptRowsCount; i < maxRows; i++) {
-      receiptsHtml += `<tr class="empty-line"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+    for (let i = receiptRowsCount; i < targetRows; i++) {
+      receiptsHtml += `<tr class="empty-line" style="height:28px;"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
     }
-    for (let i = paymentRowsCount; i < maxRows; i++) {
-      paymentsHtml += `<tr class="empty-line"><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+
+    for (let i = paymentRowsCount; i < targetRows; i++) {
+      paymentsHtml += `<tr class="empty-line" style="height:28px;"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
     }
 
     // 5. Total Lines (T/P)

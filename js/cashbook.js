@@ -518,7 +518,8 @@ if (mEl) mEl.value = '04';
   recalculateCashbook();
 }
 
-
+window.addCompleteTransaction = addCompleteTransaction;
+  
 function addCompleteTransaction() {
   const date = document.getElementById('tx-date').value;
   const ref = document.getElementById('tx-ref').value.trim() || '-';

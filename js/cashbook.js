@@ -1229,29 +1229,9 @@ function updateMandateSummaryDisplay() {
 
 Object.assign(window, CashBookModule);
 
-// Expose internal calculation & UI functions globally
-window.recalculateCashbook = function(...a) {
-  if (typeof recalculateCashbook === 'function') recalculateCashbook(...a);
-  else if (CashBookModule?.recalculateCashbook) CashBookModule.recalculateCashbook(...a);
-};
-window.deriveMealsFromExpenditure = function(...a) {
-  if (typeof deriveMealsFromExpenditure === 'function') deriveMealsFromExpenditure(...a);
-};
-window.deriveExpenditureFromMeals = function(...a) {
-  if (typeof deriveExpenditureFromMeals === 'function') deriveExpenditureFromMeals(...a);
-};
-window.calculateCookingMandate = function(...a) {
-  if (typeof calculateCookingMandate === 'function') calculateCookingMandate(...a);
-};
-window.updateMandateSummaryDisplay = function(...a) {
-  if (typeof updateMandateSummaryDisplay === 'function') updateMandateSummaryDisplay(...a);
-};
-// Auto-populate narration dropdown on initialization
-if (typeof refreshNarrationDropdown === 'function') {
-  refreshNarrationDropdown('PAYMENT');
-}
-document.addEventListener('DOMContentLoaded', function() {
-  if (typeof refreshNarrationDropdown === 'function') {
-    refreshNarrationDropdown('PAYMENT');
-  }
-});
+// Expose calculation & summary functions without recursion
+if (typeof recalculateCashbook === 'function') window.recalculateCashbook = recalculateCashbook;
+if (typeof deriveMealsFromExpenditure === 'function') window.deriveMealsFromExpenditure = deriveMealsFromExpenditure;
+if (typeof deriveExpenditureFromMeals === 'function') window.deriveExpenditureFromMeals = deriveExpenditureFromMeals;
+if (typeof calculateCookingMandate === 'function') window.calculateCookingMandate = calculateCookingMandate;
+if (typeof updateMandateSummaryDisplay === 'function') window.updateMandateSummaryDisplay = updateMandateSummaryDisplay;

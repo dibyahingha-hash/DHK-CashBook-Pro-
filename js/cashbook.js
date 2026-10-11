@@ -375,6 +375,9 @@ function switchDrawer(drawerKey) {
 }
 
 function initDrawerUI() {
+  if (typeof refreshNarrationDropdown === 'function') {
+    refreshNarrationDropdown('PAYMENT');
+  }
   const d = CashBookModule.activeDrawer || 'mdm';
     // FORCE HIDE/SHOW MANDATE
     const mandateBox = document.getElementById('box-mdm-mandate');

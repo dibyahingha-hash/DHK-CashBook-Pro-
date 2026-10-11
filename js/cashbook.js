@@ -400,7 +400,8 @@ function initDrawerUI() {
   if (ledDrawer) ledDrawer.innerText = titleText;
 
 
-function onCashbookPeriodChange() {
+window.onCashbookPeriodChange = function() {
+  
   let ym = getSelectedCBYM();
 
   const curDrawer = CashBookModule.activeDrawer || 'mdm';

@@ -381,36 +381,58 @@ table.ledger-table tr.total-row td {
 /* Force A4 Landscape Print Mode */
 @media print {
   @page {
-    size: A4 landscape !important;
-    margin: 8mm 6mm !important;
+    size: A4 landscape;
+    margin: 8mm 6mm;
   }
-  
-  body * {
-    visibility: hidden;
+
+  /* Hide interactive controls, buttons, headers, and trays */
+  nav,
+  header,
+  .no-print,
+  button,
+  input,
+  select,
+  #voucher-tray,
+  #archive-tray,
+  #box-mdm-mandate,
+  #advance-consent-banner,
+  .card:has(input),
+  .card:has(button) {
+    display: none !important;
   }
-  
-  #cashbook-printable-area, #cashbook-printable-area * {
-    visibility: visible;
+
+  body {
+    background: #fff !important;
+    margin: 0 !important;
+    padding: 0 !important;
   }
-  
-  #cashbook-printable-area {
-    position: absolute !important;
-    left: 0 !important;
-    top: 0 !important;
+
+  /* Allow both views to print whenever visible */
+  #cashbook-printable-area,
+  #subview-ledger-wrap,
+  .table-cashbook {
+    display: block !important;
     width: 100% !important;
-    display: flex !important;
-    flex-direction: row !important;
   }
 
   .register-spread {
     display: flex !important;
     flex-direction: row !important;
-    gap: 10mm !important;
+    gap: 8mm !important;
     width: 100% !important;
   }
 
   .register-page {
     width: 49% !important;
     page-break-inside: avoid !important;
+  }
+
+  table {
+    page-break-inside: auto !important;
+  }
+
+  tr {
+    page-break-inside: avoid !important;
+    page-break-after: auto !important;
   }
 }

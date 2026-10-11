@@ -571,34 +571,35 @@
     window.renderVoucherTrayList();
     window.renderLedgerSheet();
   };
-
   // --- 11. VOUCHER TRAY LIST ---
-window.renderVoucherList = window.renderVoucherTrayList = function () {
-  
+  window.renderVoucherList = window.renderVoucherTrayList = function () {
     const list = document.getElementById('voucher-list');
     if (!list) return;
 
-    if (window.currentVouchers.length === 0) {
+    if (!window.currentVouchers || window.currentVouchers.length === 0) {
       list.innerHTML = '<div style="color:#64748b; text-align:center; padding:12px; font-size:13px;">No vouchers recorded for this month yet.</div>';
       return;
     }
 
-    list.innerHTML = window.currentVouchers.map(v => `
-      <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:8px 12px; margin-bottom:6px; border:1px solid #e2e8f0; border-radius:4px; font-size:12px;">
-        <div>
-          <span style="font-weight:700; color:#0f172a;">${v.date}</span> &bull; 
-          <span style="color:${v.type === 'PAYMENT' ? '#dc2626' : (v.type === 'RECEIPT' ? '#15803d' : '#0284c7')}; font-weight:700;">[${v.type}]</span> 
-          <span>${v.desc}</span> 
-          <span style="color:#64748b;">(LF: ${v.lf} | ${v.channel})</span>
+    list.innerHTML = window.currentVouchers.map(v => {
+      const typeColor = v.type === 'PAYMENT' ? '#dc2626' : (v.type === 'RECEIPT' ? '#15803d' : '#0284c7');
+      return `
+        <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:8px 12px; margin-bottom:6px; border:1px solid #e2e8f0; border-radius:4px; font-size:12px;">
+          <div>
+            <span style="font-weight:700; color:#0f172a;">${v.date}</span> &bull; 
+            <span style="color:${typeColor}; font-weight:700;">[${v.type}]</span> 
+            <span>${v.desc}</span> 
+            <span style="color:#64748b;">(LF: ${v.lf} | ${v.channel})</span>
+          </div>
+          <div style="display:flex; align-items:center; gap:10px;">
+            <span style="font-weight:700; font-size:13px;">₹${Number(v.amount).toFixed(2)}</span>
+            <button onclick="window.removeVoucher('${v.id}')" style="background:#fee2e2; color:#b91c1c; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">&times;</button>
+          </div>
         </div>
-        <div style="display:flex; align-items:center; gap:10px;">
-          <span style="font-weight:700; font-size:13px;">₹${Number(v.amount).toFixed(2)}</span>
-          <button onclick="window.removeVoucher('${v.id}')" style="background:#fee2e2; color:#b91c1c; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">&times;</button>
-        </div>
-      </div>
-    `).join('');
+      `;
+    }).join('');
   };
-
+  
   // --- 12. GENERAL LEDGER ENGINE ---
   window.updateLedgerHeadFilterOptions = function () {
     const filterSelect = document.getElementById('sel-filter-ledger');

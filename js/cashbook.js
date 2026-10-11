@@ -288,11 +288,10 @@ function setTransactionType(type) {
     btnRcpt.style.background = '#15803d';
     btnRcpt.style.color = '#fff';
     card.style.borderColor = '#15803d';
-    title.innerText = '➕ Enter Money Received (RECEIPT / জমা শিতান)';
-    title.style.color = '#15803d';
-    lblVch.innerText = 'Sanction Order / Cheque / Bank Ref No.';
-    boxChan.style.display = 'block';
-    lblChan.innerText = 'Received Into:';
+    if (title) { title.innerText = '🟢 Enter Money Received (RECEIPT / জমা হিচাপ)'; title.style.color = '#15803d'; }
+if (lblVch) lblVch.innerText = 'Sanction Order / Cheque / Bank Ref No.';
+if (boxChan) boxChan.style.display = 'block';
+if (lblChan) lblChan.innerText = 'Received Into:';
     selChan.innerHTML = `
       <option value="BANK">Bank Account (Grant / Sanction / Interest)</option>
       <option value="CASH">Cash in Hand (Donation / Hand receipt)</option>
@@ -303,21 +302,20 @@ function setTransactionType(type) {
     btnWith.style.background = '#0284c7';
     btnWith.style.color = '#fff';
     card.style.borderColor = '#0284c7';
-    title.innerText = '🔄 Bank Withdrawal to Cash (Contra Transaction / বেংকৰ পৰা নগদ তুলন)';
-    title.style.color = '#0284c7';
-    lblVch.innerText = 'Self Cheque No. / Withdrawal Slip No.';
-    boxChan.style.display = 'none';
+    if (title) { title.innerText = '🏦 Bank Withdrawal to Cash (Contra Transaction / বেংকৰ পৰা নগদ তুলন)'; title.style.color = '#0284c7'; }
+        if (lblVch) lblVch.innerText = 'Self Cheque No. / Withdrawal Slip No.';
+        if (boxChan) boxChan.style.display = 'none';
     lfInput.value = 'C';
     descInput.value = 'To Bank (Self Cheque for MDM Expenses)';
   } else if (type === 'PAYMENT') {
     btnPmt.style.background = '#dc2626';
     btnPmt.style.color = '#fff';
     card.style.borderColor = '#dc2626';
-    title.innerText = '🔴 Enter Payment / Expenditure (PAYMENT / খৰচ শিতান)';
-    title.style.color = '#dc2626';
-    lblVch.innerText = 'Voucher No. / Cash Memo No.';
-    boxChan.style.display = 'block';
-    lblChan.innerText = 'Paid Out Of:';
+            if (title) { title.innerText = '🔴 Enter Payment / Expenditure (PAYMENT / খৰচ হিচাপ)'; title.style.color = '#dc2626'; }
+        if (lblVch) lblVch.innerText = 'Voucher No. / Cash Memo No.';
+        if (boxChan) boxChan.style.display = 'block';
+        if (lblChan) lblChan.innerText = 'Paid Out Of:';
+    
     selChan.innerHTML = `
       <option value="CASH">Cash in Hand (Vegetables, Grocery, Fuel, Labor)</option>
       <option value="BANK">Bank Account (Cheque / Direct PFMS Vendor Payment)</option>

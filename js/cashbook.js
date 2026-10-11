@@ -515,10 +515,11 @@ if (mEl) mEl.value = '04';
   }
 
   onMandateTargetChanged('RATE');
-  recalculateCashbook();
+    recalculateCashbook();
+  window.setTransactionType = setTransactionType;
+  window.addCompleteTransaction = addCompleteTransaction;
 }
-
-window.addCompleteTransaction = addCompleteTransaction;
+  
   
 function addCompleteTransaction() {
   const date = document.getElementById('tx-date').value;

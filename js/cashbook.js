@@ -352,10 +352,16 @@ function switchDrawer(drawerKey) {
 function initDrawerUI() {
   const d = CashBookModule.activeDrawer || 'mdm';
     // FORCE HIDE/SHOW MANDATE
-  const mandateBox = document.getElementById('box-mdm-mandate');
+    const mandateBox = document.getElementById('box-mdm-mandate');
   if (mandateBox) {
-    mandateBox.style.setProperty('display', (d === 'mdm') ? 'block' : 'none', 'important');
+    if (d === 'mdm') {
+      mandateBox.style.removeProperty('display');
+      mandateBox.style.display = 'block';
+    } else {
+      mandateBox.style.setProperty('display', 'none', 'important');
+    }
   }
+  
   
   const btnMdm = document.getElementById('btn-drawer-mdm');
   const btnSmc = document.getElementById('btn-drawer-smc');
@@ -389,9 +395,17 @@ function initDrawerUI() {
 
 function onCashbookPeriodChange() {
   let ym = getSelectedCBYM();
+
+  const curDrawer = CashBookModule.activeDrawer || 'mdm';
+  const mBox = document.getElementById('box-mdm-mandate');
+  if (mBox && curDrawer !== 'mdm') {
+    mBox.style.setProperty('display', 'none', 'important');
+  }
+
   if (ym < '2020-04') {
     const yEl = document.getElementById('cb-sel-year') || document.getElementById('cb-year-select');
-const mEl = document.getElementById('cb-sel-month') || document.getElementById('cb-month-select');
+    const mEl = document.getElementById('cb-sel-month') || document.getElementById('cb-month-select');
+    
 if (yEl) yEl.value = '2020';
 if (mEl) mEl.value = '04';
     ym = '2020-04';

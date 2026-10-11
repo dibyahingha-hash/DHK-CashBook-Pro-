@@ -666,94 +666,115 @@
   };
 
   window.renderLedgerSheet = function () {
-    var filterEl = document.getElementById('sel-filter-ledger');
-    var selectedLf = filterEl ? filterEl.value : 'ALL';
+  var filterEl = document.getElementById('sel-filter-ledger');
+  var selectedLf = filterEl ? filterEl.value : 'ALL';
 
-    var mEl = document.getElementById('cb-sel-month');
-    var yEl = document.getElementById('cb-sel-year');
-    var mName = (mEl && mEl.selectedIndex >= 0) ? mEl.options[mEl.selectedIndex].text : '';
-    var yName = yEl ? yEl.value : '';
+  var headNameEl = document.getElementById('led-header-head-name');
+  var tbodyEl = document.getElementById('led-tbody');
+  var totDrEl = document.getElementById('led-tot-dr');
+  var totCrEl = document.getElementById('led-tot-cr');
+  var totBalEl = document.getElementById('led-tot-bal');
 
-    var headLabel = 'CONSOLIDATED GENERAL LEDGER';
-    if (filterEl && filterEl.selectedIndex >= 0) {
-      headLabel = filterEl.options[filterEl.selectedIndex].text.toUpperCase();
-    }
+  var headLabel = 'CONSOLIDATED GENERAL LEDGER';
+  if (filterEl && filterEl.selectedIndex >= 0) {
+    headLabel = filterEl.options[filterEl.selectedIndex].text.toUpperCase();
+  }
+  if (headNameEl) {
+    headNameEl.innerText = headLabel;
+  }
 
-    var runningBal = 0;
-    var totDr = 0;
-    var totCr = 0;
-    var html = '';
+  // Filter vouchers by selected Folio
+  var list = window.currentVouchers.filter(function (v) {
+    if (!selectedLf || selectedLf === 'ALL') return true;
+    return String(v.lf).trim().toUpperCase() === selectedLf.toUpperCase();
+  });
 
-    var list = window.currentVouchers.filter(function (v) {
-      if (!selectedLf || selectedLf === 'ALL') return true;
-      return String(v.lf).trim().toUpperCase() === selectedLf.toUpperCase();
-    });
+  list.sort(function (a, b) {
+    return new Date(a.date) - new Date(b.date);
+  });
 
-    list.sort(function (a, b) {
-      return new Date(a.date) - new Date(b.date);
-    });
+  var runningBal = 0;
+  var totDr = 0;
+  var totCr = 0;
+  var rowsHtml = '';
 
+  if (list.length === 0) {
+    rowsHtml = '<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;">No vouchers recorded under this folio head for this month.</td></tr>';
+  } else {
     for (var i = 0; i < list.length; i++) {
       var v = list[i];
       var amt = parseFloat(v.amount) || 0;
       var dr = 0;
       var cr = 0;
 
-      if (v.type === 'RECEIPT') {
-        dr = amt; runningBal += amt; totDr += amt;
-      } else if (v.type === 'PAYMENT') {
-        cr = amt; runningBal -= amt; totCr += amt;
+      // Expense heads (LF 1 to 7) are debited on Payment
+      if (v.type === 'PAYMENT') {
+        dr = amt;
+        runningBal += amt;
+        totDr += amt;
+      } else if (v.type === 'RECEIPT') {
+        cr = amt;
+        runningBal += amt;
+        totCr += amt;
       } else if (v.type === 'WITHDRAWAL') {
-        dr = amt; cr = amt; totDr += amt; totCr += amt;
+        dr = amt;
+        cr = amt;
+        totDr += amt;
+        totCr += amt;
       }
 
-      html += '<tr>' +
-        '<td class="text-center">' + v.date + '</td>' +
-        '<td class="text-center">' + (v.lf || '-') + '</td>' +
-        '<td>' + v.desc + '</td>' +
-        '<td class="num">' + (dr > 0 ? 'Rs.' + dr.toFixed(2) : '-') + '</td>' +
-        '<td class="num">' + (cr > 0 ? 'Rs.' + cr.toFixed(2) : '-') + '</td>' +
-        '<td class="num font-bold">Rs.' + runningBal.toFixed(2) + '</td>' +
+      rowsHtml += '<tr>' +
+        '<td class="text-center" style="padding:6px; border:1px solid #cbd5e1;">' + v.date + '</td>' +
+        '<td class="text-center" style="padding:6px; border:1px solid #cbd5e1;">' + (v.lf || '-') + '</td>' +
+        '<td style="padding:6px; border:1px solid #cbd5e1;">' + v.desc + '</td>' +
+        '<td class="num" style="text-align:right; padding:6px; border:1px solid #cbd5e1;">' + (dr > 0 ? 'Rs.' + dr.toFixed(2) : '-') + '</td>' +
+        '<td class="num" style="text-align:right; padding:6px; border:1px solid #cbd5e1;">' + (cr > 0 ? 'Rs.' + cr.toFixed(2) : '-') + '</td>' +
+        '<td class="num font-bold" style="text-align:right; padding:6px; font-weight:700; border:1px solid #cbd5e1;">Rs.' + runningBal.toFixed(2) + '</td>' +
         '</tr>';
     }
+  }
 
-    if (list.length === 0) {
-      html = '<tr><td colspan="6" style="text-align:center; padding:18px; color:#64748b;">No voucher entries recorded under this account head.</td></tr>';
-    }
+  // 1. Populate the on-screen table elements shown in your screenshot
+  if (tbodyEl) tbodyEl.innerHTML = rowsHtml;
+  if (totDrEl) totDrEl.innerText = 'Rs.' + totDr.toFixed(2);
+  if (totCrEl) totCrEl.innerText = 'Rs.' + totCr.toFixed(2);
+  if (totBalEl) totBalEl.innerText = 'Rs.' + runningBal.toFixed(2);
 
-    var ledgerPrintArea = document.getElementById('ledger-printable-area');
-    if (ledgerPrintArea) {
-      ledgerPrintArea.innerHTML = '<div class="ledger-standalone-page">' +
-        '<div class="page-header">' +
-        '<div class="cashbook-title">GENERAL LEDGER STATEMENT</div>' +
-        '<div class="cashbook-subtitle">' + headLabel + '</div>' +
-        '<div style="font-size:11px; color:#475569; margin-top:2px;">Period: ' + mName + ' ' + yName + ' | Drawer: ' + window.currentDrawer.toUpperCase() + '</div>' +
-        '</div>' +
-        '<table class="ledger-table-full">' +
-        '<thead>' +
-        '<tr>' +
-        '<th style="width:80px; text-align:center;">Date</th>' +
-        '<th style="width:45px; text-align:center;">Folio</th>' +
-        '<th>Particulars / Head Description</th>' +
-        '<th style="width:95px; text-align:right;">Debit (Dr)</th>' +
-        '<th style="width:95px; text-align:right;">Credit (Cr)</th>' +
-        '<th style="width:105px; text-align:right;">Balance</th>' +
-        '</tr>' +
-        '</thead>' +
-        '<tbody>' + html + '</tbody>' +
-        '<tfoot>' +
-        '<tr class="total-row">' +
-        '<td colspan="3" style="text-align:right; font-weight:bold;">Total Cumulative Turnover:</td>' +
-        '<td style="text-align:right; font-weight:bold;">Rs.' + totDr.toFixed(2) + '</td>' +
-        '<td style="text-align:right; font-weight:bold;">Rs.' + totCr.toFixed(2) + '</td>' +
-        '<td style="text-align:right; font-weight:bold;">Rs.' + runningBal.toFixed(2) + '</td>' +
-        '</tr>' +
-        '</tfoot>' +
-        '</table>' +
-        '</div>';
-    }
-  };
+  // 2. Also populate standalone printable area for A4 ledger prints
+  var printArea = document.getElementById('ledger-printable-area');
+  var mEl = document.getElementById('cb-sel-month');
+  var yEl = document.getElementById('cb-sel-year');
+  var mName = (mEl && mEl.selectedIndex >= 0) ? mEl.options[mEl.selectedIndex].text : '';
+  var yName = yEl ? yEl.value : '';
 
+  if (printArea) {
+    printArea.innerHTML = '<div class="ledger-standalone-page">' +
+      '<div class="page-header">' +
+      '<div class="cashbook-title">GENERAL LEDGER STATEMENT</div>' +
+      '<div class="cashbook-subtitle">' + headLabel + '</div>' +
+      '<div style="font-size:11px; color:#475569; margin-top:2px;">Period: ' + mName + ' ' + yName + ' | Drawer: ' + window.currentDrawer.toUpperCase() + '</div>' +
+      '</div>' +
+      '<table class="ledger-table-full">' +
+      '<thead><tr>' +
+      '<th style="width:75px; text-align:center;">Date</th>' +
+      '<th style="width:40px; text-align:center;">Folio</th>' +
+      '<th>Particulars</th>' +
+      '<th style="width:85px; text-align:right;">Debit (Dr)</th>' +
+      '<th style="width:85px; text-align:right;">Credit (Cr)</th>' +
+      '<th style="width:95px; text-align:right;">Balance</th>' +
+      '</tr></thead>' +
+      '<tbody>' + rowsHtml + '</tbody>' +
+      '<tfoot><tr class="total-row">' +
+      '<td colspan="3" style="text-align:right; font-weight:bold;">Total:</td>' +
+      '<td style="text-align:right; font-weight:bold;">Rs.' + totDr.toFixed(2) + '</td>' +
+      '<td style="text-align:right; font-weight:bold;">Rs.' + totCr.toFixed(2) + '</td>' +
+      '<td style="text-align:right; font-weight:bold;">Rs.' + runningBal.toFixed(2) + '</td>' +
+      '</tr></tfoot>' +
+      '</table>' +
+      '</div>';
+  }
+};
+      
   // ==========================================================================
   // 9. EXPLICIT PRINT HANDLERS
   // ==========================================================================

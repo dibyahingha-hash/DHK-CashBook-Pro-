@@ -130,19 +130,21 @@ function onMandateTargetChanged(trigger) {
     }
   }
 
-     // Auto-generate the complete statutory narration
+         // Auto-generate the complete statutory narration
     const narrationInput = document.getElementById('tx-desc');
     const yVal = document.getElementById('cb-sel-year')?.value || new Date().getFullYear();
     const mSelect = document.getElementById('cb-sel-month');
     const mName = mSelect && mSelect.options[mSelect.selectedIndex] ? mSelect.options[mSelect.selectedIndex].text : '';
 
-            if (narrationInput && exp > 0 && meals > 0) {
+    if (narrationInput && exp > 0 && meals > 0) {
       const expStr = exp.toFixed(2);
       const rateStr = rate.toFixed(2);
       narrationInput.value = 
         `Being cooking cost of ₹${expStr} for ${meals} meals for ` +
         `the month of ${mName} ${yVal} @ ₹${rateStr}/meal`;
-            }
+    }
+}
+
   
 
 function updateMandateTallyStatus() {

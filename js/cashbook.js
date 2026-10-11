@@ -1229,14 +1229,11 @@ function updateMandateSummaryDisplay() {
 
 Object.assign(window, CashBookModule);
 
-Object.assign(window, CashBookModule);
-
-// Expose mandate calculation triggers directly to window
-window.recalculateCashbook = function() {
-  calculateCookingMandate();
-  updateMandateSummaryDisplay();
-};
-window.calculateCookingMandate = calculateCookingMandate;
-window.deriveMealsFromExpenditure = deriveMealsFromExpenditure;
-window.deriveExpenditureFromMeals = deriveExpenditureFromMeals;
-window.updateMandateSummaryDisplay = updateMandateSummaryDisplay;
+if (typeof addCompleteTransaction === 'function') window.addCompleteTransaction = addCompleteTransaction;
+if (typeof saveCurrentMonthCashbook === 'function') window.saveCurrentMonthCashbook = saveCurrentMonthCashbook;
+if (typeof refreshNarrationDropdown === 'function') window.refreshNarrationDropdown = refreshNarrationDropdown;
+if (typeof recalculateCashbook === 'function') window.recalculateCashbook = recalculateCashbook;
+if (typeof deriveMealsFromExpenditure === 'function') window.deriveMealsFromExpenditure = deriveMealsFromExpenditure;
+if (typeof deriveExpenditureFromMeals === 'function') window.deriveExpenditureFromMeals = deriveExpenditureFromMeals;
+if (typeof calculateCookingMandate === 'function') window.calculateCookingMandate = calculateCookingMandate;
+if (typeof updateMandateSummaryDisplay === 'function') window.updateMandateSummaryDisplay = updateMandateSummaryDisplay;

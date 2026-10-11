@@ -131,108 +131,146 @@ input, select {
 }
 
 /* ==========================================================================
-   ON-SCREEN FOLIO & CASHBOOK TABLES (VISIBLE IN BROWSER)
+   STATUTORY TWO-PAGE PHYSICAL REGISTER (ON-SCREEN VIEW)
    ========================================================================== */
 #subview-cashbook-wrap {
   width: 100%;
-  overflow-x: auto; /* Allows smooth swipe horizontally on phone */
+  overflow-x: auto; /* Enables horizontal swipe on mobile screens */
   margin-top: 10px;
 }
 
-.two-page-folio {
-  display: flex;
-  flex-direction: row;
+.register-spread {
+  display: grid !important;
+  grid-template-columns: 1fr 1fr !important;
   gap: 14px;
-  min-width: 800px; /* Ensures columns stay aligned like a physical book */
+  min-width: 860px; /* Locks register dimensions across phone viewports */
+  background: #e2e8f0;
+  padding: 12px;
+  border-radius: 8px;
 }
 
-.folio-page {
-  flex: 1;
-  background: #fffdfa;
-  border: 1px solid #cbd5e1;
-  border-radius: 6px;
-  padding: 10px;
-  box-shadow: 0 1px 3px rgba(0,0,0,0.05);
+.register-page {
+  background: #fafaf9; /* Ledger page tone */
+  border: 1px solid #94a3b8;
+  border-radius: 4px;
+  padding: 12px;
+  box-shadow: 0 2px 4px rgba(0,0,0,0.06);
+  min-height: 560px;
 }
 
-.folio-header h3 {
-  font-size: 1.05rem;
-  color: #991b1b;
-  margin-bottom: 2px;
+.register-header {
   text-align: center;
-}
-.folio-header h4, .folio-header p {
-  text-align: center;
-  font-size: 0.85rem;
   margin-bottom: 6px;
-  color: #475569;
+  position: relative;
+}
+.register-header h2 {
+  font-size: 1.15rem;
+  font-weight: 800;
+  color: #0f172a;
+  margin: 0;
+}
+.register-header .sub {
+  font-size: 0.82rem;
+  font-weight: 600;
+  color: #334155;
+}
+.register-header .folio-no {
+  position: absolute;
+  right: 4px;
+  top: 0;
+  font-size: 0.95rem;
+  font-weight: 800;
+}
+.side-label {
+  font-size: 0.9rem;
+  font-weight: 900;
+  letter-spacing: 1px;
+  margin-bottom: 6px;
 }
 
+/* STATUTORY RULED TABLE */
+table.ledger-table {
+  width: 100%;
+  border-collapse: collapse;
+  border: 1.5px solid #475569;
+  font-size: 0.78rem;
+  background: #fff;
+}
+
+table.ledger-table th,
+table.ledger-table td {
+  border-right: 1px solid #94a3b8;
+  border-bottom: 1px solid #cbd5e1;
+  padding: 4px 3px;
+  vertical-align: middle;
+}
+
+table.ledger-table th {
+  background: #f1f5f9;
+  font-weight: 800;
+  text-align: center;
+  border-bottom: 1.5px solid #475569;
+  font-size: 0.74rem;
+}
+
+table.ledger-table td:last-child,
+table.ledger-table th:last-child {
+  border-right: none;
+}
+
+/* Precise Ruled Column Widths */
+.col-date { width: 34px; text-align: center; }
+.col-desc { text-align: left; padding-left: 6px !important; }
+.col-lf   { width: 26px; text-align: center; font-weight: 700; }
+.col-rs   { width: 44px; text-align: right; border-right: 1px dotted #94a3b8 !important; padding-right: 3px; }
+.col-p    { width: 24px; text-align: center; }
+
+/* Statutory Ink Colors */
+.ink-black { color: #09090b !important; }
+.ink-red   { color: #b91c1c !important; }
+
+/* Empty Ruled Rows */
+table.ledger-table tr.empty-line td {
+  height: 22px;
+}
+
+/* T/P Totals Row */
+table.ledger-table tr.total-row td {
+  border-top: 1.5px solid #475569 !important;
+  border-bottom: 2px double #475569 !important;
+  font-weight: 800;
+  background: #fafaf9;
+}
+
+/* General Ledger Fallback View */
 .table-cashbook {
   width: 100%;
   border-collapse: collapse;
   border: 1.5px solid #991b1b;
   font-size: 0.8rem;
 }
-
-.table-cashbook th,
-.table-cashbook td {
+.table-cashbook th, .table-cashbook td {
   border: 1px solid #cbd5e1;
   padding: 5px 6px;
 }
-
-.table-cashbook thead tr:first-child th {
-  background: #f1f5f9;
-  font-weight: 700;
-  border-bottom: 1.5px solid #991b1b;
-}
-
-.table-cashbook thead tr.sub-head th {
-  background: #f8fafc;
-  font-size: 0.72rem;
-  padding: 2px 4px;
-  border-bottom: 2px solid #991b1b;
-}
-
-.col-divide-left {
-  border-left: 2px solid #991b1b !important;
-}
-
-.col-rs {
-  text-align: right;
-  padding-right: 4px;
-}
-
-.col-p {
-  border-left: 1px dashed #94a3b8;
-  width: 28px;
-  text-align: center;
-}
-
 .table-cashbook tfoot tr td {
   border-top: 2px solid #991b1b;
   font-weight: bold;
 }
-
-.text-center {
-  text-align: center;
-}
-
-.num {
-  text-align: right;
-}
+.text-center { text-align: center; }
+.num { text-align: right; }
 
 /* ==========================================================================
-   STRICT A4 PRINT & PDF EXPORT
+   STRICT A4 LANDSCAPE PRINT & PDF EXPORT
    ========================================================================== */
 @media print {
   @page {
     size: A4 landscape;
-    margin: 6mm 8mm;
+    margin: 5mm 6mm;
   }
 
   body, html {
-    background: #fffdfa !important;
+    background: #fff !important;
     margin: 0 !important;
     padding: 0 !important;
     -webkit-print-color-adjust: exact !important;
@@ -261,23 +299,34 @@ input, select {
     padding: 0;
   }
 
-  .two-page-folio {
-    display: flex !important;
-    flex-direction: row !important;
-    gap: 12px !important;
+  .register-spread {
+    display: grid !important;
+    grid-template-columns: 1fr 1fr !important;
+    gap: 8px !important;
     width: 100% !important;
     min-width: 100% !important;
+    background: #fff !important;
+    padding: 0 !important;
     page-break-inside: avoid !important;
   }
 
-  .folio-page {
-    flex: 1 !important;
-    background: #fffdfa !important;
-    padding: 4px 6px !important;
+  .register-page {
     box-shadow: none !important;
+    border: 1.2px solid #000 !important;
+    padding: 6px !important;
+    min-height: auto !important;
+    background: #fff !important;
   }
 
-  .table-cashbook {
-    font-size: 8.5pt !important;
+  table.ledger-table {
+    font-size: 7.5pt !important;
+  }
+
+  table.ledger-table th {
+    font-size: 7pt !important;
+  }
+
+  table.ledger-table tr.empty-line td {
+    height: 18px !important;
   }
 }

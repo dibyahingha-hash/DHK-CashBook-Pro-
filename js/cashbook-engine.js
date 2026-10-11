@@ -168,7 +168,11 @@
     var booked = 0;
     for (var i = 0; i < window.currentVouchers.length; i++) {
       var v = window.currentVouchers[i];
-      if (v.type === 'PAYMENT' && String(v.lf).trim() === '1') {
+      var lfClean = String(v.lf || '').trim();
+      var isMealDesc = String(v.desc || '').toLowerCase().indexOf('cooking cost') !== -1;
+
+      // Count if it is marked as Folio 1 OR has a Cooking Cost description
+      if (v.type === 'PAYMENT' && (lfClean === '1' || lfClean === '01' || isMealDesc)) {
         booked += (parseFloat(v.amount) || 0);
       }
     }
@@ -277,7 +281,7 @@
     }
   };
 
-  // Generates unique installment descriptions to prevent aggregate claim objections[span_7](start_span)[span_7](end_span)
+  // Generates unique installment descriptions to prevent aggregate claim objections
   function getDynamicNarrationText(item) {
     if (!item.isMealExpense) return item.text;
     var mLpEl = document.getElementById('meals-lp');
@@ -293,7 +297,10 @@
 
     var existingCount = 0;
     for (var i = 0; i < window.currentVouchers.length; i++) {
-      if (window.currentVouchers[i].type === 'PAYMENT' && String(window.currentVouchers[i].lf).trim() === '1') {
+      var v = window.currentVouchers[i];
+      var lfClean = String(v.lf || '').trim();
+      var isMealDesc = String(v.desc || '').toLowerCase().indexOf('cooking cost') !== -1;
+      if (v.type === 'PAYMENT' && (lfClean === '1' || lfClean === '01' || isMealDesc)) {
         existingCount++;
       }
     }
@@ -371,6 +378,9 @@
     }
     window.renderEngineNarrations(type);
   };
+    
+
+
 
   // ==========================================================================
   // 5. TRANSACTION INGESTION & INTERCEPTION GUARD

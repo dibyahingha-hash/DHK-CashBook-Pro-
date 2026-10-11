@@ -1191,20 +1191,21 @@ function updateMandateSummaryDisplay() {
 
   if (vouchersLbl) vouchersLbl.innerText = '₹' + vouchersTotal.toFixed(2);
 
-  if (diffLbl) {
-    const diff = targetExp - vouchersTotal;
-    if (diff > 0) {
-      diffLbl.style.color = '#dc2626';
-      diffLbl.innerText = `| Vouchers Short by ₹${diff.toFixed(2)}`;
-    } else if (diff < 0) {
-      diffLbl.style.color = '#15803d';
-      diffLbl.innerText = `| Vouchers Exceeded by ₹${Math.abs(diff).toFixed(2)}`;
-    } else {
-      diffLbl.style.color = '#15803d';
-      diffLbl.innerText = `| Mandate Exact Match (₹0.00)`;
-            }
+      if (diffLbl) {
+      const diff = targetExp - vouchersTotal;
+      if (diff > 0) {
+        diffLbl.style.color = '#dc2626';
+        diffLbl.innerText = ` | Vouchers Short by ₹${diff.toFixed(2)}`;
+      } else if (diff < 0) {
+        diffLbl.style.color = '#15803d';
+        diffLbl.innerText = ` | Vouchers Exceeded by ₹${Math.abs(diff).toFixed(2)}`;
+      } else {
+        diffLbl.style.color = '#15803d';
+        diffLbl.innerText = ' | Mandate Exact Match (₹0.00)';
+          }
   }
-}
 };
+
+
 
   

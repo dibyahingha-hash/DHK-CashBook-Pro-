@@ -1227,12 +1227,28 @@ function updateMandateSummaryDisplay() {
 Object.assign(window, CashBookModule);
 
 // Expose internal calculation & UI functions globally
-window.recalculateCashbook = typeof recalculateCashbook !== 'undefined' ? recalculateCashbook : (CashBookModule.recalculateCashbook || function(){});
-window.deriveMealsFromExpenditure = typeof deriveMealsFromExpenditure !== 'undefined' ? deriveMealsFromExpenditure : function(){};
-window.deriveExpenditureFromMeals = typeof deriveExpenditureFromMeals !== 'undefined' ? deriveExpenditureFromMeals : function(){};
-window.calculateCookingMandate = typeof calculateCookingMandate !== 'undefined' ? calculateCookingMandate : function(){};
-window.updateMandateSummaryDisplay = typeof updateMandateSummaryDisplay !== 'undefined' ? updateMandateSummaryDisplay : function(){};
-
-
-
-  
+window.recalculateCashbook = function(...a) {
+  if (typeof recalculateCashbook === 'function') recalculateCashbook(...a);
+  else if (CashBookModule?.recalculateCashbook) CashBookModule.recalculateCashbook(...a);
+};
+window.deriveMealsFromExpenditure = function(...a) {
+  if (typeof deriveMealsFromExpenditure === 'function') deriveMealsFromExpenditure(...a);
+};
+window.deriveExpenditureFromMeals = function(...a) {
+  if (typeof deriveExpenditureFromMeals === 'function') deriveExpenditureFromMeals(...a);
+};
+window.calculateCookingMandate = function(...a) {
+  if (typeof calculateCookingMandate === 'function') calculateCookingMandate(...a);
+};
+window.updateMandateSummaryDisplay = function(...a) {
+  if (typeof updateMandateSummaryDisplay === 'function') updateMandateSummaryDisplay(...a);
+};
+// Auto-populate narration dropdown on initialization
+if (typeof refreshNarrationDropdown === 'function') {
+  refreshNarrationDropdown('PAYMENT');
+}
+document.addEventListener('DOMContentLoaded', function() {
+  if (typeof refreshNarrationDropdown === 'function') {
+    refreshNarrationDropdown('PAYMENT');
+  }
+});

@@ -1,18 +1,18 @@
 /**
  * DHK PM POSHAN & SCHOOL CASHBOOK ENGINE
- * Dual-Rate LP/UP Engine | Two-Page Ruled Register | Consent-Based Advance | Multi-Month Archive
+ * Dual-Rate LP/UP Engine | Two-Page Ruled Register | Dynamic General Ledger | Multi-Month Archive
  */
 
 (function (window) {
   'use strict';
 
-  // --- STATE ---
+  // --- 1. STATE ---
   window.currentDrawer = 'mdm';
   window.currentEntryType = 'RECEIPT';
   window.currentVouchers = [];
   window.pendingAdvanceAmount = 0;
 
-  // --- STATUTORY SCHEMAS ---
+  // --- 2. STATUTORY SCHEMAS ---
   window.ENGINE_SCHEMAS = {
     mdm: {
       RECEIPT: [
@@ -70,7 +70,7 @@
     }
   };
 
-  // --- DRAWER SWITCH ---
+  // --- 3. DRAWER SWITCH ---
   window.switchDrawer = function (drawer) {
     window.currentDrawer = drawer;
     ['mdm', 'smc', 'sna'].forEach(d => {
@@ -91,9 +91,11 @@
 
     window.renderEngineNarrations(window.currentEntryType);
     window.onCashbookPeriodChange();
+    window.updateLedgerHeadFilterOptions();
+    window.renderLedgerSheet();
   };
 
-  // --- SUB-VIEW TOGGLE (CASHBOOK VS GENERAL LEDGER) ---
+  // --- 4. SUB-VIEW TOGGLE (CASHBOOK VS GENERAL LEDGER) ---
   window.switchSubView = function (view) {
     const cbWrap = document.getElementById('subview-cashbook-wrap');
     const ledWrap = document.getElementById('subview-ledger-wrap');
@@ -110,10 +112,12 @@
       if (ledWrap) ledWrap.style.display = 'block';
       if (btnCb) { btnCb.style.background = '#f8fafc'; btnCb.style.color = '#334155'; }
       if (btnLed) { btnLed.style.background = '#1e3a8a'; btnLed.style.color = '#fff'; }
+      window.updateLedgerHeadFilterOptions();
+      window.renderLedgerSheet();
     }
   };
 
-  // --- CATEGORY VISIBILITY ---
+  // --- 5. CATEGORY VISIBILITY ---
   window.updateCategoryVisibility = function () {
     const cat = document.getElementById('cb-mandate-cat')?.value || 'COMPOSITE';
     const lpBox = document.getElementById('box-lp');
@@ -140,7 +144,7 @@
     window.calculateMandate();
   };
 
-  // --- DUAL-RATE MANDATE ENGINE ---
+  // --- 6. DUAL-RATE MANDATE ENGINE ---
   window.calculateMandate = function () {
     const rateLp = parseFloat(document.getElementById('rate-lp')?.value) || 0;
     const mealsLp = parseInt(document.getElementById('meals-lp')?.value, 10) || 0;
@@ -172,7 +176,7 @@
     }
   };
 
-  // --- NARRATIONS ---
+  // --- 7. NARRATIONS ---
   function getDynamicNarrationText(item) {
     if (!item.isMealExpense) return item.text;
 
@@ -230,7 +234,7 @@
     }
   };
 
-  // --- TRANSACTION TYPE SELECTION ---
+  // --- 8. TRANSACTION TYPE SELECTION ---
   window.setTransactionType = function (type) {
     window.currentEntryType = type;
     const btnReceipt = document.getElementById('btn-type-rcpt');
@@ -298,7 +302,7 @@
     window.recalculateCashbook();
   };
 
-  // --- RECONCILIATION & TWO-PAGE REGISTER BUILDER ---
+  // --- 9. TWO-PAGE PHYSICAL REGISTER BUILDER ---
   function splitAmount(num) {
     if (num === null || num === undefined || isNaN(num) || num === 0) {
       return { rs: '-', p: '--' };
@@ -342,7 +346,7 @@
     let totPayCash = 0;
     let totPayBank = 0;
 
-    // 1. O/B Row (Debit / Receipts in Black Ink)
+    // 1. O/B Row (Receipts in Black Ink)
     let receiptsHtml = renderRegisterRow('1st', '<strong>To O/B</strong>', '-', opCash, opBank, false);
     let paymentsHtml = '';
 
@@ -387,7 +391,7 @@
       if (alertBanner) alertBanner.style.display = 'none';
     }
 
-    // 3. By C/B Row (Credit / Payments in Red Ink)
+    // 3. By C/B Row (Payments in Red Ink)
     paymentsHtml += renderRegisterRow('End', '<strong>By C/B</strong>', '-', rawCloseCash, rawCloseBank, true);
 
     // 4. Fill Ruled Empty Ledger Lines
@@ -431,7 +435,7 @@
       </tr>
     `;
 
-    // Render Full Two-Page Spread into #cashbook-printable-area
+    // Render Spread
     const mEl = document.getElementById('cb-sel-month');
     const yEl = document.getElementById('cb-sel-year');
     const mName = mEl ? mEl.options[mEl.selectedIndex]?.text : '';
@@ -441,7 +445,6 @@
     if (area) {
       area.innerHTML = `
         <div class="register-spread" style="display:grid; grid-template-columns:1fr 1fr; gap:16px; background:#e2e8f0; padding:12px; border-radius:8px;">
-          
           <!-- LEFT PAGE: RECEIPTS (BLACK INK) -->
           <div class="register-page" style="background:#fafaf9; border:1px solid #94a3b8; padding:14px; box-shadow:0 4px 6px rgba(0,0,0,0.1);">
             <div style="text-align:center; margin-bottom:6px;">
@@ -495,15 +498,117 @@
               <tbody>${paymentsHtml}</tbody>
             </table>
           </div>
-
         </div>
       `;
     }
 
     window.renderVoucherList();
+    window.renderLedgerSheet();
   };
 
-  // --- CONSENT ADVANCE ---
+  // --- 10. DYNAMIC GENERAL LEDGER (FIXES THE BLANK TABLE) ---
+  window.updateLedgerHeadFilterOptions = function () {
+    const sel = document.getElementById('sel-filter-ledger');
+    if (!sel) return;
+
+    const heads = [
+      { lf: 'ALL', name: '--- All Heads (Consolidated) ---' },
+      { lf: '1', name: 'LF 1: Cooking Cost (Meal Operations)' },
+      { lf: '2', name: 'LF 2: LPG Cylinder & Kitchen Fuel' },
+      { lf: '3', name: 'LF 3: Cook-cum-Helper Honorarium' },
+      { lf: '4', name: 'LF 4: Kitchen Devices & Utensils' },
+      { lf: '5', name: 'LF 5: FCI Rice Lifting & Transport / PFMS Grant' },
+      { lf: '6', name: 'LF 6: Kitchen Garden & Maintenance' },
+      { lf: '7', name: 'LF 7: SNA Bank Charges / SMS Fees' },
+      { lf: '8', name: 'LF 8: In-Charge Advance & Reimbursement' },
+      { lf: 'C', name: 'LF C: Contra Bank Withdrawals' }
+    ];
+
+    const currentVal = sel.value;
+    sel.innerHTML = '';
+    heads.forEach(h => {
+      const opt = document.createElement('option');
+      opt.value = h.lf;
+      opt.innerText = h.name;
+      if (h.lf === currentVal) opt.selected = true;
+      sel.appendChild(opt);
+    });
+  };
+
+  window.renderLedgerSheet = function () {
+    const tbody = document.getElementById('led-tbody');
+    const totDrEl = document.getElementById('led-tot-dr');
+    const totCrEl = document.getElementById('led-tot-cr');
+    const totBalEl = document.getElementById('led-tot-bal');
+    const filterEl = document.getElementById('sel-filter-ledger');
+    const headNameEl = document.getElementById('led-header-head-name');
+
+    if (!tbody) return;
+
+    const selectedLf = filterEl ? filterEl.value : 'ALL';
+    if (headNameEl && filterEl) {
+      headNameEl.innerText = filterEl.options[filterEl.selectedIndex]?.text.toUpperCase() || 'GENERAL LEDGER';
+    }
+
+    let runningBal = 0;
+    let totDr = 0;
+    let totCr = 0;
+    let html = '';
+
+    const list = window.currentVouchers.filter(v => {
+      if (!selectedLf || selectedLf === 'ALL') return true;
+      return String(v.lf).trim().toUpperCase() === selectedLf.toUpperCase();
+    });
+
+    list.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    if (list.length === 0) {
+      tbody.innerHTML = `<tr><td colspan="6" class="text-center" style="padding:15px; color:#64748b;">No vouchers recorded under this folio head for this month.</td></tr>`;
+      if (totDrEl) totDrEl.innerText = '₹ 0.00';
+      if (totCrEl) totCrEl.innerText = '₹ 0.00';
+      if (totBalEl) totBalEl.innerText = '₹ 0.00';
+      return;
+    }
+
+    list.forEach(v => {
+      const amt = parseFloat(v.amount) || 0;
+      let dr = 0;
+      let cr = 0;
+
+      if (v.type === 'RECEIPT') {
+        dr = amt;
+        runningBal += amt;
+        totDr += amt;
+      } else if (v.type === 'PAYMENT') {
+        cr = amt;
+        runningBal -= amt;
+        totCr += amt;
+      } else if (v.type === 'WITHDRAWAL') {
+        dr = amt;
+        cr = amt;
+        totDr += amt;
+        totCr += amt;
+      }
+
+      html += `
+        <tr>
+          <td class="text-center">${v.date}</td>
+          <td class="text-center">${v.lf || '-'}</td>
+          <td>${v.desc}</td>
+          <td class="num">${dr > 0 ? '₹ ' + dr.toFixed(2) : '-'}</td>
+          <td class="num">${cr > 0 ? '₹ ' + cr.toFixed(2) : '-'}</td>
+          <td class="num font-bold">₹ ${runningBal.toFixed(2)}</td>
+        </tr>
+      `;
+    });
+
+    tbody.innerHTML = html;
+    if (totDrEl) totDrEl.innerText = '₹ ' + totDr.toFixed(2);
+    if (totCrEl) totCrEl.innerText = '₹ ' + totCr.toFixed(2);
+    if (totBalEl) totBalEl.innerText = '₹ ' + runningBal.toFixed(2);
+  };
+
+  // --- 11. CONSENT ADVANCE ---
   window.consentTeacherAdvance = function () {
     if (window.pendingAdvanceAmount <= 0) return;
     const dEl = document.getElementById('tx-date');
@@ -526,7 +631,7 @@
     window.recalculateCashbook();
   };
 
-  // --- VOUCHER TRAY ---
+  // --- 12. VOUCHER TRAY ---
   window.renderVoucherList = function () {
     const listEl = document.getElementById('voucher-tray');
     if (!listEl) return;
@@ -550,7 +655,7 @@
     });
   };
 
-  // --- MULTI-MONTH STORAGE & RECOVERY ---
+  // --- 13. MULTI-MONTH STORAGE & RECOVERY ---
   function getStorageKey(drawer, year, month) {
     return `cashbook_rec_${drawer}_${year}_${String(month).padStart(2, '0')}`;
   }
@@ -714,11 +819,13 @@
     }
   };
 
-  // --- BOOTSTRAP ---
+  // --- 14. BOOTSTRAP ---
   document.addEventListener('DOMContentLoaded', () => {
     window.updateCategoryVisibility();
     window.setTransactionType('RECEIPT');
     window.renderArchiveTray();
+    window.updateLedgerHeadFilterOptions();
+    window.renderLedgerSheet();
   });
 
 })(window);

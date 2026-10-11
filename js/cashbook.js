@@ -351,6 +351,12 @@ function switchDrawer(drawerKey) {
 
 function initDrawerUI() {
   const d = CashBookModule.activeDrawer || 'mdm';
+    // FORCE HIDE/SHOW MANDATE
+  const mandateBox = document.getElementById('box-mdm-mandate');
+  if (mandateBox) {
+    mandateBox.style.setProperty('display', (d === 'mdm') ? 'block' : 'none', 'important');
+  }
+  
   const btnMdm = document.getElementById('btn-drawer-mdm');
   const btnSmc = document.getElementById('btn-drawer-smc');
   const btnSna = document.getElementById('btn-drawer-sna');

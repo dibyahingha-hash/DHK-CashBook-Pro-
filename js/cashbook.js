@@ -973,7 +973,7 @@ function splitAmount(val) {
   if (typeof CashBookModule !== 'undefined' && CashBookModule.activeSubView === 'ledger') {
     renderLedgerSheet();
   }
-
+    
   return {
     opCash: physicalOpCash,
     opBank: physicalOpBank,
@@ -1060,7 +1060,7 @@ function renderLedgerSheet() {
   document.getElementById('led-tot-cr').innerText = `₹ ${totCr.toFixed(2)}`;
   document.getElementById('led-tot-bal').innerText = `₹ ${Math.abs(runningBal).toFixed(2)} ${runningBal >= 0 ? 'Dr' : 'Cr'}`;
 }
-
+}
 function getNextMonthYM(ym) {
   const [year, month] = ym.split('-').map(Number);
   const d = new Date(year, month, 1); // JS months are 0-indexed; this targets the next calendar month
@@ -1202,7 +1202,9 @@ function updateMandateSummaryDisplay() {
     } else {
       diffLbl.style.color = '#15803d';
       diffLbl.innerText = `| Mandate Exact Match (₹0.00)`;
-        }
+            }
   }
+}
 };
+
   

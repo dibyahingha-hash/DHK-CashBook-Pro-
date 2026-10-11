@@ -1088,3 +1088,88 @@ function saveCurrentMonthCashbook() {
   const badge = document.getElementById('cb-op-status-badge');
   if (badge) badge.innerText = '[Saved Month]';
 }
+/* ==========================================================================
+   STATUTORY COOKING MANDATE LIVE DERIVATION ENGINE
+   ========================================================================== */
+
+function resetGovtRate() {
+  const catEl = document.getElementById('cb-mandate-cat');
+  const rateEl = document.getElementById('cb-rate-meal');
+  if (!rateEl) return;
+  
+  const cat = catEl ? catEl.value : 'LP';
+  if (cat === 'UP') {
+    rateEl.value = '10.15';
+  } else {
+    rateEl.value = '6.78';
+  }
+  calculateCookingMandate();
+}
+
+// Typing Meals -> calculates Expenditure
+function deriveExpenditureFromMeals() {
+  const rate = parseFloat(document.getElementById('cb-rate-meal')?.value) || 0;
+  const meals = parseFloat(document.getElementById('cb-derived-meals')?.value) || 0;
+  const expEl = document.getElementById('cb-mandate-exp');
+  
+  if (expEl) {
+    if (rate > 0 && meals > 0) {
+      expEl.value = (meals * rate).toFixed(2);
+    } else {
+      expEl.value = '0.00';
+    }
+  }
+  updateMandateSummaryDisplay();
+}
+
+// Typing Expenditure -> calculates Meals
+function deriveMealsFromExpenditure() {
+  const rate = parseFloat(document.getElementById('cb-rate-meal')?.value) || 0;
+  const exp = parseFloat(document.getElementById('cb-mandate-exp')?.value) || 0;
+  const mealsEl = document.getElementById('cb-derived-meals');
+  
+  if (mealsEl) {
+    if (rate > 0) {
+      mealsEl.value = Math.round(exp / rate);
+    } else {
+      mealsEl.value = 0;
+    }
+  }
+  updateMandateSummaryDisplay();
+}
+
+function calculateCookingMandate() {
+  deriveExpenditureFromMeals();
+}
+
+function updateMandateSummaryDisplay() {
+  const targetExp = parseFloat(document.getElementById('cb-mandate-exp')?.value) || 0;
+  const targetLbl = document.getElementById('lbl-mandate-target');
+  const vouchersLbl = document.getElementById('lbl-vouchers-tot');
+  const diffLbl = document.getElementById('lbl-mandate-diff');
+
+  if (targetLbl) targetLbl.innerText = '₹' + targetExp.toFixed(2);
+
+  let vouchersTotal = 0;
+  if (typeof currentCashbookEntries !== 'undefined' && Array.isArray(currentCashbookEntries)) {
+    vouchersTotal = currentCashbookEntries
+      .filter(e => e.side === 'PAYMENT')
+      .reduce((sum, e) => sum + (parseFloat(e.cashOut || e.bankOut || e.amount) || 0), 0);
+  }
+
+  if (vouchersLbl) vouchersLbl.innerText = '₹' + vouchersTotal.toFixed(2);
+
+  if (diffLbl) {
+    const diff = targetExp - vouchersTotal;
+    if (diff > 0) {
+      diffLbl.style.color = '#dc2626';
+      diffLbl.innerText = `| Vouchers Short by ₹${diff.toFixed(2)}`;
+    } else if (diff < 0) {
+      diffLbl.style.color = '#15803d';
+      diffLbl.innerText = `| Vouchers Exceeded by ₹${Math.abs(diff).toFixed(2)}`;
+    } else {
+      diffLbl.style.color = '#15803d';
+      diffLbl.innerText = `| Mandate Exact Match (₹0.00)`;
+    }
+  }
+}

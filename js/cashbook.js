@@ -336,6 +336,11 @@ function getSelectedCBYM() {
 
 function switchDrawer(drawerKey) {
   CashBookModule.activeDrawer = drawerKey;
+    const mandateBox = document.getElementById('box-mdm-mandate');
+  if (mandateBox) {
+    mandateBox.style.display = (drawerKey === 'mdm') ? 'block' : 'none';
+  }
+
   initDrawerUI();
   populateLedgerDropdowns();
   onCashbookPeriodChange();

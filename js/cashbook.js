@@ -9,6 +9,22 @@ window.onCashbookPeriodChange = function() {
     CashBookModule.onCashbookPeriodChange();
   }
 };
+
+window.recalculateCashbook = function() {
+  if (typeof CashBookModule !== 'undefined' && CashBookModule.recalculateCashbook) {
+    CashBookModule.recalculateCashbook();
+  }
+};
+
+window.setTransactionType = function(type) {
+  if (typeof CashBookModule !== 'undefined' && CashBookModule.setTransactionType) {
+    CashBookModule.setTransactionType(type);
+  }
+};
+```[span_8](start_span)[span_8](end_span)
+
+Commit those changes[span_9](start_span)[span_9](end_span). Once deployed and reloaded, inputs and buttons will find their global handlers[span_10](start_span)[span_10](end_span).
+
   
 const CashBookModule = {
   activeDrawer: 'mdm',     // 'mdm' | 'smc' | 'sna'

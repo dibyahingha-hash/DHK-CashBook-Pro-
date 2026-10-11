@@ -822,8 +822,8 @@
     }
   };
 
-  // ==========================================================================
-  // 9. EXPLICIT PRINT ROUTERS
+    // ==========================================================================
+  // EXPLICIT PRINT ROUTERS (DESKTOP & MOBILE COMPATIBLE)
   // ==========================================================================
   window.triggerCashbookPrint = function () {
     document.body.classList.remove('print-mode-ledger');
@@ -831,12 +831,27 @@
   };
 
   window.triggerLedgerPrint = function () {
+    // 1. Force the ledger engine to render latest data before print
+    if (typeof window.renderLedgerSheet === 'function') {
+      window.renderLedgerSheet();
+    }
+
+    // 2. Enable ledger print mode
     document.body.classList.add('print-mode-ledger');
-    window.print();
-    setTimeout(function () {
+
+    // 3. Listen for print completion before removing the class
+    var cleanup = function () {
       document.body.classList.remove('print-mode-ledger');
-    }, 800);
+      window.removeEventListener('afterprint', cleanup);
+    };
+    window.addEventListener('afterprint', cleanup);
+
+    // 4. Trigger print with a slight delay so DOM styles settle
+    setTimeout(function () {
+      window.print();
+    }, 150);
   };
+  
 
   // ==========================================================================
   // 10. MULTI-MONTH ARCHIVE & PERSISTENCE

@@ -513,22 +513,33 @@ if (mEl) mEl.value = '04';
   if (txDateEl) {
     txDateEl.value = `${ym}-01`;
   }
-
   onMandateTargetChanged('RATE');
-    recalculateCashbook();
+  recalculateCashbook();
+
+  // Explicit global bindings inside initDrawerUI
   window.setTransactionType = setTransactionType;
-  window.addCompleteTransaction = addCompleteTransaction;
+  window.recalculateCashbook = recalculateCashbook;
 }
-  
-  
+
+// -------------------------------------------------------------
+// GLOBAL TRANSACTION HANDLER
+// -------------------------------------------------------------
 function addCompleteTransaction() {
-  const date = document.getElementById('tx-date').value;
-  const ref = document.getElementById('tx-ref').value.trim() || '-';
-  const lf = document.getElementById('tx-lf').value.trim() || '-';
-  const desc = document.getElementById('tx-desc').value.trim();
-  const amount = parseFloat(document.getElementById('tx-amount').value) || 0;
-  const channel = document.getElementById('tx-channel') ? document.getElementById('tx-channel').value : 'BANK';
-  const headId = document.getElementById('tx-ledger-head') ? document.getElementById('tx-ledger-head').value : 'MDM_MISC';
+  const dateEl = document.getElementById('tx-date');
+  const refEl = document.getElementById('tx-ref');
+  const lfEl = document.getElementById('tx-lf');
+  const descEl = document.getElementById('tx-desc');
+  const amountEl = document.getElementById('tx-amount');
+  const channelEl = document.getElementById('tx-channel');
+  const headEl = document.getElementById('tx-ledger-head');
+
+  const date = dateEl ? dateEl.value : '';
+  const ref = refEl ? refEl.value.trim() || '-' : '-';
+  const lf = lfEl ? lfEl.value.trim() || '-' : '-';
+  const desc = descEl ? descEl.value.trim() : '';
+  const amount = amountEl ? parseFloat(amountEl.value) || 0 : 0;
+  const channel = channelEl ? channelEl.value : 'CASH';
+  const headId = headEl ? headEl.value : '';
 
   if (!date) {
     alert("Please select the exact transaction date.");
@@ -543,34 +554,46 @@ function addCompleteTransaction() {
     return;
   }
 
+  if (typeof currentVouchers === 'undefined' || !Array.isArray(currentVouchers)) {
+    window.currentVouchers = [];
+  }
+
   currentVouchers.push({
     id: Date.now(),
-    date,
-    type: currentEntryType, // 'RECEIPT' | 'WITHDRAWAL' | 'PAYMENT'
-    channel,
-    headId,
-    ref,
-    lf,
-    desc,
-    amount
+    date: date,
+    type: window.currentEntryType || 'PAYMENT',
+    channel: channel,
+    headId: headId,
+    ref: ref,
+    lf: lf,
+    desc: desc,
+    amount: amount
   });
 
-  document.getElementById('tx-desc').value = '';
-  document.getElementById('tx-amount').value = '';
-  document.getElementById('tx-ref').value = '';
+  if (descEl) descEl.value = '';
+  if (amountEl) amountEl.value = '';
+  if (refEl) refEl.value = '';
 
-  recalculateCashbook();
-}
-
-
-    // --- 1. GLOBAL DELETE HANDLER (FIXES DELETE BUTTON CLICK) ---
-window.deleteTransaction = function(id) {
-  currentVouchers = currentVouchers.filter(v => String(v.id) !== String(id));
-  recalculateCashbook();
-  if (typeof saveCurrentMonthCashbook === 'function') {
-    saveCurrentMonthCashbook();
+  if (typeof recalculateCashbook === 'function') {
+    recalculateCashbook();
   }
-};
+}
+window.addCompleteTransaction = addCompleteTransaction;
+
+// -------------------------------------------------------------
+// GLOBAL DELETE / VOUCHER REMOVAL HANDLER
+// -------------------------------------------------------------
+function removeVoucher(id) {
+  if (typeof currentVouchers !== 'undefined' && Array.isArray(currentVouchers)) {
+    currentVouchers = currentVouchers.filter(v => String(v.id) !== String(id));
+  }
+  if (typeof recalculateCashbook === 'function') {
+    recalculateCashbook();
+  }
+}
+window.removeVoucher = removeVoucher;
+
+  
 // --- DUAL-SCHEME STATUTORY NARRATION REGISTRY ---
 const AUDIT_SCHEMAS = {
   // 1. MDM / PM POSHAN REGISTER

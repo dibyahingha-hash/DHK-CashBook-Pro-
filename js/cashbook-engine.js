@@ -1,17 +1,21 @@
 /**
- * DHK PM POSHAN & SCHOOL CASHBOOK ENGINE - REVISED & FLAWLESS
- * Dual-Rate LP/UP Engine | Two-Page Ruled Register | Dynamic General Ledger | Budget Cap Guard
+ * DHK PM POSHAN & SCHOOL CASHBOOK ENGINE (AUDIT-READY SUITE)
+ * Dual-Rate LP/UP Engine | Strict 2-Page A4 Isolation | Standalone General Ledger | Multi-Month Archive
  */
 (function (window) {
   'use strict';
 
-  // --- 1. APPLICATION STATE ---
+  // ==========================================================================
+  // 1. GLOBAL ENGINE STATE
+  // ==========================================================================
   window.currentDrawer = 'mdm';
   window.currentEntryType = 'RECEIPT';
   window.currentVouchers = [];
   window.pendingAdvanceAmount = 0;
 
-  // --- 2. STATUTORY SCHEMAS ---
+  // ==========================================================================
+  // 2. STATUTORY FOLIO SCHEMAS (MDM, SMC, SNA)
+  // ==========================================================================
   window.ENGINE_SCHEMAS = {
     mdm: {
       RECEIPT: [
@@ -24,7 +28,7 @@
         { text: "To Bank (Contra - Self Cheque drawn for MDM daily marketing)", lf: "C", channel: "BANK" }
       ],
       PAYMENT: [
-        { text: "By Cooking Cost for daily meal marketing & ingredients", lf: "1", channel: "CASH", isMealExpense: true },
+        { text: "By Cooking Cost for meals served", lf: "1", channel: "CASH", isMealExpense: true },
         { text: "By LPG Cylinder / Firewood supply refilling charges for MDM kitchen", lf: "2", channel: "CASH" },
         { text: "By Cook-cum-Helper monthly engagement honorarium payment", lf: "3", channel: "BANK" },
         { text: "By Kitchen Devices & Utensils purchased under MDM Grant", lf: "4", channel: "CASH" },
@@ -69,14 +73,21 @@
     }
   };
 
-  // --- 3. DRAWER SWITCH ---
+  // ==========================================================================
+  // 3. NAVIGATION, DRAWER & VIEW SWITCHERS
+  // ==========================================================================
   window.switchDrawer = function (drawer) {
     window.currentDrawer = drawer;
     ['mdm', 'smc', 'sna'].forEach(d => {
       const b = document.getElementById(`btn-drawer-${d}`);
       if (b) {
-        b.style.background = (d === drawer) ? '#0284c7' : '#f1f5f9';
-        b.style.color = (d === drawer) ? '#fff' : '#334155';
+        if (d === drawer) {
+          b.style.background = '#0284c7';
+          b.style.color = '#fff';
+        } else {
+          b.style.background = '#f1f5f9';
+          b.style.color = '#334155';
+        }
       }
     });
 
@@ -87,10 +98,8 @@
     window.onCashbookPeriodChange();
     window.updateLedgerHeadFilterOptions();
     window.renderLedgerSheet();
-    window.updateVoucherBudgetMonitor();
   };
 
-  // --- 4. SUB-VIEW TOGGLE ---
   window.switchSubView = function (view) {
     const cbWrap = document.getElementById('subview-cashbook-wrap');
     const ledWrap = document.getElementById('subview-ledger-wrap');
@@ -112,7 +121,6 @@
     }
   };
 
-  // --- 5. CATEGORY VISIBILITY ---
   window.updateCategoryVisibility = function () {
     const cat = document.getElementById('cb-mandate-cat')?.value || 'COMPOSITE';
     const lpBox = document.getElementById('box-lp');
@@ -139,17 +147,74 @@
     window.calculateMandate();
   };
 
-  // --- 6. MANDATE & BUDGET CALCULATIONS ---
+  // ==========================================================================
+  // 4. DUAL-RATE MANDATE & RECONCILIATION MONITOR
+  // ==========================================================================
+  window.getMandateMetrics = function () {
+    const rateLp = parseFloat(document.getElementById('rate-lp')?.value) || 0;
+    const mealsLp = parseInt(document.getElementById('meals-lp')?.value, 10) || 0;
+    const rateUp = parseFloat(document.getElementById('rate-up')?.value) || 0;
+    const mealsUp = parseInt(document.getElementById('meals-up')?.value, 10) || 0;
+    const target = (mealsLp * rateLp) + (mealsUp * rateUp);
+
+    const booked = window.currentVouchers
+      .filter(v => v.type === 'PAYMENT' && String(v.lf).trim() === '1')
+      .reduce((acc, v) => acc + (parseFloat(v.amount) || 0), 0);
+
+    return {
+      target: target,
+      booked: booked,
+      deficit: target - booked,
+      mealsTotal: mealsLp + mealsUp
+    };
+  };
+
+  window.updateReconciliationBanner = function () {
+    const banner = document.getElementById('recon-status-banner');
+    if (!banner) return;
+
+    if (window.currentDrawer !== 'mdm') {
+      banner.style.display = 'none';
+      return;
+    }
+
+    const metrics = window.getMandateMetrics();
+    banner.style.display = 'block';
+
+    const fmt = n => '₹' + n.toLocaleString('en-IN', { minimumFractionDigits: 2, maximumFractionDigits: 2 });
+
+    if (metrics.target === 0) {
+      banner.style.background = '#f1f5f9';
+      banner.style.borderColor = '#cbd5e1';
+      banner.style.color = '#475569';
+      banner.innerHTML = `<strong>Status:</strong> No MDM mandate computed yet. Please input rates and meal counts.`;
+    } else if (metrics.deficit > 0) {
+      banner.style.background = '#eff6ff';
+      banner.style.borderColor = '#3b82f6';
+      banner.style.color = '#1e40af';
+      banner.innerHTML = `Target: <strong>${fmt(metrics.target)}</strong> | Vouchers Booked: <strong>${fmt(metrics.booked)}</strong> | <span style="color:#b91c1c; font-weight:700;">${fmt(metrics.deficit)} is pending.</span> Please provide required vouchers.`;
+    } else if (metrics.deficit === 0) {
+      banner.style.background = '#f0fdf4';
+      banner.style.borderColor = '#22c55e';
+      banner.style.color = '#15803d';
+      banner.innerHTML = `Target: <strong>${fmt(metrics.target)}</strong> | Vouchers Booked: <strong>${fmt(metrics.booked)}</strong> | <strong>Fully Reconciled & Audit Ready.</strong>`;
+    } else {
+      banner.style.background = '#fef2f2';
+      banner.style.borderColor = '#ef4444';
+      banner.style.color = '#b91c1c';
+      banner.innerHTML = `<strong>OVER-EXPENDITURE WARNING:</strong> Target: ${fmt(metrics.target)} | Booked: ${fmt(metrics.booked)} | Excess: <strong>${fmt(Math.abs(metrics.deficit))}</strong> exceeds the sanctioned limit!`;
+    }
+  };
+
   window.calculateMandate = function () {
     const rateLp = parseFloat(document.getElementById('rate-lp')?.value) || 0;
     const mealsLp = parseInt(document.getElementById('meals-lp')?.value, 10) || 0;
     const rateUp = parseFloat(document.getElementById('rate-up')?.value) || 0;
     const mealsUp = parseInt(document.getElementById('meals-up')?.value, 10) || 0;
-
     const costLp = mealsLp * rateLp;
     const costUp = mealsUp * rateUp;
     const totalMeals = mealsLp + mealsUp;
-    const totalTargetCost = costLp + costUp;
+    const totalCost = costLp + costUp;
 
     const subLp = document.getElementById('subtotal-lp');
     const subUp = document.getElementById('subtotal-up');
@@ -159,114 +224,72 @@
     const mealsDisp = document.getElementById('mandate-meals-display');
     const targetDisp = document.getElementById('mandate-target-display');
     if (mealsDisp) mealsDisp.innerText = totalMeals;
-    if (targetDisp) targetDisp.innerText = totalTargetCost.toFixed(2);
+    if (targetDisp) targetDisp.innerText = totalCost.toFixed(2);
 
     const hiddenMeals = document.getElementById('tx-meals');
     const hiddenTarget = document.getElementById('tx-target-expenditure');
     if (hiddenMeals) hiddenMeals.value = totalMeals;
-    if (hiddenTarget) hiddenTarget.value = totalTargetCost.toFixed(2);
+    if (hiddenTarget) hiddenTarget.value = totalCost.toFixed(2);
 
-    window.updateVoucherBudgetMonitor();
+    window.updateReconciliationBanner();
+    if (window.currentEntryType === 'PAYMENT') {
+      window.renderEngineNarrations('PAYMENT');
+    }
   };
 
-  // --- 7. EXPENDITURE MONITOR & WARNING FEATURE ---
-  window.updateVoucherBudgetMonitor = function () {
-    let monitorBox = document.getElementById('expenditure-budget-monitor');
-    if (!monitorBox) {
-      const entryForm = document.getElementById('tx-amount')?.closest('form') || document.getElementById('tx-amount')?.parentElement;
-      if (entryForm) {
-        monitorBox = document.createElement('div');
-        monitorBox.id = 'expenditure-budget-monitor';
-        monitorBox.style.cssText = 'margin:10px 0; padding:10px; border-radius:6px; font-size:12px; font-weight:600;';
-        entryForm.parentNode.insertBefore(monitorBox, entryForm.nextSibling);
+  function getDynamicNarrationText(item) {
+    if (!item.isMealExpense) return item.text;
+    const mealsLp = document.getElementById('meals-lp')?.value || '';
+    const mealsUp = document.getElementById('meals-up')?.value || '';
+    const mTotal = (parseInt(mealsLp, 10) || 0) + (parseInt(mealsUp, 10) || 0);
+    const monthEl = document.getElementById('cb-sel-month');
+    const yearEl = document.getElementById('cb-sel-year');
+    const monthText = monthEl ? monthEl.options[monthEl.selectedIndex]?.text : 'the month';
+    const yearText = yearEl ? yearEl.value : '';
+
+    if (mTotal > 0) {
+      if (mealsLp && mealsUp) {
+        return `By Cooking Cost for ${mTotal} meals (${mealsLp} LP + ${mealsUp} UP) served in the month of ${monthText} ${yearText}`;
       }
+      return `By Cooking Cost for ${mTotal} meals served in the month of ${monthText} ${yearText}`;
     }
-    if (!monitorBox) return;
+    return `By Cooking Cost for meals served in the month of ${monthText} ${yearText}`;
+  }
 
-    if (window.currentDrawer !== 'mdm') {
-      monitorBox.style.display = 'none';
-      return;
-    }
-    monitorBox.style.display = 'block';
-
-    const targetCost = parseFloat(document.getElementById('tx-target-expenditure')?.value) || 0;
-    const totalMealExpenses = window.currentVouchers
-      .filter(v => v.type === 'PAYMENT' && (v.lf === '1' || v.isMealExpense))
-      .reduce((sum, v) => sum + (parseFloat(v.amount) || 0), 0);
-
-    const enteredAmount = parseFloat(document.getElementById('tx-amount')?.value) || 0;
-    const isAddingPayment = window.currentEntryType === 'PAYMENT';
-    const prospectiveTotal = totalMealExpenses + (isAddingPayment ? enteredAmount : 0);
-    const remaining = targetCost - totalMealExpenses;
-
-    if (targetCost <= 0) {
-      monitorBox.style.background = '#f8fafc';
-      monitorBox.style.border = '1px solid #cbd5e1';
-      monitorBox.style.color = '#475569';
-      monitorBox.innerHTML = `<span>Mandate Target not defined. Set rates and meal targets above to monitor budget.</span>`;
-      return;
-    }
-
-    if (prospectiveTotal > targetCost) {
-      const excess = prospectiveTotal - targetCost;
-      monitorBox.style.background = '#fef2f2';
-      monitorBox.style.border = '1.5px solid #ef4444';
-      monitorBox.style.color = '#b91c1c';
-      monitorBox.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span>⚠️ <strong>BUDGET EXCEEDED!</strong> Meal Expenses (₹${prospectiveTotal.toFixed(2)}) exceed Mandate Target (₹${targetCost.toFixed(2)}) by <strong>₹${excess.toFixed(2)}</strong>!</span>
-        </div>
-      `;
-    } else {
-      monitorBox.style.background = '#f0fdf4';
-      monitorBox.style.border = '1.5px solid #22c55e';
-      monitorBox.style.color = '#15803d';
-      monitorBox.innerHTML = `
-        <div style="display:flex; justify-content:space-between; align-items:center;">
-          <span>Target: <strong>₹${targetCost.toFixed(2)}</strong> | Current Spent: <strong>₹${totalMealExpenses.toFixed(2)}</strong></span>
-          <span>Remaining Balance: <strong>₹${remaining.toFixed(2)}</strong></span>
-        </div>
-      `;
-    }
-  };
-
-  // --- 8. NARRATIONS & FORM SYNC ---
   window.renderEngineNarrations = function (type) {
     const drawer = window.currentDrawer || 'mdm';
-    const schemaList = (window.ENGINE_SCHEMAS[drawer] && window.ENGINE_SCHEMAS[drawer][type])
-      ? window.ENGINE_SCHEMAS[drawer][type]
-      : [];
+    const schemaList = (window.ENGINE_SCHEMAS[drawer] && window.ENGINE_SCHEMAS[drawer][type]) || [];
     const container = document.getElementById('narration-quick-options');
     if (!container) return;
 
     container.innerHTML = '';
     schemaList.forEach((item, index) => {
+      const text = getDynamicNarrationText(item);
       const card = document.createElement('div');
-      card.style.cssText = 'padding:6px 10px; margin-bottom:6px; background:#fff; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; font-size:12px; font-weight:500; display:flex; justify-content:space-between; align-items:center;';
-      card.innerHTML = `<span>${item.text}</span> <span style="color:#64748b; font-size:11px;">LF:${item.lf} [${item.channel}]</span>`;
+      card.style.cssText = 'padding:6px 10px; margin-bottom:5px; background:#fff; border:1px solid #cbd5e1; border-radius:4px; cursor:pointer; font-size:12px; font-weight:500; display:flex; justify-content:space-between; align-items:center;';
+      card.innerHTML = `<span>${text}</span> <span style="color:#64748b; font-size:11px; white-space:nowrap; margin-left:8px;">LF: <strong>${item.lf}</strong> [${item.channel}]</span>`;
+
       card.onclick = () => {
         const descEl = document.getElementById('tx-desc');
         const lfEl = document.getElementById('tx-lf');
         const chanEl = document.getElementById('tx-channel');
-        if (descEl) descEl.value = item.text;
+        if (descEl) descEl.value = text;
         if (lfEl) lfEl.value = item.lf;
         if (chanEl) chanEl.value = item.channel;
-        window.updateVoucherBudgetMonitor();
       };
       container.appendChild(card);
 
-      if (index === 0) {
+      if (index === 0 && (!document.getElementById('tx-desc')?.value)) {
         const descEl = document.getElementById('tx-desc');
         const lfEl = document.getElementById('tx-lf');
         const chanEl = document.getElementById('tx-channel');
-        if (descEl) descEl.value = item.text;
+        if (descEl) descEl.value = text;
         if (lfEl) lfEl.value = item.lf;
         if (chanEl) chanEl.value = item.channel;
       }
     });
   };
 
-  // --- 9. TRANSACTION TYPE SELECTION ---
   window.setTransactionType = function (type) {
     window.currentEntryType = type;
     const btnReceipt = document.getElementById('btn-type-rcpt');
@@ -275,7 +298,10 @@
     const channelEl = document.getElementById('tx-channel');
 
     [btnReceipt, btnWithdrawal, btnPayment].forEach(b => {
-      if (b) { b.style.opacity = '0.5'; b.style.borderColor = 'transparent'; }
+      if (b) {
+        b.style.opacity = '0.5';
+        b.style.borderColor = 'transparent';
+      }
     });
 
     if (type === 'RECEIPT' && btnReceipt) {
@@ -291,11 +317,12 @@
       btnPayment.style.borderColor = '#dc2626';
       if (channelEl) channelEl.value = 'CASH';
     }
-
     window.renderEngineNarrations(type);
-    window.updateVoucherBudgetMonitor();
   };
 
+  // ==========================================================================
+  // 5. TRANSACTION INGESTION & AUDIT INTERCEPTOR
+  // ==========================================================================
   window.addCompleteTransaction = function () {
     const dateEl = document.getElementById('tx-date');
     const lfEl = document.getElementById('tx-lf');
@@ -304,29 +331,32 @@
     const channelEl = document.getElementById('tx-channel');
 
     const date = dateEl ? dateEl.value : '';
+    let lf = lfEl ? lfEl.value.trim().toUpperCase() : '';
     const desc = descEl ? descEl.value.trim() : '';
     const amount = amountEl ? parseFloat(amountEl.value) || 0 : 0;
-    const channel = channelEl ? channelEl.value : (window.currentEntryType === 'PAYMENT' ? 'CASH' : 'BANK');
+    const channel = channelEl ? channelEl.value : 'CASH';
 
-    let defaultLf = '1';
-    if (window.currentEntryType === 'WITHDRAWAL') defaultLf = 'C';
-    else if (window.currentEntryType === 'RECEIPT') defaultLf = channel === 'CASH' ? '8' : '5';
-    const lf = (lfEl && lfEl.value.trim()) ? lfEl.value.trim() : defaultLf;
-
-    if (!date) { alert("Please pick the date of transaction."); return; }
+    if (!date) { alert("Please pick the transaction date."); return; }
     if (!desc) { alert("Please specify the particulars / narration."); return; }
     if (amount <= 0) { alert("Please enter a valid amount greater than 0."); return; }
 
-    // Cap Check & Confirmation
-    const targetCost = parseFloat(document.getElementById('tx-target-expenditure')?.value) || 0;
-    if (window.currentDrawer === 'mdm' && window.currentEntryType === 'PAYMENT' && targetCost > 0) {
-      const currentExpenses = window.currentVouchers
-        .filter(v => v.type === 'PAYMENT' && (v.lf === '1' || v.isMealExpense))
-        .reduce((sum, v) => sum + (parseFloat(v.amount) || 0), 0);
+    if (window.currentEntryType === 'WITHDRAWAL') {
+      lf = 'C';
+    } else if (lf === 'C' && window.currentEntryType !== 'WITHDRAWAL') {
+      alert("Folio 'C' is reserved exclusively for Contra cash withdrawals.");
+      return;
+    }
 
-      if ((currentExpenses + amount) > targetCost) {
-        const proceed = confirm(`Warning: Adding this voucher of ₹${amount.toFixed(2)} brings total cooking expenses to ₹${(currentExpenses + amount).toFixed(2)}, which exceeds the monthly target of ₹${targetCost.toFixed(2)}. Do you still want to add it?`);
-        if (!proceed) return;
+    // Intercept Cooking Cost Mandate Breaches
+    if (window.currentDrawer === 'mdm' && window.currentEntryType === 'PAYMENT' && (lf === '1' || !lf)) {
+      lf = '1';
+      const metrics = window.getMandateMetrics();
+      if (metrics.target > 0 && (metrics.booked + amount) > metrics.target) {
+        const excess = (metrics.booked + amount) - metrics.target;
+        const confirmEntry = confirm(
+          `AUDIT WARNING: Adding ₹${amount.toFixed(2)} exceeds the monthly Cooking Cost mandate by ₹${excess.toFixed(2)}.\n\nMandate Target: ₹${metrics.target.toFixed(2)}\nCurrent Booked: ₹${metrics.booked.toFixed(2)}\n\nDo you want to intercept and correct this voucher? Press Cancel to return.`
+        );
+        if (!confirmEntry) return;
       }
     }
 
@@ -335,28 +365,61 @@
       date: date,
       type: window.currentEntryType,
       channel: channel,
-      lf: (window.currentEntryType === 'WITHDRAWAL') ? 'C' : lf,
+      lf: lf || '1',
       desc: desc,
-      amount: amount,
-      isMealExpense: (lf === '1' || desc.toLowerCase().includes('cooking cost'))
+      amount: amount
     });
 
     if (descEl) descEl.value = '';
     if (amountEl) amountEl.value = '';
     window.recalculateCashbook();
-    window.updateVoucherBudgetMonitor();
   };
 
   window.removeVoucher = function (id) {
     window.currentVouchers = window.currentVouchers.filter(v => String(v.id) !== String(id));
     window.recalculateCashbook();
-    window.updateVoucherBudgetMonitor();
   };
 
-  // --- 10. TWO-PAGE PHYSICAL REGISTER BUILDER ---
+  // ==========================================================================
+  // 6. VOUCHER TRAY LIST RENDERER
+  // ==========================================================================
+  window.renderVoucherList = function () {
+    const listEl = document.getElementById('voucher-tray');
+    if (!listEl) return;
+    listEl.innerHTML = '';
+
+    if (!window.currentVouchers || window.currentVouchers.length === 0) {
+      listEl.innerHTML = '<div style="padding:10px; color:#64748b; font-size:12px; text-align:center;">No vouchers added for this period.</div>';
+      return;
+    }
+
+    window.currentVouchers.forEach(v => {
+      const item = document.createElement('div');
+      item.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 10px; background:#fff; border:1px solid #e2e8f0; border-radius:4px; margin-bottom:6px; font-size:12px;';
+      const color = v.type === 'RECEIPT' ? '#16a34a' : (v.type === 'WITHDRAWAL' ? '#2563eb' : '#dc2626');
+      const day = v.date ? v.date.split('-')[2] : '';
+
+      item.innerHTML = `
+        <div>
+          <span style="font-weight:700; color:${color}; margin-right:4px;">[${v.type}]</span>
+          <strong>${day ? 'Date ' + day : v.date}</strong>: ${v.desc}
+          <span style="color:#64748b; font-weight:600;">(LF: ${v.lf})</span>
+        </div>
+        <div style="display:flex; align-items:center; gap:8px;">
+          <strong>₹${Number(v.amount).toFixed(2)}</strong>
+          <button onclick="window.removeVoucher(${v.id})" style="background:none; border:none; color:#ef4444; font-weight:bold; cursor:pointer; font-size:14px; padding:2px 4px;">✕</button>
+        </div>
+      `;
+      listEl.appendChild(item);
+    });
+  };
+
+  // ==========================================================================
+  // 7. TWO-PAGE STRICT A4 REGISTER BUILDER
+  // ==========================================================================
   function splitAmount(num) {
     if (num === null || num === undefined || isNaN(num) || num === 0) {
-      return { rs: '-', p: '--' };
+      return { rs: '', p: '' };
     }
     const val = Number(Math.abs(num)).toFixed(2);
     const parts = val.split('.');
@@ -367,47 +430,45 @@
     const c = splitAmount(cashAmt);
     const b = splitAmount(bankAmt);
     const tot = (cashAmt || 0) + (bankAmt || 0);
-    const t = tot > 0 ? splitAmount(tot) : { rs: '-', p: '--' };
+    const t = tot > 0 ? splitAmount(tot) : { rs: '', p: '' };
     const inkClass = isRed ? 'ink-red' : 'ink-black';
+
     return `
-      <tr class="${inkClass}" style="color:${isRed ? '#b91c1c' : '#0f172a'};">
-        <td class="col-date" style="border:1px solid #94a3b8; text-align:center; padding:4px;">${date}</td>
-        <td class="col-desc" style="border:1px solid #94a3b8; padding:4px;">${particular}</td>
-        <td class="col-lf" style="border:1px solid #94a3b8; text-align:center; padding:4px;">${lf}</td>
-        <td class="col-rs" style="border:1px solid #94a3b8; text-align:right; padding:4px;">${c.rs}</td>
-        <td class="col-p" style="border:1px solid #94a3b8; text-align:center; padding:4px; font-size:10px;">${c.p}</td>
-        <td class="col-rs" style="border:1px solid #94a3b8; text-align:right; padding:4px;">${b.rs}</td>
-        <td class="col-p" style="border:1px solid #94a3b8; text-align:center; padding:4px; font-size:10px;">${b.p}</td>
-        <td class="col-rs" style="border:1px solid #94a3b8; text-align:right; padding:4px;">${t.rs}</td>
-        <td class="col-p" style="border:1px solid #94a3b8; text-align:center; padding:4px; font-size:10px;">${t.p}</td>
+      <tr class="${inkClass}">
+        <td class="col-date">${date}</td>
+        <td class="col-desc">${particular}</td>
+        <td class="col-lf">${lf || '-'}</td>
+        <td class="col-rs">${c.rs}</td>
+        <td class="col-p">${c.p}</td>
+        <td class="col-rs">${b.rs}</td>
+        <td class="col-p">${b.p}</td>
+        <td class="col-rs">${t.rs}</td>
+        <td class="col-p">${t.p}</td>
       </tr>
     `;
   }
 
   window.recalculateCashbook = function () {
-    const opCashEl = document.getElementById('cb-op-cash');
-    const opBankEl = document.getElementById('cb-op-bank');
-    const opCash = opCashEl ? parseFloat(opCashEl.value) || 0 : 0;
-    const opBank = opBankEl ? parseFloat(opBankEl.value) || 0 : 0;
+    const opCash = parseFloat(document.getElementById('cb-op-cash')?.value) || 0;
+    const opBank = parseFloat(document.getElementById('cb-op-bank')?.value) || 0;
 
     let totRecCash = opCash;
     let totRecBank = opBank;
     let totPayCash = 0;
     let totPayBank = 0;
 
-    let receiptsHtml = renderRegisterRow('1st', '<strong>To O/B</strong>', '-', opCash, opBank, false);
+    let receiptsHtml = renderRegisterRow('1st', '<strong>To Opening Balance (O/B)</strong>', '-', opCash, opBank, false);
     let paymentsHtml = '';
 
-    window.currentVouchers.sort((a, b) => new Date(a.date) - new Date(b.date));
+    const sortedVouchers = [...window.currentVouchers].sort((a, b) => new Date(a.date) - new Date(b.date));
 
-    window.currentVouchers.forEach(v => {
+    sortedVouchers.forEach(v => {
       const amt = parseFloat(v.amount) || 0;
       const day = v.date ? parseInt(v.date.split('-')[2], 10) : '-';
 
       if (v.type === 'RECEIPT') {
         const isBank = v.channel === 'BANK';
-        if (isBank) totRecBank += amt;
-        else totRecCash += amt;
+        if (isBank) totRecBank += amt; else totRecCash += amt;
         receiptsHtml += renderRegisterRow(day, v.desc, v.lf, !isBank ? amt : 0, isBank ? amt : 0, false);
       } else if (v.type === 'WITHDRAWAL') {
         totRecCash += amt;
@@ -416,8 +477,7 @@
         paymentsHtml += renderRegisterRow(day, 'By Cash (Contra)', 'C', 0, amt, true);
       } else if (v.type === 'PAYMENT') {
         const isBank = v.channel === 'BANK';
-        if (isBank) totPayBank += amt;
-        else totPayCash += amt;
+        if (isBank) totPayBank += amt; else totPayCash += amt;
         paymentsHtml += renderRegisterRow(day, v.desc, v.lf, !isBank ? amt : 0, isBank ? amt : 0, true);
       }
     });
@@ -425,315 +485,459 @@
     const rawCloseCash = totRecCash - totPayCash;
     const rawCloseBank = totRecBank - totPayBank;
 
-    const alertBanner = document.getElementById('advance-cons
-
-        const alertBanner = document.getElementById('advance-consent-banner');
+    // Check for cash deficits
+    const alertBanner = document.getElementById('advance-consent-banner');
     if (rawCloseCash < 0) {
       window.pendingAdvanceAmount = Math.abs(rawCloseCash);
       if (alertBanner) {
         alertBanner.style.display = 'flex';
-        const defAmt = document.getElementById('advance-deficit-amount');
-        if (defAmt) defAmt.innerText = window.pendingAdvanceAmount.toFixed(2);
+        const advAmtEl = document.getElementById('advance-deficit-amount');
+        if (advAmtEl) advAmtEl.innerText = window.pendingAdvanceAmount.toFixed(2);
       }
     } else {
       window.pendingAdvanceAmount = 0;
       if (alertBanner) alertBanner.style.display = 'none';
     }
 
-    // 3. By C/B Row (Payments in Red Ink)
-    paymentsHtml += renderRegisterRow('End', '<strong>By C/B</strong>', '-', rawCloseCash > 0 ? rawCloseCash : 0, rawCloseBank > 0 ? rawCloseBank : 0, true);
+    paymentsHtml += renderRegisterRow('End', '<strong>By Closing Balance (C/B)</strong>', '-', Math.max(0, rawCloseCash), Math.max(0, rawCloseBank), true);
 
-    // 4. Fill Ruled Empty Ledger Lines (Audit-Grade Symmetrical Spacing)
-    const receiptRowsCount = (receiptsHtml.match(/<tr/g) || []).length;
-    const paymentRowsCount = (paymentsHtml.match(/<tr/g) || []).length;
-    const targetRows = Math.max(18, receiptRowsCount, paymentRowsCount);
+    // Exact filler lines to ensure tight A4 single-page height
+    const countReceipts = (receiptsHtml.match(/<tr/g) || []).length;
+    const countPayments = (paymentsHtml.match(/<tr/g) || []).length;
+    const EXACT_PAGE_LINES = 15;
 
-    for (let i = receiptRowsCount; i < targetRows; i++) {
-      receiptsHtml += `<tr class="empty-line" style="height:28px;"><td style="border:1px solid #94a3b8; text-align:center;">&nbsp;</td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td></tr>`;
+    for (let i = countReceipts; i < EXACT_PAGE_LINES; i++) {
+      receiptsHtml += `<tr class="empty-line"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
+    }
+    for (let i = countPayments; i < EXACT_PAGE_LINES; i++) {
+      paymentsHtml += `<tr class="empty-line"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>`;
     }
 
-    for (let i = paymentRowsCount; i < targetRows; i++) {
-      paymentsHtml += `<tr class="empty-line" style="height:28px;"><td style="border:1px solid #94a3b8; text-align:center;">&nbsp;</td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td><td style="border:1px solid #94a3b8;"></td></tr>`;
-    }
-
-    // 5. Total Lines (T/P)
     const tRecCash = splitAmount(totRecCash);
     const tRecBank = splitAmount(totRecBank);
     const tRecTot = splitAmount(totRecCash + totRecBank);
 
-    const grandPayCash = totPayCash + (rawCloseCash > 0 ? rawCloseCash : 0);
-    const grandPayBank = totPayBank + (rawCloseBank > 0 ? rawCloseBank : 0);
+    const grandPayCash = totPayCash + Math.max(0, rawCloseCash);
+    const grandPayBank = totPayBank + Math.max(0, rawCloseBank);
     const tPayCash = splitAmount(grandPayCash);
     const tPayBank = splitAmount(grandPayBank);
     const tPayTot = splitAmount(grandPayCash + grandPayBank);
 
     receiptsHtml += `
-      <tr class="total-row ink-black" style="font-weight:bold; background:#f8fafc; border-top:2px solid #000; border-bottom:3px double #000;">
-        <td style="border:1px solid #000; text-align:center;"></td>
-        <td style="border:1px solid #000;"><strong>T/P</strong></td>
-        <td style="border:1px solid #000; text-align:center;"></td>
-        <td class="col-rs" style="border:1px solid #000; text-align:right; padding:4px;"><strong>${tRecCash.rs}</strong></td>
-        <td class="col-p" style="border:1px solid #000; text-align:center; padding:4px; font-size:10px;"><strong>${tRecCash.p}</strong></td>
-        <td class="col-rs" style="border:1px solid #000; text-align:right; padding:4px;"><strong>${tRecBank.rs}</strong></td>
-        <td class="col-p" style="border:1px solid #000; text-align:center; padding:4px; font-size:10px;"><strong>${tRecBank.p}</strong></td>
-        <td class="col-rs" style="border:1px solid #000; text-align:right; padding:4px;"><strong>${tRecTot.rs}</strong></td>
-        <td class="col-p" style="border:1px solid #000; text-align:center; padding:4px; font-size:10px;"><strong>${tRecTot.p}</strong></td>
+      <tr class="total-row ink-black">
+        <td></td><td><strong>Total / Balanced (T/P)</strong></td><td></td>
+        <td class="col-rs"><strong>${tRecCash.rs}</strong></td><td class="col-p"><strong>${tRecCash.p}</strong></td>
+        <td class="col-rs"><strong>${tRecBank.rs}</strong></td><td class="col-p"><strong>${tRecBank.p}</strong></td>
+        <td class="col-rs"><strong>${tRecTot.rs}</strong></td><td class="col-p"><strong>${tRecTot.p}</strong></td>
       </tr>
     `;
 
     paymentsHtml += `
-      <tr class="total-row ink-red" style="font-weight:bold; color:#b91c1c; background:#f8fafc; border-top:2px solid #000; border-bottom:3px double #000;">
-        <td style="border:1px solid #000; text-align:center;"></td>
-        <td style="border:1px solid #000;"><strong>T/P</strong></td>
-        <td style="border:1px solid #000; text-align:center;"></td>
-        <td class="col-rs" style="border:1px solid #000; text-align:right; padding:4px;"><strong>${tPayCash.rs}</strong></td>
-        <td class="col-p" style="border:1px solid #000; text-align:center; padding:4px; font-size:10px;"><strong>${tPayCash.p}</strong></td>
-        <td class="col-rs" style="border:1px solid #000; text-align:right; padding:4px;"><strong>${tPayBank.rs}</strong></td>
-        <td class="col-p" style="border:1px solid #000; text-align:center; padding:4px; font-size:10px;"><strong>${tPayBank.p}</strong></td>
-        <td class="col-rs" style="border:1px solid #000; text-align:right; padding:4px;"><strong>${tPayTot.rs}</strong></td>
-        <td class="col-p" style="border:1px solid #000; text-align:center; padding:4px; font-size:10px;"><strong>${tPayTot.p}</strong></td>
+      <tr class="total-row ink-red">
+        <td></td><td><strong>Total / Balanced (T/P)</strong></td><td></td>
+        <td class="col-rs"><strong>${tPayCash.rs}</strong></td><td class="col-p"><strong>${tPayCash.p}</strong></td>
+        <td class="col-rs"><strong>${tPayBank.rs}</strong></td><td class="col-p"><strong>${tPayBank.p}</strong></td>
+        <td class="col-rs"><strong>${tPayTot.rs}</strong></td><td class="col-p"><strong>${tPayTot.p}</strong></td>
       </tr>
     `;
 
-    // 6. Header Metadata
     const mEl = document.getElementById('cb-sel-month');
     const yEl = document.getElementById('cb-sel-year');
-    const mName = mEl ? mEl.options[mEl.selectedIndex]?.text : 'Current Month';
-    const yName = yEl ? yEl.value : '2026';
+    const mName = mEl ? mEl.options[mEl.selectedIndex]?.text : '';
+    const yName = yEl ? yEl.value : '';
 
     const area = document.getElementById('cashbook-printable-area');
     if (area) {
       area.innerHTML = `
-        <div class="register-spread" style="display:flex; flex-direction:row; justify-content:space-between; gap:16px; background:#fff; width:100%; box-sizing:border-box;">
-          
-          <!-- LEFT PAGE: RECEIPTS (BLACK INK) -->
-          <div class="register-page" style="flex:1 1 50%; width:50%; background:#fff; border:1px solid #64748b; padding:12px; box-sizing:border-box;">
-            <div style="text-align:center; margin-bottom:8px;">
-              <h3 style="margin:0; font-size:16px; text-transform:uppercase; font-weight:800; color:#0f172a;">Cash Book — Receipts</h3>
-              <div style="font-size:12px; font-weight:600; color:#334155;">For the month of ${mName} ${yName}</div>
+        <div class="print-container">
+          <!-- PAGE 1: RECEIPTS EXCLUSIVELY -->
+          <div class="register-page page-receipts">
+            <div class="page-header">
+              <div class="cashbook-title">CASH BOOK</div>
+              <div class="cashbook-subtitle">For the month of ${mName} ${yName}</div>
+              <div class="section-indicator text-receipts">RECEIPTS</div>
             </div>
-            <table class="ledger-table" style="width:100%; border-collapse:collapse; table-layout:fixed; font-size:11px;">
+            <table class="ledger-table">
               <thead>
-                <tr style="background:#f1f5f9; text-align:center;">
-                  <th rowspan="2" style="border:1px solid #64748b; width:34px; padding:4px;">Date</th>
-                  <th rowspan="2" style="border:1px solid #64748b; padding:4px;">PARTICULARS</th>
-                  <th rowspan="2" style="border:1px solid #64748b; width:26px; padding:4px;">L.F.</th>
-                  <th colspan="2" style="border:1px solid #64748b; width:68px; padding:4px;">Cash Amount</th>
-                  <th colspan="2" style="border:1px solid #64748b; width:72px; padding:4px;">Bank Amount</th>
-                  <th colspan="2" style="border:1px solid #64748b; width:72px; padding:4px;">Total Amount</th>
+                <tr>
+                  <th rowspan="2" class="th-date">Month &<br>Date</th>
+                  <th rowspan="2" class="th-particulars">PARTICULARS</th>
+                  <th rowspan="2" class="th-lf">Ledger<br>Folio</th>
+                  <th colspan="2" class="th-group">Cash Amount</th>
+                  <th colspan="2" class="th-group">Bank Amount</th>
+                  <th colspan="2" class="th-group">Total Amount</th>
                 </tr>
-                <tr style="background:#f1f5f9; text-align:center;">
-                  <th style="border:1px solid #64748b; width:46px; padding:2px;">Rs.</th>
-                  <th style="border:1px solid #64748b; width:22px; padding:2px;">P.</th>
-                  <th style="border:1px solid #64748b; width:50px; padding:2px;">Rs.</th>
-                  <th style="border:1px solid #64748b; width:22px; padding:2px;">P.</th>
-                  <th style="border:1px solid #64748b; width:50px; padding:2px;">Rs.</th>
-                  <th style="border:1px solid #64748b; width:22px; padding:2px;">P.</th>
+                <tr>
+                  <th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>
+                  <th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>
+                  <th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>
                 </tr>
               </thead>
               <tbody>${receiptsHtml}</tbody>
             </table>
           </div>
 
-          <!-- RIGHT PAGE: PAYMENTS (RED INK) -->
-          <div class="register-page" style="flex:1 1 50%; width:50%; background:#fff; border:1px solid #64748b; padding:12px; box-sizing:border-box;">
-            <div style="text-align:center; margin-bottom:8px;">
-              <h3 style="margin:0; font-size:16px; text-transform:uppercase; font-weight:800; color:#b91c1c;">Cash Book — Payments</h3>
-              <div style="font-size:12px; font-weight:600; color:#334155;">For the month of ${mName} ${yName}</div>
+          <!-- PAGE 2: PAYMENTS EXCLUSIVELY -->
+          <div class="register-page page-payments">
+            <div class="page-header">
+              <div class="cashbook-title">CASH BOOK</div>
+              <div class="cashbook-subtitle">For the month of ${mName} ${yName}</div>
+              <div class="section-indicator text-payments">PAYMENTS</div>
             </div>
-            <table class="ledger-table" style="width:100%; border-collapse:collapse; table-layout:fixed; font-size:11px;">
+            <table class="ledger-table">
               <thead>
-                <tr style="background:#f1f5f9; text-align:center;">
-                  <th rowspan="2" style="border:1px solid #64748b; width:34px; padding:4px;">Date</th>
-                  <th rowspan="2" style="border:1px solid #64748b; padding:4px;">PARTICULARS</th>
-                  <th rowspan="2" style="border:1px solid #64748b; width:26px; padding:4px;">L.F.</th>
-                  <th colspan="2" style="border:1px solid #64748b; width:68px; padding:4px;">Cash Amount</th>
-                  <th colspan="2" style="border:1px solid #64748b; width:72px; padding:4px;">Bank Amount</th>
-                  <th colspan="2" style="border:1px solid #64748b; width:72px; padding:4px;">Total Amount</th>
+                <tr>
+                  <th rowspan="2" class="th-date">Month &<br>Date</th>
+                  <th rowspan="2" class="th-particulars">PARTICULARS</th>
+                  <th rowspan="2" class="th-lf">Ledger<br>Folio</th>
+                  <th colspan="2" class="th-group">Cash Amount</th>
+                  <th colspan="2" class="th-group">Bank Amount</th>
+                  <th colspan="2" class="th-group">Total Amount</th>
                 </tr>
-                <tr style="background:#f1f5f9; text-align:center;">
-                  <th style="border:1px solid #64748b; width:46px; padding:2px;">Rs.</th>
-                  <th style="border:1px solid #64748b; width:22px; padding:2px;">P.</th>
-                  <th style="border:1px solid #64748b; width:50px; padding:2px;">Rs.</th>
-                  <th style="border:1px solid #64748b; width:22px; padding:2px;">P.</th>
-                  <th style="border:1px solid #64748b; width:50px; padding:2px;">Rs.</th>
-                  <th style="border:1px solid #64748b; width:22px; padding:2px;">P.</th>
+                <tr>
+                  <th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>
+                  <th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>
+                  <th class="th-sub">Rs.</th><th class="th-sub-p">P.</th>
                 </tr>
               </thead>
               <tbody>${paymentsHtml}</tbody>
             </table>
           </div>
-
         </div>
       `;
     }
 
-    window.renderVoucherTrayList();
-    window.renderLedgerSheet();
-  };
-  // --- 11. VOUCHER TRAY LIST ---
-  window.renderVoucherList = window.renderVoucherTrayList = function () {
-    const list = document.getElementById('voucher-list');
-    if (!list) return;
-
-    if (!window.currentVouchers || window.currentVouchers.length === 0) {
-      list.innerHTML = '<div style="color:#64748b; text-align:center; padding:12px; font-size:13px;">No vouchers recorded for this month yet.</div>';
-      return;
+    if (typeof window.renderVoucherList === 'function') {
+      window.renderVoucherList();
     }
-
-    list.innerHTML = window.currentVouchers.map(v => {
-      const typeColor = v.type === 'PAYMENT' ? '#dc2626' : (v.type === 'RECEIPT' ? '#15803d' : '#0284c7');
-      return `
-        <div style="display:flex; justify-content:space-between; align-items:center; background:#fff; padding:8px 12px; margin-bottom:6px; border:1px solid #e2e8f0; border-radius:4px; font-size:12px;">
-          <div>
-            <span style="font-weight:700; color:#0f172a;">${v.date}</span> &bull; 
-            <span style="color:${typeColor}; font-weight:700;">[${v.type}]</span> 
-            <span>${v.desc}</span> 
-            <span style="color:#64748b;">(LF: ${v.lf} | ${v.channel})</span>
-          </div>
-          <div style="display:flex; align-items:center; gap:10px;">
-            <span style="font-weight:700; font-size:13px;">₹${Number(v.amount).toFixed(2)}</span>
-            <button onclick="window.removeVoucher('${v.id}')" style="background:#fee2e2; color:#b91c1c; border:none; padding:3px 8px; border-radius:4px; cursor:pointer; font-weight:bold;">&times;</button>
-          </div>
-        </div>
-      `;
-    }).join('');
+    if (typeof window.renderLedgerSheet === 'function') {
+      window.renderLedgerSheet();
+    }
+    window.updateReconciliationBanner();
   };
-  
-  // --- 12. GENERAL LEDGER ENGINE ---
+
+  // ==========================================================================
+  // 8. DECOUPLED GENERAL LEDGER ENGINE
+  // ==========================================================================
   window.updateLedgerHeadFilterOptions = function () {
-    const filterSelect = document.getElementById('sel-filter-ledger');
-    if (!filterSelect) return;
-
-    const drawer = window.currentDrawer || 'mdm';
-    const schema = window.ENGINE_SCHEMAS[drawer] || {};
-    const seenLfs = new Set();
-    const options = ['<option value="ALL">-- ALL LEDGER FOLIO HEADS --</option>'];
-
-    ['RECEIPT', 'PAYMENT'].forEach(type => {
-      (schema[type] || []).forEach(item => {
-        if (item.lf && !seenLfs.has(item.lf) && item.lf !== 'C') {
-          seenLfs.add(item.lf);
-          options.push(`<option value="${item.lf}">LF ${item.lf}: ${item.text.replace(/^(To|By)\s+/i, '')}</option>`);
-        }
-      });
+    const sel = document.getElementById('sel-filter-ledger');
+    if (!sel) return;
+    const heads = [
+      { lf: 'ALL', name: '--- All Heads (Consolidated) ---' },
+      { lf: '1', name: 'LF 1: Cooking Cost (Meal Operations)' },
+      { lf: '2', name: 'LF 2: LPG Cylinder & Kitchen Fuel' },
+      { lf: '3', name: 'LF 3: Cook-cum-Helper Honorarium' },
+      { lf: '4', name: 'LF 4: Kitchen Devices & Utensils' },
+      { lf: '5', name: 'LF 5: FCI Rice Lifting & Transport / PFMS Grant' },
+      { lf: '6', name: 'LF 6: Kitchen Garden & Maintenance' },
+      { lf: '7', name: 'LF 7: SNA Bank Charges / SMS Fees' },
+      { lf: '8', name: 'LF 8: In-Charge Advance & Reimbursement' },
+      { lf: 'C', name: 'LF C: Contra Bank Withdrawals' }
+    ];
+    const currentVal = sel.value;
+    sel.innerHTML = '';
+    heads.forEach(h => {
+      const opt = document.createElement('option');
+      opt.value = h.lf;
+      opt.innerText = h.name;
+      if (h.lf === currentVal) opt.selected = true;
+      sel.appendChild(opt);
     });
-
-    filterSelect.innerHTML = options.join('');
   };
 
   window.renderLedgerSheet = function () {
-    const tbody = document.getElementById('led-tbody');
-    if (!tbody) return;
+    const filterEl = document.getElementById('sel-filter-ledger');
+    const selectedLf = filterEl ? filterEl.value : 'ALL';
 
-    const filterLf = document.getElementById('sel-filter-ledger')?.value || 'ALL';
-    let runningBalance = 0;
-    let rowsHtml = '';
+    const mEl = document.getElementById('cb-sel-month');
+    const yEl = document.getElementById('cb-sel-year');
+    const mName = mEl ? mEl.options[mEl.selectedIndex]?.text : '';
+    const yName = yEl ? yEl.value : '';
 
-    const eligible = window.currentVouchers.filter(v => {
-      if (v.lf === 'C' || v.type === 'WITHDRAWAL') return false;
-      if (filterLf !== 'ALL' && String(v.lf) !== String(filterLf)) return false;
-      return true;
-    });
-
-    if (eligible.length === 0) {
-      tbody.innerHTML = `<tr><td colspan="7" style="text-align:center; padding:16px; color:#64748b;">No ledger entries found for Folio: ${filterLf}</td></tr>`;
-      return;
+    let headLabel = 'CONSOLIDATED GENERAL LEDGER';
+    if (filterEl && filterEl.selectedIndex >= 0) {
+      headLabel = filterEl.options[filterEl.selectedIndex].text.toUpperCase();
     }
 
-    eligible.forEach(v => {
+    let runningBal = 0;
+    let totDr = 0;
+    let totCr = 0;
+    let html = '';
+
+    const list = window.currentVouchers.filter(v => {
+      if (!selectedLf || selectedLf === 'ALL') return true;
+      return String(v.lf).trim().toUpperCase() === selectedLf.toUpperCase();
+    });
+    list.sort((a, b) => new Date(a.date) - new Date(b.date));
+
+    list.forEach(v => {
       const amt = parseFloat(v.amount) || 0;
       let dr = 0;
       let cr = 0;
 
       if (v.type === 'RECEIPT') {
-        dr = amt;
-        runningBalance += amt;
+        dr = amt; runningBal += amt; totDr += amt;
       } else if (v.type === 'PAYMENT') {
-        cr = amt;
-        runningBalance -= amt;
+        cr = amt; runningBal -= amt; totCr += amt;
+      } else if (v.type === 'WITHDRAWAL') {
+        dr = amt; cr = amt; totDr += amt; totCr += amt;
       }
 
-      rowsHtml += `
-        <tr style="border-bottom:1px solid #cbd5e1; font-size:12px;">
-          <td style="padding:6px; text-align:center;">${v.date}</td>
-          <td style="padding:6px;">${v.desc}</td>
-          <td style="padding:6px; text-align:center; font-weight:bold;">${v.lf}</td>
-          <td style="padding:6px; text-align:center;">${v.channel}</td>
-          <td style="padding:6px; text-align:right; color:#15803d; font-weight:600;">${dr > 0 ? dr.toFixed(2) : '-'}</td>
-          <td style="padding:6px; text-align:right; color:#b91c1c; font-weight:600;">${cr > 0 ? cr.toFixed(2) : '-'}</td>
-          <td style="padding:6px; text-align:right; font-weight:700;">₹${runningBalance.toFixed(2)}</td>
+      html += `
+        <tr>
+          <td class="text-center">${v.date}</td>
+          <td class="text-center">${v.lf || '-'}</td>
+          <td>${v.desc}</td>
+          <td class="num">${dr > 0 ? '₹' + dr.toFixed(2) : '-'}</td>
+          <td class="num">${cr > 0 ? '₹' + cr.toFixed(2) : '-'}</td>
+          <td class="num font-bold">₹${runningBal.toFixed(2)}</td>
         </tr>
       `;
     });
 
-    tbody.innerHTML = rowsHtml;
+    if (list.length === 0) {
+      html = `<tr><td colspan="6" style="text-align:center; padding:18px; color:#64748b;">No voucher entries recorded under this account head.</td></tr>`;
+    }
+
+    // Render directly into the standalone ledger container
+    const ledgerPrintArea = document.getElementById('ledger-printable-area');
+    if (ledgerPrintArea) {
+      ledgerPrintArea.innerHTML = `
+        <div class="ledger-standalone-page">
+          <div class="page-header">
+            <div class="cashbook-title">GENERAL LEDGER STATEMENT</div>
+            <div class="cashbook-subtitle">${headLabel}</div>
+            <div style="font-size:11px; color:#475569; margin-top:2px;">Period: ${mName} ${yName} | Drawer: ${window.currentDrawer.toUpperCase()}</div>
+          </div>
+          <table class="ledger-table-full">
+            <thead>
+              <tr>
+                <th style="width:80px; text-align:center;">Date</th>
+                <th style="width:45px; text-align:center;">Folio</th>
+                <th>Particulars / Head Description</th>
+                <th style="width:95px; text-align:right;">Debit (Dr)</th>
+                <th style="width:95px; text-align:right;">Credit (Cr)</th>
+                <th style="width:105px; text-align:right;">Balance</th>
+              </tr>
+            </thead>
+            <tbody>${html}</tbody>
+            <tfoot>
+              <tr class="total-row">
+                <td colspan="3" style="text-align:right; font-weight:bold;">Total Cumulative Turnover:</td>
+                <td style="text-align:right; font-weight:bold;">₹${totDr.toFixed(2)}</td>
+                <td style="text-align:right; font-weight:bold;">₹${totCr.toFixed(2)}</td>
+                <td style="text-align:right; font-weight:bold;">₹${runningBal.toFixed(2)}</td>
+              </tr>
+            </tfoot>
+          </table>
+        </div>
+      `;
+    }
   };
 
-  // --- 13. PERIOD CHANGE & INITIALIZATION ---
-  window.onCashbookPeriodChange = function () {
-    window.calculateMandate();
+  // ==========================================================================
+  // 9. EXPLICIT PRINT INVOCATION HANDLERS
+  // ==========================================================================
+  window.triggerCashbookPrint = function () {
+    document.body.classList.remove('print-mode-ledger');
+    window.print();
+  };
+
+  window.triggerLedgerPrint = function () {
+    document.body.classList.add('print-mode-ledger');
+    window.print();
+    setTimeout(() => {
+      document.body.classList.remove('print-mode-ledger');
+    }, 800);
+  };
+
+  // ==========================================================================
+  // 10. TEACHER ADVANCE & MULTI-MONTH PERSISTENCE
+  // ==========================================================================
+  window.consentTeacherAdvance = function () {
+    if (window.pendingAdvanceAmount <= 0) return;
+    const dEl = document.getElementById('tx-date');
+    const advDate = dEl?.value || new Date().toISOString().split('T')[0];
+
+    window.currentVouchers.push({
+      id: Date.now(),
+      date: advDate,
+      type: 'RECEIPT',
+      channel: 'CASH',
+      lf: '8',
+      desc: 'To Temporary Advance from In-charge/Teacher (Out-of-pocket funding)',
+      amount: window.pendingAdvanceAmount
+    });
+
+    window.pendingAdvanceAmount = 0;
+    const banner = document.getElementById('advance-consent-banner');
+    if (banner) banner.style.display = 'none';
     window.recalculateCashbook();
   };
 
-  // --- 14. ISOLATED AUDIT PRINT ENGINE ---
-  window.printAuditDocument = function (elementId) {
-    const target = document.getElementById(elementId);
-    if (!target) {
-      alert('Printable section not found.');
-      return;
-    }
+  function getStorageKey(drawer, year, month) {
+    return `cashbook_rec_${drawer}_${year}_${String(month).padStart(2, '0')}`;
+  }
 
-    const frame = document.createElement('iframe');
-    frame.style.position = 'fixed';
-    frame.style.right = '0';
-    frame.style.bottom = '0';
-    frame.style.width = '0';
-    frame.style.height = '0';
-    frame.style.border = '0';
-    document.body.appendChild(frame);
+  window.saveCurrentMonthRecord = function () {
+    const drawer = window.currentDrawer;
+    const year = document.getElementById('cb-sel-year')?.value;
+    const month = document.getElementById('cb-sel-month')?.value;
+    const opCash = parseFloat(document.getElementById('cb-op-cash')?.value) || 0;
+    const opBank = parseFloat(document.getElementById('cb-op-bank')?.value) || 0;
 
-    const doc = frame.contentWindow.document;
-    doc.open();
-    doc.write(`
-      <!DOCTYPE html>
-      <html>
-        <head>
-          <title>Statutory Audit Document</title>
-          <style>
-            @page { size: A4 landscape; margin: 8mm 6mm; }
-            body { font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Arial, sans-serif; margin: 0; padding: 0; background: #fff; }
-            .register-spread { display: flex !important; flex-direction: row !important; justify-content: space-between !important; gap: 8mm !important; width: 100% !important; }
-            .register-page { width: 49% !important; box-sizing: border-box !important; }
-            table { width: 100% !important; border-collapse: collapse !important; table-layout: fixed !important; }
-            th, td { border: 1px solid #475569 !important; padding: 4px 2px !important; font-size: 11px !important; overflow: hidden !important; }
-            .col-rs { text-align: right !important; }
-            .col-p { text-align: center !important; font-size: 10px !important; }
-            .ink-red td { color: #b91c1c !important; }
-            .ink-black td { color: #0f172a !important; }
-            .total-row td { font-weight: bold !important; border-top: 2px solid #000 !important; border-bottom: 3px double #000 !important; background: #f8fafc !important; }
-          </style>
-        </head>
-        <body>
-          ${target.innerHTML}
-        </body>
-      </html>
-    `);
-    doc.close();
+    let totCashRec = opCash;
+    let totBankRec = opBank;
+    let totCashPay = 0;
+    let totBankPay = 0;
 
-    setTimeout(() => {
-      frame.contentWindow.focus();
-      frame.contentWindow.print();
-      setTimeout(() => document.body.removeChild(frame), 1500);
-    }, 400);
+    window.currentVouchers.forEach(v => {
+      const a = parseFloat(v.amount) || 0;
+      if (v.type === 'RECEIPT') {
+        if (v.channel === 'BANK') totBankRec += a; else totCashRec += a;
+      } else if (v.type === 'WITHDRAWAL') {
+        totCashRec += a; totBankPay += a;
+      } else if (v.type === 'PAYMENT') {
+        if (v.channel === 'BANK') totBankPay += a; else totCashPay += a;
+      }
+    });
+
+    const closeCash = Math.max(0, totCashRec - totCashPay);
+    const closeBank = Math.max(0, totBankRec - totBankPay);
+
+    const payload = {
+      drawer: drawer,
+      year: year,
+      month: month,
+      category: document.getElementById('cb-mandate-cat')?.value,
+      rateLp: document.getElementById('rate-lp')?.value,
+      mealsLp: document.getElementById('meals-lp')?.value,
+      rateUp: document.getElementById('rate-up')?.value,
+      mealsUp: document.getElementById('meals-up')?.value,
+      opCash: opCash,
+      opBank: opBank,
+      closeCash: closeCash,
+      closeBank: closeBank,
+      vouchers: window.currentVouchers,
+      savedAt: new Date().toISOString()
+    };
+
+    localStorage.setItem(getStorageKey(drawer, year, month), JSON.stringify(payload));
+
+    // Carry forward Closing Balance as next month's Opening Balance
+    let nextMonth = parseInt(month, 10) + 1;
+    let nextYear = parseInt(year, 10);
+    if (nextMonth > 12) { nextMonth = 1; nextYear += 1; }
+
+    const nextKey = getStorageKey(drawer, nextYear, nextMonth);
+    let nextRec = localStorage.getItem(nextKey);
+    nextRec = nextRec ? JSON.parse(nextRec) : {};
+    nextRec.opCash = closeCash;
+    nextRec.opBank = closeBank;
+    localStorage.setItem(nextKey, JSON.stringify(nextRec));
+
+    alert(`Cashbook for ${month}/${year} permanently recorded. C/B carried forward.`);
+    window.renderArchiveTray();
   };
 
-  // --- 15. AUTO BOOTSTRAP ---
-  document.addEventListener('DOMContentLoaded', () => {
-    window.switchDrawer('mdm');
-    window.setTransactionType('RECEIPT');
-  });
+  window.onCashbookPeriodChange = function () {
+    const year = document.getElementById('cb-sel-year')?.value;
+    const month = document.getElementById('cb-sel-month')?.value;
+    window.loadMonthRecord(year, month);
+  };
 
+  window.loadMonthRecord = function (year, month) {
+    const drawer = window.currentDrawer;
+    const key = getStorageKey(drawer, year, month);
+    const dataStr = localStorage.getItem(key);
+
+    const yEl = document.getElementById('cb-sel-year');
+    const mEl = document.getElementById('cb-sel-month');
+    if (yEl) yEl.value = year;
+    if (mEl) mEl.value = String(month).padStart(2, '0');
+
+    if (dataStr) {
+      const data = JSON.parse(dataStr);
+      document.getElementById('cb-mandate-cat').value = data.category || 'COMPOSITE';
+      document.getElementById('rate-lp').value = data.rateLp || '';
+      document.getElementById('meals-lp').value = data.mealsLp || '';
+      document.getElementById('rate-up').value = data.rateUp || '';
+      document.getElementById('meals-up').value = data.mealsUp || '';
+      document.getElementById('cb-op-cash').value = data.opCash !== undefined ? data.opCash : '';
+      document.getElementById('cb-op-bank').value = data.opBank !== undefined ? data.opBank : '';
+      window.currentVouchers = data.vouchers || [];
+    } else {
+      let prevM = parseInt(month, 10) - 1;
+      let prevY = parseInt(year, 10);
+      if (prevM < 1) { prevM = 12; prevY -= 1; }
+
+      const prevKey = getStorageKey(drawer, prevY, prevM);
+      const prevDataStr = localStorage.getItem(prevKey);
+      if (prevDataStr) {
+        const prevData = JSON.parse(prevDataStr);
+        document.getElementById('cb-op-cash').value = prevData.closeCash !== undefined ? prevData.closeCash : 0;
+        document.getElementById('cb-op-bank').value = prevData.closeBank !== undefined ? prevData.closeBank : 0;
+      } else {
+        document.getElementById('cb-op-cash').value = '';
+        document.getElementById('cb-op-bank').value = '';
+      }
+      document.getElementById('rate-lp').value = '';
+      document.getElementById('meals-lp').value = '';
+      document.getElementById('rate-up').value = '';
+      document.getElementById('meals-up').value = '';
+      window.currentVouchers = [];
+    }
+    window.updateCategoryVisibility();
+    window.recalculateCashbook();
+  };
+
+  window.renderArchiveTray = function () {
+    const tray = document.getElementById('archive-tray');
+    if (!tray) return;
+    tray.innerHTML = '';
+
+    const drawer = window.currentDrawer;
+    const prefix = `cashbook_rec_${drawer}_`;
+
+    for (let i = 0; i < localStorage.length; i++) {
+      const key = localStorage.key(i);
+      if (key && key.startsWith(prefix)) {
+        try {
+          const rec = JSON.parse(localStorage.getItem(key));
+          if (!rec.savedAt) continue;
+          const card = document.createElement('div');
+          card.style.cssText = 'display:flex; justify-content:space-between; align-items:center; padding:8px 12px; background:#fff; border:1px solid #cbd5e1; border-radius:6px; margin-bottom:6px; font-size:13px;';
+          card.innerHTML = `
+            <div>
+              <strong>${rec.month}/${rec.year}</strong> 
+              <span style="color:#64748b; font-size:11px;">(C/B Cash: ₹${Number(rec.closeCash).toFixed(2)} | Bank: ₹${Number(rec.closeBank).toFixed(2)})</span>
+            </div>
+            <div>
+              <button onclick="loadMonthRecord('${rec.year}', '${rec.month}')" style="background:#0284c7; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px;">View</button>
+              <button onclick="deleteRecord('${key}')" style="background:#ef4444; color:#fff; border:none; padding:4px 8px; border-radius:4px; cursor:pointer; font-size:11px; margin-left:4px;">Delete</button>
+            </div>
+          `;
+          tray.appendChild(card);
+        } catch (e) {}
+      }
+    }
+  };
+
+  window.deleteRecord = function (key) {
+    if (confirm("Are you sure you want to delete this saved month's permanent record?")) {
+      localStorage.removeItem(key);
+      window.renderArchiveTray();
+    }
+  };
+
+  // ==========================================================================
+  // 11. BOOTSTRAP INITIALIZATION
+  // ==========================================================================
+  document.addEventListener('DOMContentLoaded', () => {
+    window.updateCategoryVisibility();
+    window.setTransactionType('RECEIPT');
+    window.updateLedgerHeadFilterOptions();
+    window.renderArchiveTray();
+    window.recalculateCashbook();
+  });
 })(window);
-                                         
-                                                

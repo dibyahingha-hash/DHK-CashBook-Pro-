@@ -1202,6 +1202,7 @@ function updateMandateSummaryDisplay() {
     } else {
       diffLbl.style.color = '#15803d';
       diffLbl.innerText = `| Mandate Exact Match (₹0.00)`;
-    }
+        }
   }
-}
+};
+  

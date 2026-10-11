@@ -130,12 +130,15 @@ function onMandateTargetChanged(trigger) {
     }
   }
 
-  // Auto-generate the complete statutory narration
-  
-  
+     // Auto-generate the complete statutory narration
+    const narrationInput = document.getElementById('tx-desc');
+    const yVal = document.getElementById('cb-sel-year')?.value || new Date().getFullYear();
+    const mSelect = document.getElementById('cb-sel-month');
+    const mName = mSelect && mSelect.options[mSelect.selectedIndex] ? mSelect.options[mSelect.selectedIndex].text : '';
 
-  updateMandateTallyStatus();
-}
+    if (narrationInput && exp > 0 && meals > 0) {
+      narrationInput.value = `Being cooking cost of ₹${exp.toFixed(2)} for ${meals} meals for the month of ${mName} ${yVal} @ ₹${rate.toFixed(2)}/meal`;
+    }
 
 function updateMandateTallyStatus() {
   const targetExp = parseFloat(document.getElementById('cb-mandate-target')?.value) || 0;

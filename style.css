@@ -1,7 +1,7 @@
 /* ==========================================================================
    css/style.css
    DHK PM POSHAN & SCHOOL CASHBOOK SUITE
-   Responsive Mobile Data-Entry Desk + Statutory 2-Page Strict A4 Cash Book & Ledger
+   Responsive Mobile Data-Entry + Statutory 2-Page Strict A4 Cash Book & Ledger
    ========================================================================== */
 
 :root {
@@ -32,7 +32,7 @@ body {
    ========================================================================== */
 .app-header {
   background: var(--primary);
-  color: #fff;
+  color: #ffffff;
   padding: 12px 16px;
 }
 
@@ -46,7 +46,7 @@ body {
 
 .tabs-nav {
   display: flex;
-  background: #fff;
+  background: #ffffff;
   border-bottom: 2px solid var(--border-color);
   max-width: 1100px;
   margin: 0 auto;
@@ -68,7 +68,7 @@ body {
 .tab-btn.active {
   color: var(--primary-light);
   border-bottom: 3px solid var(--primary-light);
-  background: #fff;
+  background: #ffffff;
 }
 
 .view-panel {
@@ -139,7 +139,7 @@ input, select {
 
 .btn-secondary {
   background: var(--accent);
-  color: #fff;
+  color: #ffffff;
 }
 
 /* Real-Time Live Reconciliation Monitor Banner */
@@ -158,7 +158,7 @@ input, select {
    ========================================================================== */
 #subview-cashbook-wrap {
   width: 100%;
-  overflow-x: auto; /* Preserves mobile swipe/scroll */
+  overflow-x: auto;
   margin-top: 10px;
 }
 
@@ -177,7 +177,7 @@ input, select {
   border-radius: 4px;
   padding: 16px;
   box-shadow: 0 3px 6px rgba(0, 0, 0, 0.08);
-  min-width: 760px; /* Locks table geometry on mobile screens */
+  min-width: 760px;
 }
 
 .page-header {
@@ -211,15 +211,15 @@ input, select {
 .text-payments { color: #b91c1c; }
 
 /* ==========================================================================
-   3. STATUTORY RULED TABLE (EXACT DOUBLE-ENTRY REGISTER)
+   3. STATUTORY RULED TABLE (SCREEN FORMAT)
    ========================================================================== */
 table.ledger-table {
   width: 100%;
   border-collapse: collapse;
   border: 1.5px solid #334155;
   font-size: 11px;
-  table-layout: fixed; /* Prevents overflow into adjacent columns */
-  background: #fff;
+  table-layout: fixed;
+  background: #ffffff;
 }
 
 table.ledger-table th,
@@ -237,7 +237,7 @@ table.ledger-table th {
   text-align: center;
 }
 
-/* Colgroup Calibration */
+/* Header Columns */
 .th-date        { width: 34px; }
 .th-particulars { width: auto; }
 .th-lf          { width: 26px; }
@@ -245,25 +245,26 @@ table.ledger-table th {
 .th-sub         { width: 44px; }
 .th-sub-p       { width: 22px; }
 
+/* Body Columns */
 .col-date { width: 34px; text-align: center; font-weight: 600; }
 .col-desc { width: auto; text-align: left; padding-left: 6px !important; white-space: normal; line-height: 1.2; }
 .col-lf   { width: 26px; text-align: center; font-weight: 700; }
 .col-rs   { width: 44px; text-align: right; padding-right: 3px !important; font-variant-numeric: tabular-nums; }
 .col-p    { width: 22px; text-align: center; font-variant-numeric: tabular-nums; }
 
-/* Ink Colors */
+/* Dual-Ink Styles */
 .ink-black td { color: #09090b; }
 .ink-red td   { color: #b91c1c; }
 
-/* Strict Ruled Row Heights */
+/* Filler Rows */
 table.ledger-table tr.empty-line td {
   height: 24px;
 }
 
 /* Balanced T/P Summary Row */
 table.ledger-table tr.total-row td {
-  border-top: 1.5px solid #000 !important;
-  border-bottom: 3px double #000 !important;
+  border-top: 1.5px solid #000000 !important;
+  border-bottom: 3px double #000000 !important;
   font-weight: 800;
   background: #fafaf9;
 }
@@ -278,7 +279,7 @@ table.ledger-table tr.total-row td {
 }
 
 .ledger-standalone-page {
-  background: #fff;
+  background: #ffffff;
   border: 1px solid #cbd5e1;
   border-radius: 6px;
   padding: 16px;
@@ -320,7 +321,7 @@ table.ledger-table tr.total-row td {
     print-color-adjust: exact !important;
   }
 
-  /* Suppress UI headers, drawers, buttons, forms, and live monitoring banners */
+  /* Suppress UI elements, forms, trays, and interactive controls */
   nav,
   header,
   .app-header,
@@ -340,7 +341,7 @@ table.ledger-table tr.total-row td {
   }
 
   /* -------------------------------------------------------------
-     MODE A: TWO-PAGE CASHBOOK (RECEIPTS PAGE 1, PAYMENTS PAGE 2)
+     MODE A: TWO-PAGE CASHBOOK (PAGE 1: RECEIPTS, PAGE 2: PAYMENTS)
      ------------------------------------------------------------- */
   body:not(.print-mode-ledger) #subview-ledger-wrap,
   body:not(.print-mode-ledger) #ledger-printable-area {
@@ -357,7 +358,7 @@ table.ledger-table tr.total-row td {
     width: 100% !important;
   }
 
-  /* Enforce exact single-page A4 height containment */
+  /* Strict physical A4 page containment */
   body:not(.print-mode-ledger) .register-page {
     display: flex !important;
     flex-direction: column !important;
@@ -373,14 +374,14 @@ table.ledger-table tr.total-row td {
     overflow: hidden !important;
   }
 
-  /* SHEET 1: STRICT RECEIPTS */
+  /* SHEET 1: RECEIPTS EXCLUSIVELY */
   body:not(.print-mode-ledger) .page-receipts {
     page-break-before: auto !important;
     page-break-after: always !important;
     break-after: page !important;
   }
 
-  /* SHEET 2: STRICT PAYMENTS */
+  /* SHEET 2: PAYMENTS EXCLUSIVELY */
   body:not(.print-mode-ledger) .page-payments {
     page-break-before: always !important;
     break-before: page !important;
@@ -388,15 +389,15 @@ table.ledger-table tr.total-row td {
     break-after: avoid !important;
   }
 
-  /* Preserve ruled print density */
+  /* Ruled grid print density */
   table.ledger-table {
     font-size: 10px !important;
-    border: 1.5px solid #000 !important;
+    border: 1.5px solid #000000 !important;
   }
 
   table.ledger-table th,
   table.ledger-table td {
-    border: 1px solid #333 !important;
+    border: 1px solid #333333 !important;
     padding: 2.5px 2px !important;
   }
 

@@ -821,10 +821,26 @@ var cbTot  = { rs: '0', p: '00' };
       return new Date(a.date) - new Date(b.date);
     });
 
-    var runningBal = 0;
-    var totDr = 0;
-    var totCr = 0;
-    var rowsHtml = '';
+    var opCashVal = parseFloat((document.getElementById('cb-op-cash') || {}).value) || 0;
+var opBankVal = parseFloat((document.getElementById('cb-op-bank') || {}).value) || 0;
+var initialBal = (selectedLf === 'ALL') ? (opCashVal + opBankVal) : 0;
+
+var runningBal = initialBal;
+var totDr = 0;
+var totCr = 0;
+var rowsHtml = '';
+
+if (selectedLf === 'ALL') {
+  rowsHtml += '<tr>' +
+    '<td>01</td>' +
+    '<td style="text-align:center;">-</td>' +
+    '<td><strong>To Opening Balance b/d</strong></td>' +
+    '<td style="text-align:right;">Rs. ' + initialBal.toFixed(2) + '</td>' +
+    '<td style="text-align:center;">-</td>' +
+    '<td style="text-align:right; font-weight:bold;">Rs. ' + runningBal.toFixed(2) + '</td>' +
+  '</tr>';
+}
+
 
     if (list.length === 0) {
       rowsHtml = '<tr><td colspan="6" style="text-align:center; padding:15px; color:#64748b;">No vouchers recorded under this folio head for this month.</td></tr>';
@@ -841,8 +857,8 @@ var cbTot  = { rs: '0', p: '00' };
             dr = amt; runningBal += amt; totDr += amt;
           } else if (v.type === 'PAYMENT') {
             cr = amt; runningBal -= amt; totCr += amt;
-          } else if (v.type === 'WITHDRAWAL') {
-            dr = amt; cr = amt; totDr += amt; totCr += amt;
+        } else if (v.type === 'WITHDRAWAL') {
+  dr = amt; cr = amt;
           }
         } else {
           // Nominal Ledger Perspective: Expenditure heads are debited on payment[span_10](start_span)[span_10](end_span)

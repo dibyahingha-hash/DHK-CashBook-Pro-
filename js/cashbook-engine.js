@@ -627,9 +627,9 @@
     var tpBank = splitAmount(totPayBank);
     var tpTot  = splitAmount(totPayCash + totPayBank);
 
-    var cbCashObj = splitAmount(Math.max(0, rawCloseCash));
-    var cbBankObj = splitAmount(Math.max(0, rawCloseBank));
-    var cbTotObj  = splitAmount(Math.max(0, rawCloseCash) + Math.max(0, rawCloseBank));
+    var cbCash = splitAmount(Math.max(0, rawCloseCash));
+var cbBank = splitAmount(Math.max(0, rawCloseBank));
+var cbTot = splitAmount(Math.max(0, rawCloseCash) + Math.max(0, rawCloseBank));
 
     var gtPayCash = splitAmount(totPayCash + Math.max(0, rawCloseCash));
     var gtPayBank = splitAmount(totPayBank + Math.max(0, rawCloseBank));
@@ -642,13 +642,12 @@
       '<td class="col-rs"><strong>' + tpBank.rs + '</strong></td><td class="col-p"><strong>' + tpBank.p + '</strong></td>' +
       '<td class="col-rs"><strong>' + tpTot.rs  + '</strong></td><td class="col-p"><strong>' + tpTot.p  + '</strong></td>' +
     '</tr>';
-
     // Row 2: Closing Balance (C/B)
     paymentsHtml += '<tr class="total-row ink-red" style="font-weight:bold; border-top:1px solid #e2e8f0;">' +
       '<td>End</td><td><strong>By Closing Balance (C/B)</strong></td><td>-</td>' +
-      '<td class="col-rs"><strong>' + cbCashObj.rs + '</strong></td><td class="col-p"><strong>' + cbCashObj.p + '</strong></td>' +
-      '<td class="col-rs"><strong>' + cbBankObj.rs + '</strong></td><td class="col-p"><strong>' + cbBankObj.p + '</strong></td>' +
-      '<td class="col-rs"><strong>' + cbTotObj.rs  + '</strong></td><td class="col-p"><strong>' + cbTotObj.p  + '</strong></td>' +
+      '<td class="col-rs"><strong>' + cbCash.rs + '</strong></td><td class="col-p"><strong>' + cbCash.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + cbBank.rs + '</strong></td><td class="col-p"><strong>' + cbBank.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + cbTot.rs  + '</strong></td><td class="col-p"><strong>' + cbTot.p  + '</strong></td>' +
     '</tr>';
 
     // Row 3: G/T (Grand Total)
@@ -658,6 +657,7 @@
       '<td class="col-rs"><strong>' + gtPayBank.rs + '</strong></td><td class="col-p"><strong>' + gtPayBank.p + '</strong></td>' +
       '<td class="col-rs"><strong>' + gtPayTot.rs  + '</strong></td><td class="col-p"><strong>' + gtPayTot.p  + '</strong></td>' +
     '</tr>';
+    
 
     var mEl = document.getElementById('cb-sel-month');
     var yEl = document.getElementById('cb-sel-year');

@@ -583,13 +583,14 @@
       if (alertBanner) alertBanner.style.display = 'none';
     }
 
-    paymentsHtml += renderRegisterRow('End', '<strong>By Closing Balance (C/B)</strong>', '-', Math.max(0, rawCloseCash), Math.max(0, rawCloseBank), true);
+    
 
     // Exact filler row allocation to fit table, certificates, and signature blocks strictly on 1 page[span_8](start_span)[span_8](end_span)
     var countReceipts = (receiptsHtml.match(/<tr/g) || []).length;
     var countPayments = (paymentsHtml.match(/<tr/g) || []).length;
     var EXACT_RECEIPT_LINES = 15;
-    var EXACT_PAYMENT_LINES = 10;
+    var EXACT_PAYMENT_LINES = 8;
+    
 
     for (var r = countReceipts; r < EXACT_RECEIPT_LINES; r++) {
       receiptsHtml += '<tr class="empty-line"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
@@ -598,32 +599,65 @@
       paymentsHtml += '<tr class="empty-line"><td>&nbsp;</td><td></td><td></td><td></td><td></td><td></td><td></td><td></td><td></td></tr>';
     }
 
-    var tRecCash = splitAmount(totRecCash);
-    var tRecBank = splitAmount(totRecBank);
-    var tRecTot = splitAmount(totRecCash + totRecBank);
+        // --- 1. RECEIPT TOTALS (T/R & G/T) ---
+    var trOnlyCash = splitAmount(totRecCash - opCash);
+    var trOnlyBank = splitAmount(totRecBank - opBank);
+    var trOnlyTot  = splitAmount((totRecCash - opCash) + (totRecBank - opBank));
 
-    var grandPayCash = totPayCash + Math.max(0, rawCloseCash);
-    var grandPayBank = totPayBank + Math.max(0, rawCloseBank);
-    var tPayCash = splitAmount(grandPayCash);
-    var tPayBank = splitAmount(grandPayBank);
-    var tPayTot = splitAmount(grandPayCash + grandPayBank);
+    var gtRecCash = splitAmount(totRecCash);
+    var gtRecBank = splitAmount(totRecBank);
+    var gtRecTot  = splitAmount(totRecCash + totRecBank);
 
-    var cbCash = splitAmount(Math.max(0, rawCloseCash));
-    var cbBank = splitAmount(Math.max(0, rawCloseBank));
+    receiptsHtml += '<tr class="total-row ink-black" style="font-weight:bold; border-top:1.5px solid #000;">' +
+      '<td></td><td><strong>T/R (Total Receipts)</strong></td><td>-</td>' +
+      '<td class="col-rs"><strong>' + trOnlyCash.rs + '</strong></td><td class="col-p"><strong>' + trOnlyCash.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + trOnlyBank.rs + '</strong></td><td class="col-p"><strong>' + trOnlyBank.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + trOnlyTot.rs  + '</strong></td><td class="col-p"><strong>' + trOnlyTot.p  + '</strong></td>' +
+    '</tr>';
 
-    receiptsHtml += '<tr class="total-row ink-black">' +
-      '<td></td><td><strong>Total / Balanced (T/P)</strong></td><td></td>' +
-      '<td class="col-rs"><strong>' + tRecCash.rs + '</strong></td><td class="col-p"><strong>' + tRecCash.p + '</strong></td>' +
-      '<td class="col-rs"><strong>' + tRecBank.rs + '</strong></td><td class="col-p"><strong>' + tRecBank.p + '</strong></td>' +
-      '<td class="col-rs"><strong>' + tRecTot.rs + '</strong></td><td class="col-p"><strong>' + tRecTot.p + '</strong></td>' +
-      '</tr>';
+    receiptsHtml += '<tr class="total-row ink-black" style="font-weight:bold; border-top:1px solid #cbd5e1; border-bottom:3px double #000;">' +
+      '<td></td><td><strong>G/T (Grand Total)</strong></td><td>-</td>' +
+      '<td class="col-rs"><strong>' + gtRecCash.rs + '</strong></td><td class="col-p"><strong>' + gtRecCash.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + gtRecBank.rs + '</strong></td><td class="col-p"><strong>' + gtRecBank.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + gtRecTot.rs  + '</strong></td><td class="col-p"><strong>' + gtRecTot.p  + '</strong></td>' +
+    '</tr>';
 
-    paymentsHtml += '<tr class="total-row ink-red">' +
-      '<td></td><td><strong>Total / Balanced (T/P)</strong></td><td></td>' +
-      '<td class="col-rs"><strong>' + tPayCash.rs + '</strong></td><td class="col-p"><strong>' + tPayCash.p + '</strong></td>' +
-      '<td class="col-rs"><strong>' + tPayBank.rs + '</strong></td><td class="col-p"><strong>' + tPayBank.p + '</strong></td>' +
-      '<td class="col-rs"><strong>' + tPayTot.rs + '</strong></td><td class="col-p"><strong>' + tPayTot.p + '</strong></td>' +
-      '</tr>';
+    // --- 2. PAYMENT TOTALS (T/P, C/B & G/T) ---
+    var tpCash = splitAmount(totPayCash);
+    var tpBank = splitAmount(totPayBank);
+    var tpTot  = splitAmount(totPayCash + totPayBank);
+
+    var cbCashObj = splitAmount(Math.max(0, rawCloseCash));
+    var cbBankObj = splitAmount(Math.max(0, rawCloseBank));
+    var cbTotObj  = splitAmount(Math.max(0, rawCloseCash) + Math.max(0, rawCloseBank));
+
+    var gtPayCash = splitAmount(totPayCash + Math.max(0, rawCloseCash));
+    var gtPayBank = splitAmount(totPayBank + Math.max(0, rawCloseBank));
+    var gtPayTot  = splitAmount(totPayCash + Math.max(0, rawCloseCash) + totPayBank + Math.max(0, rawCloseBank));
+
+    // Row 1: T/P
+    paymentsHtml += '<tr class="total-row ink-red" style="font-weight:bold; border-top:1.5px solid #000;">' +
+      '<td></td><td><strong>T/P (Total Payments)</strong></td><td>-</td>' +
+      '<td class="col-rs"><strong>' + tpCash.rs + '</strong></td><td class="col-p"><strong>' + tpCash.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + tpBank.rs + '</strong></td><td class="col-p"><strong>' + tpBank.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + tpTot.rs  + '</strong></td><td class="col-p"><strong>' + tpTot.p  + '</strong></td>' +
+    '</tr>';
+
+    // Row 2: Closing Balance (C/B)
+    paymentsHtml += '<tr class="total-row ink-red" style="font-weight:bold; border-top:1px solid #e2e8f0;">' +
+      '<td>End</td><td><strong>By Closing Balance (C/B)</strong></td><td>-</td>' +
+      '<td class="col-rs"><strong>' + cbCashObj.rs + '</strong></td><td class="col-p"><strong>' + cbCashObj.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + cbBankObj.rs + '</strong></td><td class="col-p"><strong>' + cbBankObj.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + cbTotObj.rs  + '</strong></td><td class="col-p"><strong>' + cbTotObj.p  + '</strong></td>' +
+    '</tr>';
+
+    // Row 3: G/T (Grand Total)
+    paymentsHtml += '<tr class="total-row ink-red" style="font-weight:bold; border-top:1px solid #cbd5e1; border-bottom:3px double #000;">' +
+      '<td></td><td><strong>G/T (Grand Total)</strong></td><td>-</td>' +
+      '<td class="col-rs"><strong>' + gtPayCash.rs + '</strong></td><td class="col-p"><strong>' + gtPayCash.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + gtPayBank.rs + '</strong></td><td class="col-p"><strong>' + gtPayBank.p + '</strong></td>' +
+      '<td class="col-rs"><strong>' + gtPayTot.rs  + '</strong></td><td class="col-p"><strong>' + gtPayTot.p  + '</strong></td>' +
+    '</tr>';
 
     var mEl = document.getElementById('cb-sel-month');
     var yEl = document.getElementById('cb-sel-year');

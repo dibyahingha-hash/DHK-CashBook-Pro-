@@ -520,6 +520,10 @@
   window.recalculateCashbook = function () {
     var opCashEl = document.getElementById('cb-op-cash');
     var opBankEl = document.getElementById('cb-op-bank');
+    var cbCash = { rs: '0', p: '00' };
+var cbBank = { rs: '0', p: '00' };
+var cbTot  = { rs: '0', p: '00' };
+
     var opCash = opCashEl ? (parseFloat(opCashEl.value) || 0) : 0;
     var opBank = opBankEl ? (parseFloat(opBankEl.value) || 0) : 0;
 
@@ -627,9 +631,9 @@
     var tpBank = splitAmount(totPayBank);
     var tpTot  = splitAmount(totPayCash + totPayBank);
 
-    var cbCash = splitAmount(Math.max(0, rawCloseCash));
-var cbBank = splitAmount(Math.max(0, rawCloseBank));
-var cbTot = splitAmount(Math.max(0, rawCloseCash) + Math.max(0, rawCloseBank));
+    cbCash = splitAmount(Math.max(0, rawCloseCash));
+ cbBank = splitAmount(Math.max(0, rawCloseBank));
+ cbTot = splitAmount(Math.max(0, rawCloseCash) + Math.max(0, rawCloseBank));
 
     var gtPayCash = splitAmount(totPayCash + Math.max(0, rawCloseCash));
     var gtPayBank = splitAmount(totPayBank + Math.max(0, rawCloseBank));

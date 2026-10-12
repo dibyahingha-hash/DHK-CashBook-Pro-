@@ -379,7 +379,15 @@
     window.renderEngineNarrations(type);
   };
     
-
+  window.applyNarrationTemplate = function (templateStr) {
+    if (!templateStr) return;
+    var descEl = document.getElementById('tx-desc');
+    if (descEl) {
+      descEl.value = templateStr;
+      descEl.focus();
+    }
+  };
+  
 
 
   // ==========================================================================

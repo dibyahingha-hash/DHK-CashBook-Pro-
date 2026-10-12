@@ -304,6 +304,23 @@
 
         <div class="form-group">
           <label>Audit Particulars / Narration</label>
+          <select id="sel-quick-narration" onchange="applyNarrationTemplate(this.value)" style="margin-bottom:6px; padding:7px; width:100%; border:1px solid #cbd5e1; border-radius:4px; font-size:12px; background:#f8fafc;">
+  <option value="">-- Choose Audit-Compliant Template --</option>
+  <optgroup label="Receipts (To)">
+    <option value="To PM POSHAN (Cooking Cost)<br>(Being Cooking Cost grant received vide Sanction/FTO No. ___ dated ___ via SNA)">Receipt: Cooking Cost Grant (SNA/FTO)</option>
+    <option value="To PM POSHAN (CCH Honorarium)<br>(Being Cook-cum-Helper honorarium received vide FTO No. ___ via SNA)">Receipt: CCH Honorarium (SNA/FTO)</option>
+    <option value="To Bank Interest<br>(Being savings bank interest credited by bank)">Receipt: Savings Bank Interest</option>
+    <option value="To Temporary Advance from In-charge/Teacher (Out-of-pocket funding)">Receipt: Teacher Out-of-pocket Advance</option>
+  </optgroup>
+  <optgroup label="Payments (By)">
+    <option value="By Cash (Contra)<br>(Being cash withdrawn from bank vide Self Cheque/PPA No. ___ for MDM daily marketing)">Payment: Cash Withdrawal (Contra)</option>
+    <option value="By Cooking Cost (Inst. 1)<br>(Being expenditure incurred towards daily marketing of meals vide Sub-Voucher No. ___)">Payment: Cooking Cost Marketing</option>
+    <option value="By Cook-cum-Helper Honorarium<br>(Being monthly honorarium paid to Cook-cum-Helper vide PPA/Receipt No. ___)">Payment: Cook Honorarium (CCH)</option>
+    <option value="By LPG / Kitchen Fuel<br>(Being payment for refill of commercial LPG cylinder vide Cash Memo No. ___ dated ___)">Payment: LPG Cylinder Refill</option>
+    <option value="By In-Charge Advance Settlement<br>(Being refund/settlement of temporary advance incurred by Teacher vide Voucher No. ___)">Payment: In-Charge Advance Refund</option>
+  </optgroup>
+          </select>
+          
           <input type="text" id="tx-desc" placeholder="Select quick option or type custom narration" style="padding:8px; width:100%; margin-bottom:6px;">
           <div id="narration-quick-options" style="margin-top:4px;"></div>
         </div>

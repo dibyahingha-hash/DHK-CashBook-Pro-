@@ -672,11 +672,13 @@
         '<div class="signature-block">' +
         '<div class="sign-box">' +
         '<div class="sign-line"></div>' +
-        'Prepared & Verified By<br>(Accountant / In-Charge Teacher)' +
+               'Signature of SMC President' +
+ 
         '</div>' +
         '<div class="sign-box">' +
         '<div class="sign-line"></div>' +
-        'Countersigned & Certified<br>Headmaster / Member Secy (SMC Seal)' +
+                'Signature of Head Teacher / Member Secretary' +
+        
         '</div>' +
         '</div>' +
 

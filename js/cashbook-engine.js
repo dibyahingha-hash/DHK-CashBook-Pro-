@@ -843,34 +843,44 @@
     }
   };
 
-    // ==========================================================================
-  // EXPLICIT PRINT ROUTERS (DESKTOP & MOBILE COMPATIBLE)
+  // ==========================================================================
+  // 9. EXPLICIT PRINT ROUTERS (DESKTOP & MOBILE COMPATIBLE)
   // ==========================================================================
   window.triggerCashbookPrint = function () {
     document.body.classList.remove('print-mode-ledger');
-    window.print();
+    if (typeof window.switchSubView === 'function') {
+      window.switchSubView('cashbook');
+    }
+    setTimeout(function () {
+      window.print();
+    }, 150);
   };
 
   window.triggerLedgerPrint = function () {
-    // 1. Force the ledger engine to render latest data before print
+    // 1. Force complete render into #ledger-printable-area
     if (typeof window.renderLedgerSheet === 'function') {
       window.renderLedgerSheet();
     }
 
-    // 2. Enable ledger print mode
+    // 2. Switch subview so the active DOM tree is already on the ledger
+    if (typeof window.switchSubView === 'function') {
+      window.switchSubView('ledger');
+    }
+
+    // 3. Attach the print mode class
     document.body.classList.add('print-mode-ledger');
 
-    // 3. Listen for print completion before removing the class
+    // 4. Remove class after printing ends
     var cleanup = function () {
       document.body.classList.remove('print-mode-ledger');
       window.removeEventListener('afterprint', cleanup);
     };
     window.addEventListener('afterprint', cleanup);
 
-    // 4. Trigger print with a slight delay so DOM styles settle
+    // 5. 350ms delay gives mobile Chrome enough time to repaint before printing
     setTimeout(function () {
       window.print();
-    }, 150);
+    }, 350);
   };
   
 

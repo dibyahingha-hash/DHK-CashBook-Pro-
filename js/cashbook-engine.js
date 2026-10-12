@@ -530,22 +530,33 @@
     for (var i = 0; i < sortedVouchers.length; i++) {
       var v = sortedVouchers[i];
       var amt = parseFloat(v.amount) || 0;
-      var day = v.date ? parseInt(v.date.split('-')[2], 10) : '-';
+            var dateFormatted = '-';
+      if (v.date) {
+        var dParts = v.date.split('-');
+        if (dParts.length === 3) {
+          var dd = String(dParts[2]).padStart(2, '0');
+          var mm = String(dParts[1]).padStart(2, '0');
+          var yy = String(dParts[0]).slice(-2);
+          dateFormatted = dd + '/' + mm + '/' + yy;
+        } else {
+          dateFormatted = v.date;
+        }
+      }
 
       if (v.type === 'RECEIPT') {
         var isBank = v.channel === 'BANK';
         if (isBank) totRecBank += amt; else totRecCash += amt;
-        receiptsHtml += renderRegisterRow(day, v.desc, v.lf, !isBank ? amt : 0, isBank ? amt : 0, false);
+        receiptsHtml += renderRegisterRow(dateFormatted, v.desc, v.lf, !isBank ? amt : 0, isBank ? amt : 0, false);
       } else if (v.type === 'WITHDRAWAL') {
         totRecCash += amt;
         totPayBank += amt;
-        receiptsHtml += renderRegisterRow(day, 'To Bank (Contra)', 'C', amt, 0, false);
-        paymentsHtml += renderRegisterRow(day, 'By Cash (Contra)', 'C', 0, amt, true);
+        receiptsHtml += renderRegisterRow(dateFormatted, 'To Bank (Contra)', 'C', amt, 0, false);
+        paymentsHtml += renderRegisterRow(dateFormatted, 'By Cash (Contra)', 'C', 0, amt, true);
       } else if (v.type === 'PAYMENT') {
         var isBankPay = v.channel === 'BANK';
         if (isBankPay) totPayBank += amt; else totPayCash += amt;
-        paymentsHtml += renderRegisterRow(day, v.desc, v.lf, !isBankPay ? amt : 0, isBankPay ? amt : 0, true);
-      }
+        paymentsHtml += renderRegisterRow(dateFormatted, v.desc, v.lf, !isBankPay ? amt : 0, isBankPay ? amt : 0, true);
+      } 
     }
 
     var rawCloseCash = totRecCash - totPayCash;

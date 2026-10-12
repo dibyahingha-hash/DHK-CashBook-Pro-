@@ -562,8 +562,25 @@ var cbTot  = { rs: '0', p: '00' };
       } else if (v.type === 'WITHDRAWAL') {
         totRecCash += amt;
         totPayBank += amt;
-        receiptsHtml += renderRegisterRow(dateFormatted, 'To Bank (Contra)', 'C', amt, 0, false);
-        paymentsHtml += renderRegisterRow(dateFormatted, 'By Cash (Contra)', 'C', 0, amt, true);
+        var chqRef = (v.chqNo ? ' vide Cheque/PPA No. ' + v.chqNo : '');
+    receiptsHtml += renderRegisterRow(
+      dateFormatted,
+      '<strong>To Bank Account (Contra)</strong><br><small style="color:#555;">(Cash withdrawn from bank for school expenses' + chqRef + ')</small>',
+      'C',
+      amt,
+      0,
+      false
+    );
+    paymentsHtml += renderRegisterRow(
+      dateFormatted,
+      '<strong>By Cash in Hand (Contra)</strong><br><small style="color:#555;">(Contra cash withdrawn from bank' + chqRef + ')</small>',
+      'C',
+      0,
+      amt,
+      true
+    );
+
+
       } else if (v.type === 'PAYMENT') {
         var isBankPay = v.channel === 'BANK';
         if (isBankPay) totPayBank += amt; else totPayCash += amt;

@@ -238,14 +238,16 @@ table.ledger-table th {
 }
 
 /* Column Dimensions */
-.th-date        { width: 34px; }
+.th-date { width: 56px; }
+
 .th-particulars { width: auto; }
 .th-lf          { width: 26px; }
 .th-group       { text-align: center; }
 .th-sub         { width: 44px; }
 .th-sub-p       { width: 22px; }
 
-.col-date { width: 34px; text-align: center; font-weight: 600; }
+.col-date { width: 56px; text-align: center; font-weight: 600; font-size: 9.5px; }
+
 .col-desc { width: auto; text-align: left; padding-left: 6px !important; white-space: normal; line-height: 1.2; }
 .col-lf   { width: 26px; text-align: center; font-weight: 700; }
 .col-rs   { width: 44px; text-align: right; padding-right: 3px !important; font-variant-numeric: tabular-nums; }

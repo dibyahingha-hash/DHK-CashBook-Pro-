@@ -1216,10 +1216,13 @@ window.refreshModalPreview = function() {
   if (!previewEl || typeof NarrationEngine === 'undefined') return;
 
   // 1. Resolve transaction type cleanly via active window state or button classes
-    var btnRcpt = document.getElementById('btn-type-rcpt');
-  var isRcpt = (window.currentTxType === 'RECEIPT') || 
-               (btnRcpt && (btnRcpt.style.background.indexOf('1e3a8a') !== -1 || btnRcpt.classList.contains('active')));
-  var type = isRcpt ? 'receipt' : 'payment';
+    var activeType = String(window.currentTxType || '').toLowerCase();
+var btnRcpt = document.getElementById('btn-type-rcpt');
+var isRcpt = activeType === 'receipt' || 
+             (btnRcpt && (btnRcpt.classList.contains('active') || 
+                          (btnRcpt.style.background && btnRcpt.style.background.indexOf('1e3a8a') !== -1)));
+var type = isRcpt ? 'receipt' : 'payment';
+  
   
 
   // 2. Map drawer name to exact NarrationEngine key
@@ -1287,6 +1290,26 @@ window.refreshModalPreview = function() {
   if (typeof window.refreshModalPreview === 'function') {
     window.refreshModalPreview();
   }
+};
+  window.updateCategoryVisibility = function() {
+  var sel = document.getElementById('v-category-select');
+  if (!sel) return;
+
+  var currentDrawer = (window.currentDrawer || 'MDM').toUpperCase();
+  var optgroups = sel.querySelectorAll('optgroup');
+
+  optgroups.forEach(function(og) {
+    var label = (og.label || '').toUpperCase();
+    if (label.indexOf('CUSTOM') !== -1) {
+      og.style.display = '';
+    } else if (currentDrawer.indexOf('MDM') !== -1) {
+      og.style.display = label.indexOf('MDM') !== -1 ? '' : 'none';
+    } else if (currentDrawer.indexOf('SMC') !== -1 && currentDrawer.indexOf('SNA') === -1) {
+      og.style.display = label.indexOf('SMC') !== -1 ? '' : 'none';
+    } else if (currentDrawer.indexOf('SNA') !== -1 || currentDrawer.indexOf('CANARA') !== -1) {
+      og.style.display = (label.indexOf('SNA') !== -1 || label.indexOf('CANARA') !== -1) ? '' : 'none';
+    }
+  });
 };
   
   // ==========================================================================

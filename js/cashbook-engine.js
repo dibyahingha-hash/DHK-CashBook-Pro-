@@ -616,6 +616,40 @@ var cbTot  = { rs: '0', p: '00' };
       if (alertBanner) alertBanner.style.display = 'none';
     }
 
+      // --- MANDATE VOUCHER GAP CHECKER ---
+  var targetEl = document.getElementById('mandate-target-display');
+  var targetMandate = targetEl ? parseFloat(targetEl.innerText.replace(/[^0-9.]/g, '') || 0) : 0;
+  
+  var bookedCookingVouchers = 0;
+  (window.currentVouchers || []).forEach(function (v) {
+    if (v.type === 'PAYMENT') {
+      bookedCookingVouchers += parseFloat(v.amount || 0);
+    }
+  });
+
+  var bookedEl = document.getElementById('val-vouchers-booked');
+  var gapEl = document.getElementById('val-target-gap');
+  var msgEl = document.getElementById('msg-voucher-status');
+
+  if (bookedEl && gapEl && msgEl) {
+    var gap = targetMandate - bookedCookingVouchers;
+    bookedEl.innerText = '₹' + bookedCookingVouchers.toFixed(2);
+    gapEl.innerText = '₹' + Math.abs(gap).toFixed(2);
+
+    if (gap > 0.01) {
+      gapEl.style.color = '#b91c1c';
+      msgEl.innerText = '⚠️ Need ₹' + gap.toFixed(2) + ' more in vouchers to hit mandate.';
+      msgEl.style.color = '#b91c1c';
+    } else if (Math.abs(gap) <= 0.01) {
+      gapEl.style.color = '#15803d';
+      msgEl.innerText = '✅ Vouchers exactly match monthly cooking mandate.';
+      msgEl.style.color = '#15803d';
+    } else {
+      gapEl.style.color = '#d97706';
+      msgEl.innerText = 'ℹ️ Vouchers exceed mandate by ₹' + Math.abs(gap).toFixed(2);
+      msgEl.style.color = '#d97706';
+    }
+  }
     
 
     // Exact filler row allocation to fit table, certificates, and signature blocks strictly on 1 page[span_8](start_span)[span_8](end_span)

@@ -1210,32 +1210,32 @@ if (selectedLf === 'ALL') {
 // ==========================================
 
 window.refreshModalPreview = function() {
-  var btnRcpt = document.getElementById('btn-type-rcpt');
-  var btnWith = document.getElementById('btn-type-with');
-  
-  var type = 'payment';
-  if (btnRcpt && btnRcpt.style.background.indexOf('15803d') !== -1) {
-    type = 'receipt';
-  } else if (btnWith && btnWith.style.background.indexOf('0284c7') !== -1) {
-    type = 'receipt';
-  }
-
-  var folioEl = document.getElementById('v-folio-input');
   var previewEl = document.getElementById('v-narration-preview');
+  var folioEl = document.getElementById('v-folio-input');
   if (!previewEl || typeof NarrationEngine === 'undefined') return;
 
-  var currentDrawer = (typeof window.currentDrawer !== 'undefined') 
-    ? window.currentDrawer.toUpperCase() 
-    : 'MDM';
+  // 1. Resolve transaction type cleanly via active window state or button classes
+  var type = (window.currentTxType || 'PAYMENT').toLowerCase(); // 'receipt' or 'payment'
 
+  // 2. Map drawer name to exact NarrationEngine key
+  var rawDrawer = (window.currentDrawer || 'mdm').toLowerCase();
+  var drawerKey = 'MDM';
+  if (rawDrawer.indexOf('smc') !== -1) drawerKey = 'SMC_SAVINGS';
+  else if (rawDrawer.indexOf('sna') !== -1) drawerKey = 'CANARA_SNA';
+
+  // 3. Map Channel ('BANK' -> 'CHEQUE' for cheque/PPA narration generation)
   var channelEl = document.getElementById('tx-channel');
-  var channel = channelEl ? channelEl.value : 'BANK';
+  var channelVal = channelEl ? channelEl.value : 'CASH';
+  var channelKey = channelVal === 'BANK' ? 'CHEQUE' : channelVal;
+
+  var categoryEl = document.getElementById('v-category-select');
+  var categoryVal = categoryEl ? categoryEl.value : 'CUSTOM';
 
   var params = {
-    drawer: currentDrawer,
+    drawer: drawerKey,
     type: type,
-    channel: channel,
-    category: document.getElementById('v-category-select') ? document.getElementById('v-category-select').value : 'CUSTOM',
+    channel: channelKey,
+    category: categoryVal,
     purpose: document.getElementById('v-purpose-input') ? document.getElementById('v-purpose-input').value : '',
     refNo: document.getElementById('v-ref-input') ? document.getElementById('v-ref-input').value : '',
     date: document.getElementById('tx-date') ? document.getElementById('tx-date').value : '',
@@ -1244,11 +1244,16 @@ window.refreshModalPreview = function() {
     userFolio: folioEl ? folioEl.value : ''
   };
 
-  // Only auto-fill if not manually typed over by teacher
+  // Auto-resolve Folio if not manually edited by user
   if (folioEl && !folioEl.dataset.userEdited) {
-    folioEl.value = NarrationEngine.resolveFolio(params);
+    var resolvedFolio = NarrationEngine.resolveFolio(params);
+    if (resolvedFolio) folioEl.value = resolvedFolio;
   }
 
+  // Generate live audit narration
+  previewEl.value = NarrationEngine.generate(params);
+};
+  
   // Generate live audit narration
   previewEl.value = NarrationEngine.generate(params);
 };

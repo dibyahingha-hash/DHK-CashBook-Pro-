@@ -130,12 +130,20 @@ window.filterCategoryDropdownByDrawer = function() {
       '</optgroup>';
   } else if (curDrawer === 'smc') {
     html += '<optgroup label="SMC Receipts (To...)">' +
+      '<option value="MAINTENANCE_GRANT">Receipt: School Composite / Maintenance Grant (LF 5)</option>' +
+      '<option value="SPORTS_GRANT">Receipt: Sports & Physical Education Grant</option>' +
+      '<option value="TLM_GRANT">Receipt: TLM / Teaching Learning Materials Grant</option>' +
+      '<option value="REPAIR_GRANT">Receipt: Minor Repair / Infrastructure Grant</option>' +
+      '<option value="SAFETY_GRANT">Receipt: School Safety & Security Grant</option>' +
+      '<option value="COMMUNITY_CONTRIBUTION">Receipt: Community / SMDC Contribution</option>' +
       '<option value="INTEREST">Receipt: Bank Interest (LF 7)</option>' +
       '<option value="CONTRA">Receipt: Cash Withdrawn from Bank (Contra C)</option>' +
-      '<option value="MAINTENANCE_GRANT">Receipt: School Composite/Maintenance Grant (LF 5)</option>' +
       '</optgroup>' +
       '<optgroup label="SMC Payments (By...)">' +
       '<option value="MAINTENANCE">Payment: School Maintenance & Contingency</option>' +
+      '<option value="SPORTS_EXP">Payment: Sports Goods & Equipment</option>' +
+      '<option value="TLM_EXP">Payment: TLM Materials / Teaching Aids</option>' +
+      '<option value="REPAIR_EXP">Payment: Minor Repairs & White Washing</option>' +
       '<option value="CONTRA">Payment: Self Cheque / Cash in Hand (Contra C)</option>' +
       '<option value="BANK_CHARGES">Payment: Bank SMS / Maintenance Charges (LF 7)</option>' +
       '<option value="VENDOR">Payment: Vendor Cheque Payment</option>' +
@@ -151,10 +159,16 @@ window.filterCategoryDropdownByDrawer = function() {
 
   sel.innerHTML = html;
   sel.value = 'CUSTOM';
+
+  // Ensure purpose fields container is never hidden
+  var pBox = document.getElementById('party-purpose-fields');
+  if (pBox) pBox.style.display = 'block';
+
   if (typeof window.refreshModalPreview === 'function') {
     window.refreshModalPreview();
   }
 };
+  
   
   
   window.switchSubView = function (view) {

@@ -334,12 +334,26 @@ table.ledger-table tr.total-row td {
 .text-center { text-align: center; }
 
 /* ==========================================================================
-   5. STRICT AUDIT-READY A4 PRINT ENGINE
+   5. STRICT AUDIT-READY LEGAL PRINT ENGINE (TEAR-SAFE BINDING)
    ========================================================================== */
 @media print {
   @page {
-    size: A4 portrait;
-    margin: 8mm 6mm;
+    size: legal portrait;
+    /* 22mm gutter protects text from hole punches, staples & register binding */
+    margin-top: 15mm;
+    margin-bottom: 15mm;
+    margin-left: 22mm;
+    margin-right: 12mm;
+  }
+
+  /* Two-page spread margins: inner spine clearance */
+  @page :left {
+    margin-left: 12mm;
+    margin-right: 22mm;
+  }
+  @page :right {
+    margin-left: 22mm;
+    margin-right: 12mm;
   }
 
   body, html {
@@ -351,7 +365,7 @@ table.ledger-table tr.total-row td {
     print-color-adjust: exact !important;
   }
 
-  /* 1. Suppress screen UI, navigation, forms, and cards */
+  /* 1. Suppress UI elements */
   nav,
   header,
   .app-header,
@@ -393,8 +407,9 @@ table.ledger-table tr.total-row td {
     flex-direction: column !important;
     justify-content: flex-start !important;
     width: 100% !important;
-    height: 278mm !important;
-    max-height: 278mm !important;
+    /* Legal printable height (356mm - 30mm margins = ~326mm) */
+    height: 325mm !important;
+    max-height: 325mm !important;
     padding: 0 !important;
     margin: 0 !important;
     border: none !important;
@@ -416,31 +431,47 @@ table.ledger-table tr.total-row td {
     break-after: avoid !important;
   }
 
+  /* Proportional table width preventing cutoffs on the right */
   table.ledger-table {
-    font-size: 9.8px !important;
+    width: 100% !important;
+    max-width: 100% !important;
+    table-layout: fixed !important;
+    border-collapse: collapse !important;
+    font-size: 10px !important;
     border: 1.5px solid #000000 !important;
+    box-sizing: border-box !important;
   }
 
   table.ledger-table th,
   table.ledger-table td {
     border: 1px solid #333333 !important;
-    padding: 2.2px 2px !important;
+    padding: 3px 2px !important;
+    box-sizing: border-box !important;
+    overflow: hidden !important;
+    word-break: break-word !important;
   }
 
+  /* Width locked by percentages (sum equals 100%) */
+  .th-date, .col-date             { width: 12% !important; }
+  .th-particulars, .col-desc      { width: 44% !important; }
+  .th-lf, .col-lf                 { width: 6% !important; }
+  .th-sub, .col-rs                { width: 14% !important; }
+  .th-sub-p, .col-p               { width: 5% !important; }
+
   table.ledger-table tr.empty-line td {
-    height: 20px !important;
+    height: 22px !important;
   }
 
   .statutory-audit-cert {
     font-size: 9px !important;
-    padding: 5px 8px !important;
-    margin-top: 6px !important;
+    padding: 6px 10px !important;
+    margin-top: 8px !important;
     border: 1px solid #000000 !important;
   }
 
   .signature-block {
-    margin-top: 20px !important;
-    font-size: 10px !important;
+    margin-top: 24px !important;
+    font-size: 10.5px !important;
   }
 
   /* -------------------------------------------------------------

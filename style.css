@@ -356,14 +356,27 @@ table.ledger-table tr.total-row td {
     margin-right: 12mm;
   }
 
-  body, html {
-    background: #ffffff !important;
-    margin: 0 !important;
-    padding: 0 !important;
-    width: 100% !important;
-    -webkit-print-color-adjust: exact !important;
-    print-color-adjust: exact !important;
-  }
+body, html {
+  background: #ffffff !important;
+  margin: 0 !important;
+  padding: 0 !important;
+  width: 100% !important;
+  height: auto !important;
+  min-height: 100% !important;
+  overflow: visible !important;
+  -webkit-print-color-adjust: exact !important;
+  print-color-adjust: exact !important;
+}
+
+#view-cashbook,
+.view-panel,
+main,
+.app-container {
+  overflow: visible !important;
+  height: auto !important;
+  max-height: none !important;
+}
+   
 
   /* 1. Suppress UI elements */
   nav,

@@ -234,7 +234,17 @@
           <input type="hidden" id="tx-meals" value="0">
           <input type="hidden" id="tx-target-expenditure" value="0">
         </div>
-
+          <!-- Live Voucher Gap Tracker -->
+          <div id="voucher-gap-tracker" style="margin-top:10px; padding:10px; border-radius:6px; background:#eff6ff; border:1px solid #bfdbfe; font-size:0.9rem;">
+            <div style="display:flex; justify-content:space-between; align-items:center;">
+              <span><b>Vouchers Booked:</b> <span id="val-vouchers-booked">₹0.00</span></span>
+              <span><b>Remaining Target:</b> <span id="val-target-gap" style="font-weight:bold; color:#b91c1c;">₹0.00</span></span>
+            </div>
+            <div id="msg-voucher-status" style="margin-top:5px; font-size:0.8rem; font-weight:600; color:#1e40af;">
+              Add vouchers to match your monthly mandate.
+            </div>
+          </div>
+        
         <!-- Opening Balances (O/B) -->
         <div style="border-top:1px dashed #cbd5e1; padding-top:10px; margin-top:8px;">
           <label style="font-weight:bold; color:#1e3a8a; margin-bottom:6px; display:block;">

@@ -318,30 +318,44 @@
         <!-- Statutory Category / Preset Selector -->
         <div class="form-group">
           <label><b>Accounting Head / Purpose Preset</b></label>
-          <select id="v-category-select" onchange="refreshModalPreview()" style="margin-bottom:6px; padding:8px; width:100%; border:1px solid #cbd5e1; border-radius:4px; font-size:13px; font-weight:600; background:#f8fafc;">
-            <option value="CUSTOM">-- Custom Purpose / Open Entry --</option>
-            <optgroup label="MDM Receipts (To...)">
-              <option value="GRANT_COOKING">Receipt: Cooking Cost Grant (LF 5)</option>
-              <option value="INTEREST">Receipt: Bank Interest (LF 7)</option>
-              <option value="CARRIAGE">Receipt: Rice Transportation Subsidy (LF 13)</option>
-              <option value="UTENSILS">Receipt: Kitchen Devices & Utensils (LF 11)</option>
-              <option value="TEACHER_ADVANCE">Receipt: Teacher Temporary Advance (LF 9)</option>
-              <option value="CONTRA_COOKING">Receipt: Cash Brought from Bank for Meals (Contra C)</option>
-              <option value="CONTRA_OTHER">Receipt: Cash Brought from Bank for Other Work (Contra C)</option>
-            </optgroup>
-            <optgroup label="MDM Payments (By...)">
-              <option value="COOKING_COST">Payment: Cooking Cost Marketing (LF 1)</option>
-              <option value="CONTRA_COOKING">Payment: Self Cheque for Cooking Cost (Contra C)</option>
-              <option value="CONTRA_OTHER">Payment: Self Cheque for Other Purpose (Contra C)</option>
-              <option value="VENDOR">Payment: Vendor / Supplier Cheque (Bank)</option>
-              <option value="TEACHER_ADVANCE">Payment: Refund Teacher Advance (LF 9)</option>
-              <option value="BANK_CHARGES">Payment: Bank SMS / Service Charges (LF 7)</option>
-            </optgroup>
-          </select>
-        </div>
-
-        <!-- Contextual Fields for Sentence Assembly -->
-        <div class="grid-2 form-group" id="dynamic-helper-fields">
+                  <select id="v-category-select" onchange="refreshModalPreview()" style="margin-bottom:6px; padding:8px; width:100%;">
+          <option value="CUSTOM">-- Custom Purpose / Open Entry --</option>
+          <optgroup label="MDM Receipts (To...)">
+            <option value="GRANT_COOKING">Receipt: Cooking Cost Grant (LF 5)</option>
+            <option value="INTEREST">Receipt: Bank Interest (LF 7)</option>
+            <option value="CARRIAGE">Receipt: Rice Transportation Subsidy (LF 13)</option>
+            <option value="UTENSILS">Receipt: Kitchen Devices & Utensils (LF 11)</option>
+            <option value="TEACHER_ADVANCE">Receipt: Teacher Temporary Advance (LF 9)</option>
+            <option value="CONTRA_COOKING">Receipt: Cash Brought from Bank for Meals (Contra C)</option>
+            <option value="CONTRA_OTHER">Receipt: Cash Brought from Bank for Other Work (Contra C)</option>
+          </optgroup>
+          <optgroup label="MDM Payments (By...)">
+            <option value="COOKING_COST">Payment: Cooking Cost Marketing (LF 1)</option>
+            <option value="CONTRA_COOKING">Payment: Self Cheque for Cooking Cost (Contra C)</option>
+            <option value="CONTRA_OTHER">Payment: Self Cheque for Other Purpose (Contra C)</option>
+            <option value="VENDOR">Payment: Vendor / Supplier Cheque (Bank)</option>
+            <option value="TEACHER_ADVANCE">Payment: Refund Teacher Advance (LF 9)</option>
+            <option value="BANK_CHARGES">Payment: Bank SMS / Service Charges (LF 7)</option>
+          </optgroup>
+          <optgroup label="SMC Normal Receipts (To...)">
+            <option value="INTEREST">Receipt: Bank Interest (LF 7)</option>
+            <option value="CONTRA">Receipt: Cash Withdrawn from Bank (Contra C)</option>
+            <option value="MAINTENANCE_GRANT">Receipt: School Composite/Maintenance Grant (LF 5)</option>
+          </optgroup>
+          <optgroup label="SMC Normal Payments (By...)">
+            <option value="MAINTENANCE">Payment: School Maintenance & Contingency</option>
+            <option value="CONTRA">Payment: Self Cheque / Cash in Hand (Contra C)</option>
+            <option value="BANK_CHARGES">Payment: Bank SMS / Maintenance Charges (LF 7)</option>
+            <option value="VENDOR">Payment: Vendor Cheque Payment</option>
+          </optgroup>
+          <optgroup label="Canara SNA Receipts (To...)">
+            <option value="COMPONENT_LIMIT">Receipt: Drawing Limit Allocation (To Component)</option>
+          </optgroup>
+          <optgroup label="Canara SNA Payments (By...)">
+            <option value="PPA_VENDOR">Payment: Vendor Disbursement via SNA PPA</option>
+          </optgroup>
+                  </select>
+          
           <div>
             <label style="font-size:0.75rem;">Instrument / Voucher / Order No.</label>
             <input type="text" id="v-ref-input" placeholder="e.g. 01 to 04 / Cheque No. / Advice No." oninput="refreshModalPreview()" style="padding:7px; width:100%;">

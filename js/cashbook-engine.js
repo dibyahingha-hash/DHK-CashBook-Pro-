@@ -1044,47 +1044,25 @@ if (selectedLf === 'ALL') {
   // 9. EXPLICIT PRINT ROUTERS (DESKTOP & MOBILE COMPATIBLE)
   // ==========================================================================
     window.triggerCashbookPrint = function () {
-    if (typeof window.recalculateCashbook === 'function') {
-      window.recalculateCashbook();
-    }
-    
-    var printableEl = document.getElementById('cashbook-printable-area');
-    if (!printableEl) return;
-
-    var iframe = document.getElementById('print-iframe');
-    if (!iframe) {
-      iframe = document.createElement('iframe');
-      iframe.id = 'print-iframe';
-      iframe.style.position = 'fixed';
-      iframe.style.right = '0';
-      iframe.style.bottom = '0';
-      iframe.style.width = '0';
-      iframe.style.height = '0';
-      iframe.style.border = '0';
-      document.body.appendChild(iframe);
-    }
-
-    var doc = iframe.contentWindow.document;
-    doc.open();
-    doc.write('<!DOCTYPE html><html><head><title>Cashbook Print</title>');
-    
-    // Copy stylesheets so table formatting and Legal sizes apply
-    var styles = document.querySelectorAll('link[rel="stylesheet"], style');
-    styles.forEach(function (s) {
-      doc.write(s.outerHTML);
-    });
-    
-    doc.write('</head><body style="background:#fff; margin:0; padding:0;">');
-    doc.write(printableEl.innerHTML);
-    doc.write('</body></html>');
-    doc.close();
-
-    setTimeout(function () {
-      iframe.contentWindow.focus();
-      iframe.contentWindow.print();
-    }, 350);
-  };
+  document.body.classList.remove('print-mode-ledger');
   
+  var cbView = document.getElementById('view-cashbook');
+  if (cbView) {
+    cbView.style.display = 'block';
+  }
+
+  if (typeof window.recalculateCashbook === 'function') {
+    window.recalculateCashbook();
+  }
+  if (typeof window.switchSubView === 'function') {
+    window.switchSubView('cashbook');
+  }
+
+  setTimeout(function () {
+    window.print();
+  }, 300);
+};
+      
 
     window.triggerLedgerPrint = function () {
     if (typeof window.renderLedgerSheet === 'function') {

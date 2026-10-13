@@ -1254,10 +1254,6 @@ window.refreshModalPreview = function() {
   previewEl.value = NarrationEngine.generate(params);
 };
   
-  // Generate live audit narration
-  previewEl.value = NarrationEngine.generate(params);
-};
-  
   // ==========================================================================
   // 11. BOOTSTRAP INITIALIZATION
   // ==========================================================================

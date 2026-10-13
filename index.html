@@ -139,10 +139,12 @@
       
       <!-- Top Book / Ledger Toggle -->
       <div class="card no-print" style="margin-bottom:12px; display:flex; gap:10px;">
-        <button id="btn-sub-cashbook" class="btn" onclick="switchSubView('cashbook')" style="flex:1; background:#1e3a8a; color:#fff; font-weight:bold; padding:10px;">
+        <button id="btn-sub-cashbook" class="btn" onclick="window.switchSubView('cashbook')" style="flex:1; background:#1e3a8a; color:#fff;">
+          
           📖 Two-Page Cash Book Register
         </button>
-        <button id="btn-sub-ledger" class="btn" onclick="switchSubView('ledger')" style="flex:1; background:#f8fafc; color:#334155; border:1px solid #cbd5e1; font-weight:bold; padding:10px;">
+        <button id="btn-sub-ledger" class="btn" onclick="window.switchSubView('ledger')" style="flex:1; background:#f8fafc; color:#334155;">
+
           📑 General Ledger
         </button>
       </div>

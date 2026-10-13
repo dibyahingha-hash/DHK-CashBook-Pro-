@@ -1044,14 +1044,18 @@ if (selectedLf === 'ALL') {
   // 9. EXPLICIT PRINT ROUTERS (DESKTOP & MOBILE COMPATIBLE)
   // ==========================================================================
   window.triggerCashbookPrint = function () {
-    document.body.classList.remove('print-mode-ledger');
-    if (typeof window.switchSubView === 'function') {
-      window.switchSubView('cashbook');
-    }
-    setTimeout(function () {
-      window.print();
-    }, 150);
-  };
+  document.body.classList.remove('print-mode-ledger');
+  if (typeof window.recalculateCashbook === 'function') {
+    window.recalculateCashbook();
+  }
+  if (typeof window.switchSubView === 'function') {
+    window.switchSubView('cashbook');
+  }
+  setTimeout(function () {
+    window.print();
+  }, 300);
+};
+  
 
     window.triggerLedgerPrint = function () {
     if (typeof window.renderLedgerSheet === 'function') {

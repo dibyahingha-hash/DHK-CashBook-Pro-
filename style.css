@@ -393,10 +393,12 @@ table.ledger-table tr.total-row td {
     display: none !important;
   }
 
-  body:not(.print-mode-ledger) #subview-cashbook-wrap,
-  body:not(.print-mode-ledger) #cashbook-printable-area,
-  body:not(.print-mode-ledger) .print-container {
+.view-panel.active,
+body:not(.print-mode-ledger) #subview-cashbook-wrap,
+body:not(.print-mode-ledger) #cashbook-printable-area,
+body:not(.print-mode-ledger) .print-container {
     display: block !important;
+   
     background: transparent !important;
     padding: 0 !important;
     margin: 0 !important;

@@ -100,8 +100,39 @@
     window.onCashbookPeriodChange();
     window.updateLedgerHeadFilterOptions();
     window.renderLedgerSheet();
+    window.filterCategoryDropdownByDrawer();
+    
   };
+window.filterCategoryDropdownByDrawer = function() {
+  var sel = document.getElementById('v-category-select');
+  if (!sel) return;
 
+  var curDrawer = (window.currentDrawer || 'mdm').toLowerCase();
+
+  // Filter every optgroup according to the active drawer
+  var optgroups = sel.querySelectorAll('optgroup');
+  optgroups.forEach(function(og) {
+    var label = (og.label || '').toLowerCase();
+    
+    // Always show custom/generic entries
+    if (label.indexOf('custom') !== -1 || label.indexOf('open') !== -1) {
+      og.style.display = '';
+    } else if (curDrawer === 'mdm') {
+      og.style.display = label.indexOf('mdm') !== -1 ? '' : 'none';
+    } else if (curDrawer === 'smc') {
+      og.style.display = (label.indexOf('smc') !== -1 && label.indexOf('sna') === -1) ? '' : 'none';
+    } else if (curDrawer === 'sna') {
+      og.style.display = (label.indexOf('sna') !== -1 || label.indexOf('canara') !== -1) ? '' : 'none';
+    }
+  });
+
+  // Default selection back to CUSTOM to prevent cross-drawer invalid data
+  sel.value = 'CUSTOM';
+  if (typeof window.refreshModalPreview === 'function') {
+    window.refreshModalPreview();
+  }
+};
+  
   window.switchSubView = function (view) {
     var cbWrap = document.getElementById('subview-cashbook-wrap');
     var ledWrap = document.getElementById('subview-ledger-wrap');
@@ -1291,32 +1322,14 @@ var type = isRcpt ? 'receipt' : 'payment';
     window.refreshModalPreview();
   }
 };
-  window.updateCategoryVisibility = function() {
-  var sel = document.getElementById('v-category-select');
-  if (!sel) return;
 
-  var currentDrawer = (window.currentDrawer || 'MDM').toUpperCase();
-  var optgroups = sel.querySelectorAll('optgroup');
-
-  optgroups.forEach(function(og) {
-    var label = (og.label || '').toUpperCase();
-    if (label.indexOf('CUSTOM') !== -1) {
-      og.style.display = '';
-    } else if (currentDrawer.indexOf('MDM') !== -1) {
-      og.style.display = label.indexOf('MDM') !== -1 ? '' : 'none';
-    } else if (currentDrawer.indexOf('SMC') !== -1 && currentDrawer.indexOf('SNA') === -1) {
-      og.style.display = label.indexOf('SMC') !== -1 ? '' : 'none';
-    } else if (currentDrawer.indexOf('SNA') !== -1 || currentDrawer.indexOf('CANARA') !== -1) {
-      og.style.display = (label.indexOf('SNA') !== -1 || label.indexOf('CANARA') !== -1) ? '' : 'none';
-    }
-  });
-};
   
   // ==========================================================================
   // 11. BOOTSTRAP INITIALIZATION
   // ==========================================================================
   document.addEventListener('DOMContentLoaded', function () {
-    window.updateCategoryVisibility();
+    window.filterCategoryDropdownByDrawer();
+    
     window.setTransactionType('RECEIPT');
     window.updateLedgerHeadFilterOptions();
     window.renderArchiveTray();

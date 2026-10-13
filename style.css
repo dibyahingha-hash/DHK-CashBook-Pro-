@@ -406,6 +406,8 @@ main,
     display: none !important;
   }
 
+#workspace-container,
+#view-cashbook,
 .view-panel.active,
 body:not(.print-mode-ledger) #subview-cashbook-wrap,
 body:not(.print-mode-ledger) #cashbook-printable-area,

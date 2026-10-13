@@ -655,8 +655,9 @@ var cbTot  = { rs: '0', p: '00' };
     // Exact filler row allocation to fit table, certificates, and signature blocks strictly on 1 page[span_8](start_span)[span_8](end_span)
     var countReceipts = (receiptsHtml.match(/<tr/g) || []).length;
     var countPayments = (paymentsHtml.match(/<tr/g) || []).length;
-    var EXACT_RECEIPT_LINES = 15;
-    var EXACT_PAYMENT_LINES = 8;
+    var EXACT_RECEIPT_LINES = 20;
+var EXACT_PAYMENT_LINES = 13;
+    
     
 
     for (var r = countReceipts; r < EXACT_RECEIPT_LINES; r++) {

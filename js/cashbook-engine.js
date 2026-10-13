@@ -108,30 +108,54 @@ window.filterCategoryDropdownByDrawer = function() {
   if (!sel) return;
 
   var curDrawer = (window.currentDrawer || 'mdm').toLowerCase();
+  var html = '<option value="CUSTOM">-- Custom Purpose / Open Entry --</option>';
 
-  // Filter every optgroup according to the active drawer
-  var optgroups = sel.querySelectorAll('optgroup');
-  optgroups.forEach(function(og) {
-    var label = (og.label || '').toLowerCase();
-    
-    // Always show custom/generic entries
-    if (label.indexOf('custom') !== -1 || label.indexOf('open') !== -1) {
-      og.style.display = '';
-    } else if (curDrawer === 'mdm') {
-      og.style.display = label.indexOf('mdm') !== -1 ? '' : 'none';
-    } else if (curDrawer === 'smc') {
-      og.style.display = (label.indexOf('smc') !== -1 && label.indexOf('sna') === -1) ? '' : 'none';
-    } else if (curDrawer === 'sna') {
-      og.style.display = (label.indexOf('sna') !== -1 || label.indexOf('canara') !== -1) ? '' : 'none';
-    }
-  });
+  if (curDrawer === 'mdm') {
+    html += '<optgroup label="MDM Receipts (To...)">' +
+      '<option value="GRANT_COOKING">Receipt: Cooking Cost Grant (LF 5)</option>' +
+      '<option value="INTEREST">Receipt: Bank Interest (LF 7)</option>' +
+      '<option value="CARRIAGE">Receipt: Rice Transportation Subsidy (LF 13)</option>' +
+      '<option value="UTENSILS">Receipt: Kitchen Devices & Utensils (LF 11)</option>' +
+      '<option value="TEACHER_ADVANCE">Receipt: Teacher Temporary Advance (LF 9)</option>' +
+      '<option value="CONTRA_COOKING">Receipt: Cash Brought from Bank for Meals (Contra C)</option>' +
+      '<option value="CONTRA_OTHER">Receipt: Cash Brought from Bank for Other Work (Contra C)</option>' +
+      '</optgroup>' +
+      '<optgroup label="MDM Payments (By...)">' +
+      '<option value="COOKING_COST">Payment: Cooking Cost Marketing (LF 1)</option>' +
+      '<option value="CONTRA_COOKING">Payment: Self Cheque for Cooking Cost (Contra C)</option>' +
+      '<option value="CONTRA_OTHER">Payment: Self Cheque for Other Purpose (Contra C)</option>' +
+      '<option value="VENDOR">Payment: Vendor / Supplier Cheque (Bank)</option>' +
+      '<option value="TEACHER_ADVANCE">Payment: Refund Teacher Advance (LF 9)</option>' +
+      '<option value="BANK_CHARGES">Payment: Bank SMS / Service Charges (LF 7)</option>' +
+      '</optgroup>';
+  } else if (curDrawer === 'smc') {
+    html += '<optgroup label="SMC Receipts (To...)">' +
+      '<option value="INTEREST">Receipt: Bank Interest (LF 7)</option>' +
+      '<option value="CONTRA">Receipt: Cash Withdrawn from Bank (Contra C)</option>' +
+      '<option value="MAINTENANCE_GRANT">Receipt: School Composite/Maintenance Grant (LF 5)</option>' +
+      '</optgroup>' +
+      '<optgroup label="SMC Payments (By...)">' +
+      '<option value="MAINTENANCE">Payment: School Maintenance & Contingency</option>' +
+      '<option value="CONTRA">Payment: Self Cheque / Cash in Hand (Contra C)</option>' +
+      '<option value="BANK_CHARGES">Payment: Bank SMS / Maintenance Charges (LF 7)</option>' +
+      '<option value="VENDOR">Payment: Vendor Cheque Payment</option>' +
+      '</optgroup>';
+  } else if (curDrawer === 'sna') {
+    html += '<optgroup label="Canara SNA Receipts (To...)">' +
+      '<option value="COMPONENT_LIMIT">Receipt: Drawing Limit Allocation (To Component)</option>' +
+      '</optgroup>' +
+      '<optgroup label="Canara SNA Payments (By...)">' +
+      '<option value="PPA_VENDOR">Payment: Vendor Disbursement via SNA PPA</option>' +
+      '</optgroup>';
+  }
 
-  // Default selection back to CUSTOM to prevent cross-drawer invalid data
+  sel.innerHTML = html;
   sel.value = 'CUSTOM';
   if (typeof window.refreshModalPreview === 'function') {
     window.refreshModalPreview();
   }
 };
+  
   
   window.switchSubView = function (view) {
     var cbWrap = document.getElementById('subview-cashbook-wrap');

@@ -1296,7 +1296,8 @@ var type = isRcpt ? 'receipt' : 'payment';
   window.currentTxType = (txType || 'RECEIPT').toUpperCase();
   
   var btnRcpt = document.getElementById('btn-type-rcpt');
-  var btnPay = document.getElementById('btn-type-pay');
+  var btnPay = document.getElementById('btn-type-pmt') || document.getElementById('btn-type-pay');
+    
   
   if (window.currentTxType === 'RECEIPT') {
     if (btnRcpt) {

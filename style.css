@@ -406,21 +406,19 @@ body:not(.print-mode-ledger) .print-container {
   }
 
   body:not(.print-mode-ledger) .register-page {
-    display: flex !important;
-    flex-direction: column !important;
-    justify-content: flex-start !important;
-    width: 100% !important;
-    /* Legal printable height (356mm - 30mm margins = ~326mm) */
-    height: 325mm !important;
-    max-height: 325mm !important;
-    padding: 0 !important;
-    margin: 0 !important;
-    border: none !important;
-    box-shadow: none !important;
-    box-sizing: border-box !important;
-    overflow: hidden !important;
+  display: block !important;
+  width: 100% !important;
+  min-width: 0 !important;
+  height: auto !important;
+  max-height: none !important;
+  padding: 0 !important;
+  margin: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  box-sizing: border-box !important;
+  overflow: visible !important;
   }
-
+   
   body:not(.print-mode-ledger) .page-receipts {
     page-break-before: auto !important;
     page-break-after: always !important;

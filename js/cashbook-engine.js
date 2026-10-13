@@ -1216,7 +1216,11 @@ window.refreshModalPreview = function() {
   if (!previewEl || typeof NarrationEngine === 'undefined') return;
 
   // 1. Resolve transaction type cleanly via active window state or button classes
-  var type = (window.currentTxType || 'PAYMENT').toLowerCase(); // 'receipt' or 'payment'
+    var btnRcpt = document.getElementById('btn-type-rcpt');
+  var isRcpt = (window.currentTxType === 'RECEIPT') || 
+               (btnRcpt && (btnRcpt.style.background.indexOf('1e3a8a') !== -1 || btnRcpt.classList.contains('active')));
+  var type = isRcpt ? 'receipt' : 'payment';
+  
 
   // 2. Map drawer name to exact NarrationEngine key
   var rawDrawer = (window.currentDrawer || 'mdm').toLowerCase();
@@ -1253,6 +1257,36 @@ window.refreshModalPreview = function() {
 
   // Generate live audit narration
   previewEl.value = NarrationEngine.generate(params);
+};
+  window.setTransactionType = function(txType) {
+  window.currentTxType = (txType || 'RECEIPT').toUpperCase();
+  
+  var btnRcpt = document.getElementById('btn-type-rcpt');
+  var btnPay = document.getElementById('btn-type-pay');
+  
+  if (window.currentTxType === 'RECEIPT') {
+    if (btnRcpt) {
+      btnRcpt.style.background = '#1e3a8a';
+      btnRcpt.style.color = '#ffffff';
+    }
+    if (btnPay) {
+      btnPay.style.background = '#e2e8f0';
+      btnPay.style.color = '#334155';
+    }
+  } else {
+    if (btnPay) {
+      btnPay.style.background = '#b91c1c';
+      btnPay.style.color = '#ffffff';
+    }
+    if (btnRcpt) {
+      btnRcpt.style.background = '#e2e8f0';
+      btnRcpt.style.color = '#334155';
+    }
+  }
+
+  if (typeof window.refreshModalPreview === 'function') {
+    window.refreshModalPreview();
+  }
 };
   
   // ==========================================================================

@@ -380,7 +380,8 @@ table.ledger-table tr.total-row td {
   #voucher-tray,
   #archive-tray,
   #box-mdm-mandate,
-  .card {
+  #tx-entry-card {
+
     display: none !important;
   }
 

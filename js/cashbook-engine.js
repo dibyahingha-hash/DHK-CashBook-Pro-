@@ -395,8 +395,9 @@
   // ==========================================================================
   window.addCompleteTransaction = function () {
     var dateEl = document.getElementById('tx-date');
-    var lfEl = document.getElementById('tx-lf');
-    var descEl = document.getElementById('tx-desc');
+    var lfEl = document.getElementById('v-folio-input') || document.getElementById('tx-lf');
+var descEl = document.getElementById('v-narration-preview') || document.getElementById('tx-desc');
+    
     var amountEl = document.getElementById('tx-amount');
     var channelEl = document.getElementById('tx-channel');
 
@@ -440,6 +441,17 @@
 
     if (descEl) descEl.value = '';
     if (amountEl) amountEl.value = '';
+      var fInput = document.getElementById('v-folio-input');
+  if (fInput) {
+    delete fInput.dataset.userEdited;
+    fInput.value = '';
+  }
+  ['v-ref-input', 'v-period-input', 'v-payee-input', 'v-purpose-input'].forEach(function(id) {
+    var el = document.getElementById(id);
+    if (el) el.value = '';
+  });
+  if (window.refreshModalPreview) window.refreshModalPreview();
+    
     window.recalculateCashbook();
   };
 
@@ -1159,7 +1171,54 @@ if (selectedLf === 'ALL') {
       window.renderArchiveTray();
     }
   };
+// ==========================================
+// AUDIT NARRATION & LIVE FOLIO INTEGRATION
+// ==========================================
 
+window.refreshModalPreview = function() {
+  var btnRcpt = document.getElementById('btn-type-rcpt');
+  var btnWith = document.getElementById('btn-type-with');
+  
+  var type = 'payment';
+  if (btnRcpt && btnRcpt.style.background.indexOf('15803d') !== -1) {
+    type = 'receipt';
+  } else if (btnWith && btnWith.style.background.indexOf('0284c7') !== -1) {
+    type = 'receipt';
+  }
+
+  var folioEl = document.getElementById('v-folio-input');
+  var previewEl = document.getElementById('v-narration-preview');
+  if (!previewEl || typeof NarrationEngine === 'undefined') return;
+
+  var currentDrawer = (typeof window.currentDrawer !== 'undefined') 
+    ? window.currentDrawer.toUpperCase() 
+    : 'MDM';
+
+  var channelEl = document.getElementById('tx-channel');
+  var channel = channelEl ? channelEl.value : 'BANK';
+
+  var params = {
+    drawer: currentDrawer,
+    type: type,
+    channel: channel,
+    category: document.getElementById('v-category-select') ? document.getElementById('v-category-select').value : 'CUSTOM',
+    purpose: document.getElementById('v-purpose-input') ? document.getElementById('v-purpose-input').value : '',
+    refNo: document.getElementById('v-ref-input') ? document.getElementById('v-ref-input').value : '',
+    date: document.getElementById('tx-date') ? document.getElementById('tx-date').value : '',
+    payee: document.getElementById('v-payee-input') ? document.getElementById('v-payee-input').value : '',
+    period: document.getElementById('v-period-input') ? document.getElementById('v-period-input').value : '',
+    userFolio: folioEl ? folioEl.value : ''
+  };
+
+  // Only auto-fill if not manually typed over by teacher
+  if (folioEl && !folioEl.dataset.userEdited) {
+    folioEl.value = NarrationEngine.resolveFolio(params);
+  }
+
+  // Generate live audit narration
+  previewEl.value = NarrationEngine.generate(params);
+};
+  
   // ==========================================================================
   // 11. BOOTSTRAP INITIALIZATION
   // ==========================================================================
@@ -1169,5 +1228,8 @@ if (selectedLf === 'ALL') {
     window.updateLedgerHeadFilterOptions();
     window.renderArchiveTray();
     window.recalculateCashbook();
+      var fEl = document.getElementById('v-folio-input');
+  if (fEl) fEl.addEventListener('input', function() { fEl.dataset.userEdited = 'true'; });
+    
   });
 })(window);

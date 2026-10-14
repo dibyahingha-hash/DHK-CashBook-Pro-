@@ -1039,44 +1039,105 @@ if (selectedLf === 'ALL') {
         '</div>';
     }
   };
+// ==========================================================================
+// 9. EXPLICIT PRINT ROUTERS (STANDALONE CLEAN-BUFFER ENGINE)
+// ==========================================================================
 
-  // ==========================================================================
-  // 9. EXPLICIT PRINT ROUTERS (DESKTOP & MOBILE COMPATIBLE)
-  // ==========================================================================
-    window.triggerCashbookPrint = function () {
-  document.body.classList.remove('print-mode-ledger');
-  
-  var cbView = document.getElementById('view-cashbook');
-  if (cbView) {
-    cbView.style.display = 'block';
+function executeIsolatedPrint(targetElementId, documentTitle) {
+  var targetEl = document.getElementById(targetElementId);
+  if (!targetEl || !targetEl.innerHTML.trim()) {
+    alert("No printable data found to print.");
+    return;
   }
 
-  if (typeof window.recalculateCashbook === 'function') {
-    window.recalculateCashbook();
-  }
-  if (typeof window.switchSubView === 'function') {
-    window.switchSubView('cashbook');
+  // Collect all existing stylesheets so typography and table layout remain identical
+  var stylesHtml = "";
+  var styleNodes = document.querySelectorAll('link[rel="stylesheet"], style');
+  for (var i = 0; i < styleNodes.length; i++) {
+    stylesHtml += styleNodes[i].outerHTML;
   }
 
+  // Mobile print layout overrides to ensure 100% visible unclipped tables
+  var printResetCss = `
+    <style>
+      @page { size: legal portrait; margin: 8mm 6mm; }
+      html, body {
+        background: #fff !important;
+        margin: 0 !important;
+        padding: 0 !important;
+        overflow: visible !important;
+        width: 100% !important;
+        height: auto !important;
+      }
+      .register-page {
+        display: block !important;
+        width: 100% !important;
+        min-width: 0 !important;
+        height: auto !important;
+        max-height: none !important;
+        padding: 0 !important;
+        margin: 0 0 20px 0 !important;
+        border: none !important;
+        box-shadow: none !important;
+        page-break-inside: avoid !important;
+      }
+      .page-receipts {
+        page-break-after: always !important;
+        break-after: page !important;
+      }
+      .page-payments {
+        page-break-before: always !important;
+        break-before: page !important;
+      }
+      table {
+        width: 100% !important;
+        table-layout: fixed !important;
+        border-collapse: collapse !important;
+      }
+    </style>
+  `;
+
+  var printFrame = document.createElement("iframe");
+  printFrame.style.position = "fixed";
+  printFrame.style.right = "0";
+  printFrame.style.bottom = "0";
+  printFrame.style.width = "0";
+  printFrame.style.height = "0";
+  printFrame.style.border = "0";
+  document.body.appendChild(printFrame);
+
+  var frameDoc = printFrame.contentWindow || printFrame.contentDocument;
+  if (frameDoc.document) frameDoc = frameDoc.document;
+
+  frameDoc.open();
+  frameDoc.write("<!DOCTYPE html><html><head><title>" + documentTitle + "</title>");
+  frameDoc.write(stylesHtml);
+  frameDoc.write(printResetCss);
+  frameDoc.write("</head><body>");
+  frameDoc.write(targetEl.innerHTML);
+  frameDoc.write("</body></html>");
+  frameDoc.close();
+
+  // Allow the iframe DOM and styles to finish parsing, then trigger print
   setTimeout(function () {
-    window.print();
-  }, 300);
-};
-      
-
-    window.triggerLedgerPrint = function () {
-    if (typeof window.renderLedgerSheet === 'function') {
-      window.renderLedgerSheet();
-    }
-    if (typeof window.switchSubView === 'function') {
-      window.switchSubView('ledger');
-    }
-    document.body.classList.add('print-mode-ledger');
+    printFrame.contentWindow.focus();
+    printFrame.contentWindow.print();
     setTimeout(function () {
-      window.print();
-    }, 300);
-  };
+      document.body.removeChild(printFrame);
+    }, 1000);
+  }, 400);
+}
+
+window.triggerCashbookPrint = function () {
+  executeIsolatedPrint("cashbook-printable-area", "Cash Book Register");
+};
+
+window.triggerLedgerPrint = function () {
+  executeIsolatedPrint("ledger-printable-area", "General Ledger Register");
+};
   
+
+    
   
 
   // ==========================================================================

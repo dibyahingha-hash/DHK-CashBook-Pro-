@@ -782,7 +782,8 @@ var EXACT_PAYMENT_LINES = 13;
     // Row 2: Closing Balance (C/B)
     paymentsHtml += '<tr class="total-row ink-red" style="font-weight:bold; border-top:1px solid #e2e8f0;">' +
       '<td>End</td><td><strong>By Closing Balance (C/B)</strong></td><td>-</td>' +
-      '<td class="col-rs"><strong>' + (cbCash.rs === '' ? '0' : cbCash.rs) + '</strong></td><td class="col-p"><strong>' + (cbCash.p || '00') + '</strong></td>' +
+     '<td class="col-rs"><strong>' + (cbCash.rs ? cbCash.rs : '0') + '</strong></td><td class="col-p"><strong>' + (cbCash.p ? cbCash.p : '00') + '</strong></td>' +
+ 
 
       '<td class="col-rs"><strong>' + cbBank.rs + '</strong></td><td class="col-p"><strong>' + cbBank.p + '</strong></td>' +
       '<td class="col-rs"><strong>' + cbTot.rs  + '</strong></td><td class="col-p"><strong>' + cbTot.p  + '</strong></td>' +
@@ -843,7 +844,8 @@ var EXACT_PAYMENT_LINES = 13;
         '<!-- STATUTORY AUDIT & RECONCILIATION CERTIFICATE -->' +
         '<div class="statutory-audit-cert">' +
         '<strong>STATUTORY PHYSICAL VERIFICATION & AUDIT CERTIFICATE:</strong><br>' +
-      '1. Certified that the closing cash-in-hand balance of <strong>Rs. ' + (cbCash.rs === '' ? '0' : cbCash.rs) + '.' + (cbCash.p || '00') + '</strong>...'
+        '1. Certified that the closing cash-in-hand balance of <strong>Rs. ' + (Number(rawCloseCash) <= 0 ? '0.00' : Number(rawCloseCash).toFixed(2)) + '</strong> has been physically verified by the undersigned and found correct.' +
+        
   
         '2. Certified that the closing bank balance of <strong>Rs. ' + cbBank.rs + '.' + (cbBank.p || '00') + '</strong> agrees with the entries in the Bank Passbook / SNA Portal statement for ' + mName + ' ' + yName + '.<br>' +
         '3. Certified that all cooking cost expenditures billed under Folio 1 conform to sanctioned per-child per-day allocation rules.' +
